@@ -1,0 +1,368 @@
+/* =========================================================
+   0) Quitar scroll del navegador (solo la app controla)
+========================================================= */
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
+}
+
+/* =========================================================
+   1) Layout general
+========================================================= */
+.app-shell {
+  height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  background: linear-gradient(135deg, rgba(106,92,255,0.16), rgba(255,79,166,0.12));
+}
+
+.app-main {
+  height: 100%;
+  overflow: auto;
+  padding: 6px; /* ✅ ganamos px para que NO se corte la última fila */
+
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.app-main::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+/* HOME sin scroll (todo debe caber) */
+.app-main--home {
+  overflow: hidden;
+}
+
+/* =========================================================
+   2) Header centrado, compacto (para ganar alto)
+========================================================= */
+.dash {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.dash--fit {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.dash-head--center {
+  text-align: center;
+}
+
+.dash-head--tight {
+  margin: 2px 0 4px; /* ✅ aún más compacto (cabida garantizada) */
+}
+
+.dash-title {
+  margin: 0;
+  font-size: clamp(22px, 1.6vw, 32px);
+  font-weight: 1000;
+  letter-spacing: -0.7px;
+  color: rgba(10,12,14,0.92);
+}
+
+.dash-sub {
+  margin: 4px 0 0;
+  opacity: 0.78;
+  font-weight: 900;
+  font-size: clamp(11px, 0.95vw, 13px);
+  color: rgba(10,12,14,0.70);
+}
+
+/* =========================================================
+   3) Mosaico FIT (WEB) - MÁS JUNTO como IMG 3
+========================================================= */
+.mosaic {
+  --gap: 6px; /* ✅ más junto aún (estilo img 3) */
+  flex: 1;
+  min-height: 0;
+
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-auto-flow: dense;
+  gap: var(--gap);
+
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  border-radius: 0;
+  overflow: visible;
+}
+
+/* 3 filas visibles (inventario/servicios, 4 módulos, admin) */
+.mosaic--fit {
+  /* ✅ restamos unos px para evitar recorte por redondeo */
+  grid-auto-rows: calc((100% - (var(--gap) * 2) - 8px) / 3);
+}
+
+/* =========================================================
+   4) Tiles (auto-ajuste tipo “celda Excel”)
+========================================================= */
+.mTile {
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+
+  color: rgba(255,255,255,0.98);
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px;
+
+  box-shadow: 0 16px 46px rgba(0,0,0,0.18);
+  transition: transform 180ms ease, filter 180ms ease, box-shadow 180ms ease;
+  will-change: transform;
+}
+
+.mTile--big {
+  /* ✅ menos padding para que quepa contenido sin cortar */
+  padding: 12px 14px;
+}
+
+.mTile:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.03);
+  box-shadow: 0 22px 64px rgba(0,0,0,0.22);
+}
+
+.mTile:active {
+  transform: translateY(-1px) scale(0.995);
+}
+
+.mTile:focus-visible {
+  outline: 3px solid rgba(255,255,255,0.45);
+  outline-offset: 3px;
+}
+
+/* =========================================================
+   4.1) Layout interno: TODO se adapta y nunca se corta feo
+========================================================= */
+.mTile-hero {
+  height: 100%;
+  display: grid;
+
+  /* ✅ icono | texto | flecha */
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 12px;
+  min-height: 0;
+}
+
+/* ✅ quitar “cuadro” del icono y hacerlo más grande */
+.mTile-ico {
+  width: auto;
+  height: auto;
+  display: inline-grid;
+  place-items: center;
+
+  background: transparent;  /* ✅ SIN contenedor */
+  box-shadow: none;         /* ✅ SIN contenedor */
+  border-radius: 0;
+
+  /* ✅ icono grande */
+  font-size: clamp(32px, 2.2vw, 48px);
+  color: rgba(255,255,255,0.98);
+}
+
+.mTile-ico--big {
+  font-size: clamp(34px, 2.4vw, 52px);
+}
+
+/* Contenedor de texto que se comprime bien */
+.mTile-text {
+  min-width: 0;
+  min-height: 0;
+}
+
+/* ✅ título: auto-fit, sin corte */
+.mTile-title {
+  font-weight: 1000;
+  letter-spacing: -0.4px;
+  color: rgba(255,255,255,0.98);
+  text-shadow: 0 14px 40px rgba(0,0,0,0.28);
+
+  /* ✅ evita recortes y se adapta al espacio */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mTile-title--big {
+  font-size: clamp(15px, 1.25vw, 22px);
+}
+
+/* ✅ descripción: si no cabe, recorta bonito y NO rompe layout */
+.mTile-desc {
+  margin-top: 4px;
+  font-weight: 900;
+  opacity: 0.92;
+  color: rgba(255,255,255,0.92);
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mTile-desc--big {
+  font-size: clamp(11px, 0.9vw, 13px);
+}
+
+/* ✅ flecha: escala y nunca se sale */
+.mTile-go {
+  font-weight: 1000;
+  opacity: 0.55;
+  transform: translateX(-1px);
+  transition: 180ms ease;
+  color: rgba(255,255,255,0.92);
+
+  font-size: clamp(26px, 2.0vw, 44px); /* ✅ auto */
+  line-height: 1;
+}
+
+.mTile-go--big {
+  font-size: clamp(28px, 2.2vw, 46px);
+}
+
+.mTile:hover .mTile-go {
+  opacity: 0.95;
+  transform: translateX(0);
+}
+
+/* =========================================================
+   5) Brillo tipo gema / cristal (hover) - SIN recortar contenido
+========================================================= */
+.mTile::before {
+  content: "";
+  position: absolute;
+  inset: -45%;
+  background:
+    radial-gradient(
+      circle at 30% 25%,
+      rgba(255,255,255,0.26),
+      rgba(255,255,255,0.04) 55%,
+      rgba(255,255,255,0.00) 72%
+    ),
+    linear-gradient(
+      120deg,
+      rgba(255,255,255,0.00),
+      rgba(255,255,255,0.16),
+      rgba(255,255,255,0.00)
+    );
+  transform: translateX(-55%) rotate(10deg);
+  opacity: 0;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
+.mTile::after {
+  content: "";
+  position: absolute;
+  inset: -70%;
+  background: linear-gradient(
+    120deg,
+    rgba(255,255,255,0.00),
+    rgba(255,255,255,0.12),
+    rgba(255,255,255,0.00)
+  );
+  transform: translateX(-60%) rotate(10deg);
+  opacity: 0;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
+@keyframes gemShine {
+  0%   { transform: translateX(-60%) rotate(10deg); }
+  100% { transform: translateX(40%) rotate(10deg); }
+}
+
+.mTile:hover::before,
+.mTile:hover::after {
+  opacity: 1;
+  animation: gemShine 850ms ease forwards;
+}
+
+/* =========================================================
+   6) Spans (sizes)
+========================================================= */
+.mTile.span1 { grid-column: span 1; grid-row: span 1; }
+.mTile.span2 { grid-column: span 2; grid-row: span 1; }
+.mTile.span4 { grid-column: span 4; grid-row: span 1; }
+
+/* =========================================================
+   7) Paleta corporativa (oscura) - NO TOCAR
+========================================================= */
+.mTile.burgundy {
+  background: linear-gradient(135deg, rgba(78, 20, 36, 0.98), rgba(126, 35, 58, 0.96));
+}
+.mTile.steel {
+  background: linear-gradient(135deg, rgba(18, 54, 79, 0.98), rgba(36, 86, 122, 0.96));
+}
+.mTile.navy {
+  background: linear-gradient(135deg, rgba(9, 24, 56, 0.98), rgba(20, 52, 98, 0.96));
+}
+.mTile.forest {
+  background: linear-gradient(135deg, rgba(12, 58, 42, 0.98), rgba(22, 94, 68, 0.96));
+}
+.mTile.teal {
+  background: linear-gradient(135deg, rgba(6, 61, 75, 0.98), rgba(10, 95, 110, 0.96));
+}
+.mTile.violet {
+  background: linear-gradient(135deg, rgba(38, 24, 74, 0.98), rgba(72, 40, 122, 0.96));
+}
+.mTile.slate {
+  background: linear-gradient(135deg, rgba(24, 34, 46, 0.98), rgba(44, 60, 82, 0.96));
+}
+
+/* =========================================================
+   8) Responsive (sin scroll, todo cabe)
+========================================================= */
+@media (max-width: 1100px) {
+  .mosaic {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    --gap: 8px;
+  }
+
+  .mosaic--fit {
+    grid-auto-rows: calc((100% - (var(--gap) * 2)) / 3);
+  }
+
+  /* spans en 3 columnas */
+  .mTile.span1 { grid-column: span 1; }
+  .mTile.span2 { grid-column: span 3; }
+  .mTile.span4 { grid-column: span 3; }
+
+  .mTile--big { padding: 12px 12px; }
+}
+
+@media (max-width: 760px) {
+  .app-main { padding: 8px; }
+  .app-main--home { overflow: hidden; } /* ✅ sin scroll */
+
+  .mosaic {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    --gap: 8px;
+  }
+
+  /* 4 filas en móvil para 7 cards sin corte */
+/* ✅ 5 filas en móvil (Admin Panel cae en la 5ta fila) */
+.mosaic--fit {
+  grid-auto-rows: calc((100% - (var(--gap) * 4) - 8px) / 5);
+}
+
+  /* spans móvil */
+  .mTile.span1 { grid-column: span 1; }
+  .mTile.span2 { grid-column: span 2; }
+  .mTile.span4 { grid-column: span 2; }
+
+  /* más compacto para que no se corte nada */
+  .mTile--big { padding: 10px 10px; }
+
+  .mTile-ico--big { font-size: clamp(28px, 6.2vw, 44px); }
+  .mTile-title--big { font-size: clamp(14px, 3.8vw, 18px); }
+  .mTile-desc--big { font-size: clamp(10px, 3.0vw, 12px); }
+  .mTile-go--big { font-size: clamp(24px, 6.0vw, 36px); }
+}

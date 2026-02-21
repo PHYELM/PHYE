@@ -1,0 +1,1028 @@
+  /* ===== ECOVISA NAV (dark corporate) ===== */
+  .nav{
+    position: relative;
+    z-index: 50;
+    background: linear-gradient(90deg, rgba(6, 26, 45, 0.96), rgba(7, 39, 53, 0.94));
+    border-bottom: 1px solid rgba(122, 217, 87, 0.26);
+    box-shadow: 0 18px 50px rgba(0,0,0,0.22);
+  }
+
+  /* SINGLE ROW */
+  .nav-row{
+    height: 72px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+
+    /* 1) margen del logo (más aire a la izquierda) */
+    padding: 0 22px 0 28px;
+
+    gap: 20px;
+  }
+
+  /* LEFT */
+  .nav-left{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .nav-burger{
+    display: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    border: 0;
+    background: transparent;
+    color: rgba(255,255,255,0.92);
+    cursor: pointer;
+    font-size: 20px;
+  }
+  .nav-burger:hover{ background: rgba(255,255,255,0.08); }
+
+  /* LOGO limpio */
+  .nav-logoBtn{
+    border: 0;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+  }
+  .nav-logo-img{
+    height: 52px;
+    width: auto;
+    object-fit: contain;
+  }
+
+  /* CENTER */
+  .nav-center{
+    justify-self: center;
+    width: 100%;
+    min-width: 0;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    /* 2) más separación entre iconos */
+    gap: 26px;
+
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    padding: 8px 4px;
+  }
+  .nav-center::-webkit-scrollbar{ display:none; }
+  .nav-center{
+    position: relative; /* ✅ para el indicador absoluto */
+  }
+
+  .nav-activePill{
+    position: absolute;
+    top: 50%;
+    left: 0;
+    height: 44px;
+    border-radius: 999px;
+
+    background: rgba(122, 217, 87, 0.16);
+    box-shadow:
+      0 0 0 2px rgba(122, 217, 87, 0.22) inset,
+      0 10px 28px rgba(0,0,0,0.25);
+
+    opacity: 0;
+    transition:
+      transform 320ms cubic-bezier(.2,.9,.2,1),
+      width 320ms cubic-bezier(.2,.9,.2,1),
+      opacity 120ms ease;
+    pointer-events: none;
+  }
+
+  .nav-activePill.ready{ opacity: 1; }
+
+  /* Botones arriba del pill */
+  .nav-iconBtn{ position: relative; z-index: 1; }
+
+  /* Ya no necesitas el background del active porque el pill lo hace */
+  .nav-iconBtn.active{
+    background: transparent;
+    box-shadow: none;
+  }
+  /* icon buttons (sin contenedores pesados) */
+  .nav-iconBtn{
+    position: relative;
+    width: 44px;
+    height: 44px;
+    border-radius: 999px;
+    border: 0;
+    background: transparent;
+    color: rgba(255,255,255,0.90);
+    cursor: pointer;
+    transition: 160ms ease;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+  }
+
+  .nav-iconBtn:hover{
+    background: rgba(255,255,255,0.08);
+    transform: translateY(-1px);
+  }
+
+
+  .nav-icon{
+    font-size: 24px;
+    display: grid;
+    place-items: center;
+  }
+
+  /* Tooltip pro */
+  .nav-iconBtn[data-tip]::after{
+    content: attr(data-tip);
+    position: absolute;
+    left: 50%;
+    bottom: -46px;
+    transform: translateX(-50%);
+    padding: 8px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+
+    background: rgba(10, 12, 14, 0.92);
+    color: rgba(255,255,255,0.95);
+    border: 1px solid rgba(255,255,255,0.10);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.35);
+
+    opacity: 0;
+    pointer-events: none;
+    transition: 120ms ease;
+  }
+  .nav-iconBtn[data-tip]::before{
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: -18px;
+    width: 10px;
+    height: 10px;
+    background: rgba(10, 12, 14, 0.92);
+    border-left: 1px solid rgba(255,255,255,0.10);
+    border-top: 1px solid rgba(255,255,255,0.10);
+    transform: translateX(-50%) rotate(45deg);
+
+    opacity: 0;
+    pointer-events: none;
+    transition: 120ms ease;
+  }
+  .nav-iconBtn:hover::after,
+  .nav-iconBtn:hover::before{ opacity: 1; }
+
+  /* RIGHT: user (avatar/icon + nombre) */
+  .nav-right{
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    position: relative;
+  }
+  /* ===== NOTIF BELL ===== */
+  /* ===== BELL (igual que módulos) ===== */
+  .nav-bellBtn{
+    margin-right: 10px;         /* conserva separación con el user */
+    position: relative;         /* para badge */
+  }
+
+  /* El ícono FiBell ya viene más chico; igualamos */
+  .nav-bellBtn svg{
+    font-size: 20px;
+  }
+
+  /* Badge abajo-derecha sin tapar la campana */
+  .nav-bellBadge{
+    position: absolute;
+    right: -2px;
+    bottom: -2px;
+
+    min-width: 18px;
+    height: 18px;
+    padding: 0 6px;
+    border-radius: 999px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    background: rgba(122, 217, 87, 1);
+    color: rgba(6, 26, 45, 0.98);
+    font-weight: 1000;
+    font-size: 11px;
+    line-height: 1;
+
+    box-shadow: 0 0 0 3px rgba(6, 26, 45, 0.98);
+  }
+  .nav-userBtn{
+    border: 0;
+    background: rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.92);
+    cursor: pointer;
+
+    height: 46px;
+    padding: 0 12px 0 8px;
+    border-radius: 999px;
+
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .nav-userBtn:hover{ background: rgba(255,255,255,0.10); }
+
+  .nav-userAvatar{
+    width: 38px;
+    height: 38px;
+    border-radius: 999px;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+    background: rgba(255,255,255,0.08);
+  }
+
+  .nav-userAvatarImg{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .nav-userAvatarIcon{
+    font-size: 28px;
+    display: grid;
+    place-items: center;
+  }
+
+  .nav-userName{
+    max-width: 220px;
+    font-weight: 950;
+    font-size: 13px;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* PROFILE MENU */
+  .nav-profileMenu{
+    position: absolute;
+    right: 0;
+    top: 62px;
+
+    /* ✅ más pequeño */
+    width: 320px;
+    border-radius: 16px;
+    padding: 10px;
+
+    background: rgba(14, 18, 22, 0.94);
+    border: 1px solid rgba(255,255,255,0.10);
+    box-shadow: 0 28px 80px rgba(0,0,0,0.45);
+
+    /* ✅ animación */
+    transform-origin: top right;
+    animation: profilePopIn 160ms ease;
+  }
+
+  @keyframes profilePopIn{
+    from { transform: translateY(8px) scale(0.98); opacity: 0; }
+    to   { transform: translateY(0) scale(1); opacity: 1; }
+  }
+
+  .nav-profileMenu.closing{
+    animation: profilePopOut 160ms ease forwards;
+  }
+
+  @keyframes profilePopOut{
+    from { transform: translateY(0) scale(1); opacity: 1; }
+    to   { transform: translateY(8px) scale(0.98); opacity: 0; }
+  }
+
+  /* 4) header con nombre centrado */
+  .nav-profileHeader{
+    display: grid;
+    grid-template-columns: 42px 1fr 42px;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.10);
+  }
+
+  .nav-profileHeaderSpacer{ width: 42px; height: 42px; }
+
+  .nav-profileHeaderName{
+    text-align: center;
+    font-weight: 1000;
+    color: rgba(255,255,255,0.95);
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .nav-profileClose{
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    border: 0;
+    background: rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.90);
+    cursor: pointer;
+  }
+  .nav-profileClose:hover{ background: rgba(255,255,255,0.10); }
+
+  /* avatar editable centrado */
+  .nav-profileAvatarArea{
+    display: grid;
+    place-items: center;
+    padding: 12px 0 6px;
+  }
+
+  .nav-profileAvatarBtn{
+    width: 74px;
+    height: 74px;
+    border-radius: 999px;
+    border: 0;
+    background: rgba(255,255,255,0.06);
+    cursor: pointer;
+    overflow: hidden;
+    position: relative;
+    display: grid;
+    place-items: center;
+  }
+
+  .nav-profileAvatarImg{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .nav-profileAvatarFallback{
+    width: 100%;
+    height: 100%;
+    display: grid;
+    place-items: center;
+    font-size: 44px;
+    color: rgba(255,255,255,0.92);
+  }
+
+  .nav-profileCam{
+    position: absolute;
+    right: 6px;
+    bottom: 6px;
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    background: rgba(122, 217, 87, 0.22);
+    border: 1px solid rgba(122, 217, 87, 0.35);
+    color: rgba(255,255,255,0.95);
+    display: grid;
+    place-items: center;
+  }
+
+  /* Info centrada (PUESTO/DEPTO) */
+  .nav-profileInfo{
+    padding: 10px 8px 6px;
+    text-align: center;
+  }
+
+  .nav-profileInfoRow{
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+
+  .nav-profileLabel{
+    font-size: 12px;
+    font-weight: 1000;
+    color: rgba(255,255,255,0.78);
+    letter-spacing: 0.4px;
+  }
+
+  .nav-profileValue{
+    font-size: 12px;
+    font-weight: 950;
+    color: rgba(255,255,255,0.95);
+    max-width: 290px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Botón verde sólido */
+  .nav-profileActions{ padding-top: 12px; }
+
+  .nav-profileLogout{
+    width: 100%;
+    height: 48px;
+    border-radius: 16px;
+    border: 0;
+
+    background: rgba(122, 217, 87, 1);
+    color: rgba(6, 26, 45, 0.98);
+
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+
+    font-weight: 1000;
+  }
+  .nav-profileLogout:hover{
+    filter: brightness(0.96);
+  }
+
+  /* =========================
+    MOBILE DRAWER (FIT 1 VIEW)
+  ========================= */
+  .nav-drawer{
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 200ms ease;
+  }
+
+  .nav-drawer.open{
+    pointer-events: auto;
+    opacity: 1;
+  }
+
+  /* ✅ Backdrop ATRÁS del panel (sin taparlo) */
+  .nav-drawer-backdrop{
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+
+    border: 0;
+    cursor: pointer;
+
+    background: rgba(0,0,0,0.40);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+
+    opacity: 0;
+    transition: opacity 200ms ease;
+  }
+
+  .nav-drawer.open .nav-drawer-backdrop{
+    opacity: 1;
+  }
+
+  /* ✅ Panel ENCIMA (nítido, NO borroso) */
+  .nav-drawer-inner{
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+
+    /* ✅ alto REAL visible del móvil */
+    height: 100dvh;
+    width: min(86vw, 330px);
+
+    background: rgba(14, 18, 22, 0.98);
+    border-right: 1px solid rgba(255,255,255,0.10);
+    box-shadow: 18px 0 70px rgba(0,0,0,0.55);
+
+    display: flex;
+    flex-direction: column;
+
+    /* ✅ deja espacio para barra inferior/safe-area */
+    padding: 10px;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    gap: 10px;
+
+    box-sizing: border-box;
+
+    transform: translateX(-110%);
+    transition: transform 240ms cubic-bezier(.2,.9,.2,1);
+    will-change: transform;
+  }
+
+  .nav-drawer.open .nav-drawer-inner{
+    transform: translateX(0);
+  }
+
+  /* HEAD compacto */
+  .nav-drawer-head{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.10);
+  }
+
+  .nav-drawer-logo{
+    height: 40px;               /* ✅ más chico */
+    width: auto;
+    object-fit: contain;
+  }
+
+  .nav-drawer-close{
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    border: 0;
+    background: rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.92);
+    cursor: pointer;
+    transition: 160ms ease;
+  }
+  .nav-drawer-close:hover{ background: rgba(255,255,255,0.10); }
+  .nav-drawer-close:active{ transform: scale(0.98); }
+
+  /* ✅ LISTA SIN SCROLL y que QUEPA */
+  .nav-drawer-list{
+    display: flex;
+    flex-direction: column;
+    gap: 8px;                   /* ✅ menos gap */
+    flex: 0 0 auto;             /* ✅ NO crece, no empuja logout */
+    overflow: visible;          /* ✅ sin scroll */
+  }
+
+  /* items más compactos para que quepa TODO */
+  .nav-drawer-item{
+    height: 44px;               /* ✅ clave para que quepa todo */
+    border-radius: 14px;
+    border: 0;
+
+    background: rgba(255,255,255,0.06);
+    color: #fff;
+
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 12px;
+
+    cursor: pointer;
+    font-weight: 1000;
+    font-size: 13px;
+
+    transition: transform 140ms ease, background 160ms ease, box-shadow 160ms ease;
+  }
+  .nav-drawer-item:hover{
+    background: rgba(255,255,255,0.10);
+    transform: translateY(-1px);
+  }
+  .nav-drawer-item:active{
+    transform: scale(0.985);
+  }
+  .nav-drawer-item.active{
+    background: rgba(122, 217, 87, 0.18);
+    box-shadow: 0 0 0 2px rgba(122, 217, 87, 0.22) inset;
+  }
+
+  .nav-drawer-ico{
+    font-size: 19px;            /* ✅ un toque más chico */
+    display: grid;
+    place-items: center;
+  }
+  .nav-drawer-txt{ font-size: 13px; }
+
+  /* ✅ Logout SIEMPRE visible al fondo */
+  .nav-drawer-logout{
+    margin-top: auto;
+    height: 46px;
+    width: 100%;
+
+    /* ✅ evita que se pegue a la barra inferior */
+    margin-bottom: env(safe-area-inset-bottom, 0px);
+
+    border-radius: 14px;
+    border: 0;
+
+    background: rgba(122, 217, 87, 1);
+    color: rgba(6, 26, 45, 0.98);
+
+    font-weight: 1000;
+    cursor: pointer;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+
+    transition: 160ms ease;
+  }
+  .nav-drawer-logout:hover{ filter: brightness(0.96); }
+  .nav-drawer-logout:active{ transform: scale(0.99); }
+  /* RESPONSIVE */
+  @media (max-width: 920px){
+    .nav-userName{ display: none; }
+    .nav-center{ gap: 20px; }
+  }
+
+  @media (max-width: 760px){
+    .nav-burger{ display: grid; place-items: center; }
+    .nav-center{ display:none; }
+  }
+
+  /* ===== Avatar Crop Modal (FB style) ===== */
+  .avatarCrop-backdrop{
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    display: grid;
+    place-items: center;
+    z-index: 9999;
+  }
+
+  .avatarCrop-modal{
+    width: min(92vw, 520px);
+    background: rgba(14, 18, 22, 0.98);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 18px;
+    box-shadow: 0 35px 120px rgba(0,0,0,0.60);
+    overflow: hidden;
+
+    animation: avatarPopIn 160ms ease;
+  }
+
+  @keyframes avatarPopIn{
+    from { transform: translateY(10px) scale(0.98); opacity: 0; }
+    to   { transform: translateY(0) scale(1); opacity: 1; }
+  }
+
+  .avatarCrop-head{
+    display: grid;
+    grid-template-columns: 1fr 42px;
+    align-items: center;
+    padding: 12px 12px 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.10);
+  }
+
+  .avatarCrop-title{
+    font-weight: 1000;
+    color: rgba(255,255,255,0.95);
+    font-size: 14px;
+  }
+
+  .avatarCrop-x{
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    border: 0;
+    background: rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.90);
+    cursor: pointer;
+  }
+  .avatarCrop-x:hover{ background: rgba(255,255,255,0.10); }
+
+  .avatarCrop-body{
+    padding: 12px;
+  }
+
+  .avatarCrop-cropper{
+    position: relative;
+    width: 100%;
+    height: 320px;
+    border-radius: 16px;
+    overflow: hidden;
+    background: rgba(255,255,255,0.06);
+  }
+
+  .avatarCrop-zoomRow{
+    margin-top: 12px;
+    display: grid;
+    grid-template-columns: 22px 1fr 22px;
+    align-items: center;
+    gap: 10px;
+    color: rgba(255,255,255,0.75);
+    font-weight: 900;
+  }
+
+  .avatarCrop-actions{
+    padding: 12px;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    border-top: 1px solid rgba(255,255,255,0.10);
+  }
+
+  .avatarCrop-btn{
+    height: 44px;
+    border-radius: 14px;
+    border: 0;
+    cursor: pointer;
+    font-weight: 1000;
+    padding: 0 14px;
+  }
+
+  .avatarCrop-btn.ghost{
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.92);
+  }
+  .avatarCrop-btn.ghost:hover{ background: rgba(255,255,255,0.12); }
+
+  .avatarCrop-btn.solid{
+    background: rgba(122, 217, 87, 1);
+    color: rgba(6, 26, 45, 0.98);
+  }
+  .avatarCrop-btn.solid:hover{ filter: brightness(0.96); }
+  @media (max-width: 520px){
+    .avatarCrop-modal{
+      width: min(94vw, 420px);
+      border-radius: 16px;
+    }
+
+    .avatarCrop-cropper{
+      height: 260px;
+    }
+
+    .avatarCrop-actions{
+      justify-content: stretch;
+    }
+
+    .avatarCrop-btn{
+      flex: 1;
+    }
+  }
+  /* ===== NOTIF MENU (FB-ish) ===== */
+  .nav-notifMenu{
+    position: absolute;
+    right: 0;
+    top: 62px;
+    width: 360px;
+    border-radius: 16px;
+    padding: 10px;
+    background: rgba(14, 18, 22, 0.96);
+    border: 1px solid rgba(255,255,255,0.10);
+    box-shadow: 0 28px 80px rgba(0,0,0,0.45);
+
+    transform-origin: top right;
+    animation: notifPopIn 160ms ease;
+  }
+
+  @keyframes notifPopIn{
+    from { transform: translateY(8px) scale(0.98); opacity: 0; }
+    to   { transform: translateY(0) scale(1); opacity: 1; }
+  }
+
+  .nav-notifMenu.closing{
+    animation: notifPopOut 160ms ease forwards;
+  }
+  @keyframes notifPopOut{
+    from { transform: translateY(0) scale(1); opacity: 1; }
+    to   { transform: translateY(8px) scale(0.98); opacity: 0; }
+  }
+
+  .nav-notifHeader{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.10);
+  }
+  .nav-notifTabs{
+    display: flex;
+    gap: 8px;
+    padding: 10px 0 6px;
+  }
+
+  .nav-notifTab{
+    height: 36px;
+    border-radius: 999px;
+    border: 0;
+    cursor: pointer;
+    padding: 0 12px;
+
+    background: rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.88);
+
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+
+    font-weight: 1000;
+    font-size: 13px;
+
+    transition: 160ms ease;
+  }
+
+  .nav-notifTab:hover{
+    background: rgba(255,255,255,0.10);
+    transform: translateY(-1px);
+  }
+
+  .nav-notifTab.active{
+    background: rgba(122, 217, 87, 0.18);
+    box-shadow: 0 0 0 2px rgba(122, 217, 87, 0.22) inset;
+    color: rgba(255,255,255,0.95);
+  }
+
+  .nav-notifTabCount{
+    height: 20px;
+    min-width: 20px;
+    padding: 0 7px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    background: rgba(255,255,255,0.10);
+    color: rgba(255,255,255,0.90);
+    font-size: 12px;
+    font-weight: 1000;
+  }
+
+  .nav-notifEmpty{
+    padding: 16px 10px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.05);
+    color: rgba(255,255,255,0.70);
+    font-weight: 900;
+    font-size: 13px;
+  }
+  .nav-notifTitle{
+    font-weight: 1000;
+    color: rgba(255,255,255,0.95);
+    font-size: 16px;
+  }
+
+  .nav-notifClose{
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    border: 0;
+    background: rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.90);
+    cursor: pointer;
+  }
+  .nav-notifClose:hover{ background: rgba(255,255,255,0.10); }
+
+  .nav-notifList{
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 420px;
+    overflow: auto;
+    scrollbar-width: none;
+  }
+  .nav-notifList::-webkit-scrollbar{ display:none; }
+
+  .nav-notifItem{
+    border: 0;
+    width: 100%;
+    cursor: pointer;
+    text-align: left;
+    border-radius: 14px;
+    padding: 10px;
+
+    color: rgba(255,255,255,0.92);
+
+    display: grid;
+    grid-template-columns: 44px 1fr 10px;
+    align-items: center;
+    gap: 10px;
+
+    transition: 160ms ease;
+    will-change: transform;
+  }
+
+  .nav-notifItem.unread{
+    background: rgba(122, 217, 87, 0.08);
+    box-shadow: 0 0 0 1px rgba(122, 217, 87, 0.18) inset;
+  }
+
+  .nav-notifItem.read{
+    background: rgba(255,255,255,0.05);
+    opacity: 0.92;
+  }
+
+  .nav-notifItem:hover{
+    transform: translateY(-1px);
+    background: rgba(255,255,255,0.08);
+  }
+
+  .nav-notifItem:active{
+    transform: translateY(0px) scale(0.99);
+  }
+
+  .nav-notifReadSpacer{
+    width: 8px;
+    height: 8px;
+    justify-self: end;
+    opacity: 0;
+  }
+
+  .nav-notifAvatar{
+    width: 44px;
+    height: 44px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: rgba(255,255,255,0.08);
+    display: grid;
+    place-items: center;
+  }
+  .nav-notifAvatar img{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .nav-notifAvatarFallback{
+    font-size: 30px;
+    display: grid;
+    place-items: center;
+  }
+
+  .nav-notifText{
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+  .nav-notifLine1{
+    font-size: 13px;
+    line-height: 1.25;
+    color: rgba(255,255,255,0.94);
+  }
+  .nav-notifLine2{
+    font-size: 12px;
+    color: rgba(255,255,255,0.65);
+    font-weight: 800;
+  }
+
+  .nav-notifUnread{
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: rgba(122, 217, 87, 1);
+    justify-self: end;
+  }
+
+  .nav-notifFooter{
+    margin-top: 10px;
+    width: 100%;
+    height: 48px;          /* igual que logout */
+    border-radius: 16px;   /* igual que logout */
+    border: 0;
+    cursor: pointer;
+    font-weight: 1000;
+  }
+  .nav-notifFooter:disabled{
+    opacity: 0.55;
+    cursor: not-allowed;
+    filter: none;
+  }
+  /* verde sólido tipo "Cerrar sesión" */
+  .nav-notifFooter.solid{
+    background: rgba(122, 217, 87, 1);
+    color: rgba(6, 26, 45, 0.98);
+  }
+  .nav-notifFooter.solid:hover{
+    filter: brightness(0.96);
+  }
+
+  @media (max-width: 520px){
+    .nav-notifMenu{
+      width: min(92vw, 380px);
+    }
+  }
+  /* Header label USUARIO */
+  .nav-profileHeaderName{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .nav-profileHeaderLabel{
+    font-weight: 1000;
+    color: rgba(255,255,255,0.75);
+    letter-spacing: 0.4px;
+    font-size: 12px;
+  }
+
+  .nav-profileHeaderValue{
+    font-weight: 1000;
+    color: rgba(255,255,255,0.95);
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+  }
+
+  /* ✅ Evita que al recargar se vea "hover" por focus restaurado */
+.nav-iconBtn:focus{
+  outline: none;
+  background: transparent; /* mantiene el look limpio */
+  box-shadow: none;
+}
+
+/* ✅ Accesibilidad: solo muestra foco cuando es teclado */
+.nav-iconBtn:focus-visible{
+  outline: 2px solid rgba(122, 217, 87, 0.55);
+  outline-offset: 3px;
+  background: rgba(255,255,255,0.06);
+}

@@ -1,0 +1,275 @@
+/* Login.css - estilo corporativo ECOVISA */
+
+.login-page {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+
+  /* ✅ fondo más oscuro para contraste fuerte */
+  background:
+    radial-gradient(900px 520px at 20% 20%, rgba(33, 150, 243, 0.18), transparent 60%),
+    radial-gradient(900px 520px at 85% 80%, rgba(34, 197, 94, 0.16), transparent 60%),
+    linear-gradient(180deg, #0b1220 0%, #0a1020 100%);
+}
+
+/* Brillos suaves (nada neón) */
+.login-page::before,
+.login-page::after {
+  content: "";
+  position: absolute;
+  width: 640px;
+  height: 640px;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.20;
+  pointer-events: none;
+}
+
+.login-page::before {
+  background: rgba(33, 150, 243, 0.55);
+  left: -220px;
+  top: -260px;
+}
+
+.login-page::after {
+  background: rgba(46, 204, 113, 0.45);
+  right: -240px;
+  bottom: -260px;
+}
+
+.login-card {
+  width: min(980px, calc(100% - 48px));
+  background: rgba(255, 255, 255, 0.96); /* ✅ más sólida */
+  border-radius: 18px;
+
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow:
+    0 40px 120px rgba(0, 0, 0, 0.45),   /* ✅ separación clara */
+    0 10px 30px rgba(0, 0, 0, 0.22);
+
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  overflow: hidden;
+  animation: popIn 420ms ease-out;
+}
+@keyframes popIn {
+  from { transform: translateY(10px) scale(0.98); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.login-left {
+  padding: 40px 40px;
+  display: grid;
+  align-content: center;
+  gap: 18px;
+  background: linear-gradient(180deg, rgba(17,24,39,0.02), rgba(17,24,39,0.00));
+}
+
+.brand-center {
+  width: 100%;
+  display: grid;
+  place-items: center;         /* ✅ centrado */
+  margin-bottom: 6px;
+}
+
+.brand-logo {
+  height: 54px;                /* ✅ más grande */
+  width: auto;
+  max-width: 90%;
+  object-fit: contain;
+  user-select: none;
+  pointer-events: none;
+  filter: drop-shadow(0 10px 22px rgba(0,0,0,0.10));
+}
+
+.login-gifWrap {
+  width: 100%;
+  display: grid;
+  place-items: center;
+  margin-top: 14px;
+
+  /* ✅ sin contenedor */
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.login-gif {
+  width: min(260px, 100%);
+  height: auto;
+
+  /* ✅ sin “tarjeta” */
+  border-radius: 0;
+  background: transparent;
+
+  user-select: none;
+  pointer-events: none;
+  display: block;
+
+  /* ✅ sombra directa al GIF (separación sin contenedor) */
+  filter: drop-shadow(0 18px 40px rgba(0,0,0,0.16));
+}
+.login-note {
+  margin: 0;
+  margin-top: 8px;
+  text-align: center;            /* ✅ centrado */
+  opacity: 0.85;                 /* ✅ más visible */
+  font-size: 13.5px;             /* ✅ un poco más grande */
+  line-height: 1.6;              /* ✅ separación pro */
+  color: rgba(17, 24, 39, 0.75);
+}
+
+.login-note span {
+  display: block;                /* ✅ cada uno en su renglón */
+}
+
+.login-right {
+  padding: 34px 56px 40px;   /* ✅ sube el header (menos padding arriba) */
+  display: grid;
+  align-content: start;      /* ✅ alinea arriba como el logo */
+  gap: 10px;
+}
+
+.login-title {
+  margin: 0;
+  margin-top: 6px;
+  font-size: 30px;          /* ✅ más grande */
+  font-weight: 950;
+  color: #0f172a;
+  text-align: center;
+  letter-spacing: 0.2px;
+}
+
+.login-hint {
+  margin: 0;
+  margin-top: 2px;
+  margin-bottom: 18px;      /* ✅ separa header de los campos */
+  text-align: center;
+  opacity: 0.72;
+  font-size: 14.5px;        /* ✅ más visible */
+  color: rgba(15, 23, 42, 0.78);
+}
+
+.login-form {
+  margin-top: 6px;
+}
+
+.field {
+  display: grid;
+  gap: 10px;
+  margin-top: 30px;   /* ✅ más separación entre campos */
+}
+
+.label {
+  font-size: 13px;             /* ✅ más grande */
+  font-weight: 900;
+  color: rgba(15, 23, 42, 0.82); /* ✅ más visible */
+}
+
+.input {
+  height: 46px;
+  width: 100%;                 /* ✅ fuerza mismo ancho */
+  box-sizing: border-box;      /* ✅ evita que “se salga” por padding/border */
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: rgba(15, 23, 42, 0.03);
+  outline: none;
+  transition: 140ms ease;
+  font-size: 15px;             /* ✅ más grande */
+  color: #0f172a;
+}
+
+.input:focus {
+  border-color: rgba(33, 150, 243, 0.55);
+  background: rgba(255,255,255,0.9);
+  box-shadow: 0 0 0 4px rgba(33, 150, 243, 0.12);
+}
+
+.input-wrap {
+  position: relative;
+  width: 100%;
+  display: grid;               /* ✅ evita estiramientos raros */
+}
+
+.input-wrap .input {
+  width: 100%;
+  min-width: 0;                /* ✅ evita overflow en grid */
+}
+.input-password {
+  padding-right: 56px; /* ✅ ojo adentro sin romper ancho */
+}
+/* 5) Ojo sin contenedor (solo ícono) */
+.eye-btn {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  color: rgba(15, 23, 42, 0.55);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  /* ✅ clic fácil pero sin “contenedor visible” */
+  width: 34px;
+  height: 34px;
+}
+.eye-btn:hover {
+  color: rgba(15, 23, 42, 0.85);
+}
+
+.btn {
+  height: 52px;           /* ✅ un poquito más alto */
+  width: 100%;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  font-weight: 900;
+  letter-spacing: 0.9px;
+  margin-top: 80px;       /* ✅ baja el botón */
+  transition: transform 120ms ease, filter 120ms ease, box-shadow 120ms ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #fff;
+  box-shadow: 0 18px 42px rgba(34, 197, 94, 0.28);
+}
+
+.btn:hover { transform: translateY(-1px); filter: brightness(0.99); }
+.btn:active { transform: translateY(0px) scale(0.99); }
+.btn:disabled { opacity: 0.65; cursor: not-allowed; box-shadow: none; }
+
+.error {
+  margin: 8px 0 0;
+  color: #b00020;
+  font-size: 13px;
+  text-align: center;
+}
+
+/* Responsive */
+@media (max-width: 880px) {
+  .login-card { grid-template-columns: 1fr; }
+  .login-left { display: none; }
+}
+
+.hint-error {
+  margin-top: 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #b00020;
+}
