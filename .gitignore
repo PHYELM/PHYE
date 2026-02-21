@@ -1,0 +1,45 @@
+# =========================
+# DEPENDENCIAS
+# =========================
+node_modules
+**/node_modules
+.pnp
+.pnp.js
+
+# =========================
+# BUILDS
+# =========================
+build
+**/build
+dist
+**/dist
+coverage
+**/coverage
+
+# =========================
+# ENV (SECRETOS)
+# =========================
+.env
+**/.env
+.env.*
+**/.env.*
+
+# opcionales comunes
+!.env.example
+!.env.sample
+
+# =========================
+# LOGS
+# =========================
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# =========================
+# SO / EDITORES
+# =========================
+.DS_Store
+Thumbs.db
+.vscode
+.idea
