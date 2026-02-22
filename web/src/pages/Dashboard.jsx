@@ -61,6 +61,22 @@ export default function Dashboard({ worker, onLogout }) {
     window.addEventListener("keydown", onKeyDown, { capture: true });
     return () => window.removeEventListener("keydown", onKeyDown, { capture: true });
   }, []);
+    // ✅ FIX móvil: 100vh “real” (evita recortes por barra de URL)
+  useEffect(() => {
+    const setVh = () => {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty("--vh", `${vh}px`);
+    };
+
+    setVh();
+    window.addEventListener("resize", setVh);
+    window.addEventListener("orientationchange", setVh);
+
+    return () => {
+      window.removeEventListener("resize", setVh);
+      window.removeEventListener("orientationchange", setVh);
+    };
+  }, []);
   // ✅ persistimos el tab para refrescos y reabrir app
   useEffect(() => {
     localStorage.setItem("ecovisa_active_tab", tab);

@@ -8,6 +8,7 @@ import {
   TbPlus,
   TbTrash,
   TbEdit,
+  TbEye, 
   TbX,
   TbRefresh,
   TbSearch,
@@ -17,8 +18,7 @@ import {
   TbKey,
   TbShieldLock,
   TbDotsVertical,
- TbUserCircle, // ✅ AQUI
-  // ✅ iconos depto (20+)
+ TbUserCircle,
   TbBriefcase,
   TbTruckDelivery,
   TbChartBar,
@@ -380,7 +380,18 @@ export default function AdminPanel({ currentWorker }) {
   const [levels, setLevels] = useState([]);
   const [workers, setWorkers] = useState([]);
   const [policies, setPolicies] = useState([]);
+  // ✅ Modal "Ver detalles" (móvil + pro)
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [detailsWorker, setDetailsWorker] = useState(null);
 
+  function openDetails(w) {
+    setDetailsWorker(w);
+    setDetailsOpen(true);
+  }
+  function closeDetails() {
+    setDetailsOpen(false);
+    setDetailsWorker(null);
+  }
   // filtros
   const [fDept, setFDept] = useState("all");
   const [fLevel, setFLevel] = useState("all");
@@ -1354,55 +1365,65 @@ return (
     className={rowTint ? "apRowTinted" : ""}
     style={rowTint ? { "--rowTint": rowTint } : undefined}
   >
-    <td className="apTdStrong">
-      <div className="apUserCell">
-        <span className="apAvatar">
-          <TbUserCircle />
-          {w.profile_photo_url ? (
-            <img
-              src={`${w.profile_photo_url}${w.profile_photo_url.includes("?") ? "&" : "?"}v=${encodeURIComponent(w.updated_at || w.id || Date.now())}`}
-              alt=""
-              loading="lazy"
-              onError={(e) => {
-                e.currentTarget.style.display = "none";
-              }}
-            />
-          ) : null}
-        </span>
+<td className="apTdStrong" data-label="Trabajador">
+  <div className="apUserCell">
+    <span className="apAvatar">
+      <TbUserCircle />
+      {w.profile_photo_url ? (
+        <img
+          src={`${w.profile_photo_url}${w.profile_photo_url.includes("?") ? "&" : "?"}v=${encodeURIComponent(w.updated_at || w.id || Date.now())}`}
+          alt=""
+          loading="lazy"
+          onError={(e) => {
+            e.currentTarget.style.display = "none";
+          }}
+        />
+      ) : null}
+    </span>
 
-        <span className="apUserName">
-          {w.full_name || "-"}
-        </span>
-      </div>
-    </td>
+    <span className="apUserName">{w.full_name || "-"}</span>
+  </div>
+</td>
 
-    <td>{w.username}</td>
-    <td className="apMono">{w.password_plain}</td>
+<td data-label="Usuario">{w.username}</td>
 
-    <td>
-      <span className="apDeptCell">
-        <span className="apDeptIcoPlain">
-          <DeptIcon iconKey={depObj?.icon} />
-        </span>
-        <span className="apDeptName">{dep}</span>
-      </span>
-    </td>
+<td className="apMono" data-label="Contraseña">{w.password_plain}</td>
 
-    <td>{lvl}</td>
+<td data-label="Departamento">
+  <span className="apDeptCell">
+    <span className="apDeptIcoPlain">
+      <DeptIcon iconKey={depObj?.icon} />
+    </span>
+    <span className="apDeptName">{dep}</span>
+  </span>
+</td>
 
-    <td>
-      <span className={`apDot ${active ? "ok" : "off"}`} />
-      {active ? "Sí" : "No"}
-    </td>
+<td data-label="Puesto">{lvl}</td>
 
-    <td className="apActions">
-      <button className="apIconBtn" onClick={() => openEditUser(w)} type="button" title="Editar">
-        <TbEdit />
-      </button>
-      <button className="apIconBtn apDanger" onClick={() => deleteWorker(w)} type="button" title="Eliminar">
-        <TbTrash />
-      </button>
-    </td>
+<td data-label="Activo">
+  <span className={`apDot ${active ? "ok" : "off"}`} />
+  {active ? "Sí" : "No"}
+</td>
+
+<td className="apActions" data-label="Acciones">
+  <button
+    className="apIconBtn apInfo"
+    onClick={() => openDetails(w)}
+    type="button"
+    title="Ver detalles"
+    aria-label="Ver detalles"
+  >
+    <TbEye />
+  </button>
+
+  <button className="apIconBtn" onClick={() => openEditUser(w)} type="button" title="Editar" aria-label="Editar">
+    <TbEdit />
+  </button>
+
+  <button className="apIconBtn apDanger" onClick={() => deleteWorker(w)} type="button" title="Eliminar" aria-label="Eliminar">
+    <TbTrash />
+  </button>
+</td>
   </tr>
 );
               })}
@@ -1468,7 +1489,95 @@ return (
   </button>
 </div>
       </section>
+      {/* ✅ MODAL VER DETALLES (pro) */}
+      <Modal open={detailsOpen} title="Detalles del usuario" onClose={closeDetails}>
+        {(() => {
+          const w = detailsWorker;
+          if (!w) return <div className="apMuted">Sin datos</div>;
 
+          const depObj = departmentsMap.get(w.department_id);
+          const dep = depObj?.name || "-";
+          const lvl = levelsMap.get(w.level_id)?.name || "-";
+          const active = String(w.active) === "true";
+
+          return (
+            <div className="apDetailsWrap">
+              {/* Hero: avatar grande + nombre centrado (móvil) */}
+              <div className="apDetailsHero">
+                <div className="apDetailsAvatar">
+                  <TbUserCircle />
+                  {w.profile_photo_url ? (
+                    <img
+                      src={`${w.profile_photo_url}${w.profile_photo_url.includes("?") ? "&" : "?"}v=${encodeURIComponent(w.updated_at || w.id || Date.now())}`}
+                      alt=""
+                      loading="lazy"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                      }}
+                    />
+                  ) : null}
+                </div>
+
+                <div className="apDetailsName">{w.full_name || "-"}</div>
+                <div className="apDetailsSub">{dep} · {lvl}</div>
+              </div>
+
+              {/* Grid tipo “label / value” */}
+              <div className="apDetailsGrid">
+                <div className="apDetailsRow">
+                  <div className="apDetailsLabel">Trabajador</div>
+                  <div className="apDetailsValue">{w.full_name || "-"}</div>
+                </div>
+
+                <div className="apDetailsRow">
+                  <div className="apDetailsLabel">Usuario</div>
+                  <div className="apDetailsValue">{w.username || "-"}</div>
+                </div>
+
+                <div className="apDetailsRow">
+                  <div className="apDetailsLabel">Departamento</div>
+                  <div className="apDetailsValue">
+                    <span className="apDetailsInline">
+                      <span className="apDetailsDeptIco">
+                        <DeptIcon iconKey={depObj?.icon} />
+                      </span>
+                      <span>{dep}</span>
+                    </span>
+                  </div>
+                </div>
+
+                <div className="apDetailsRow">
+                  <div className="apDetailsLabel">Puesto</div>
+                  <div className="apDetailsValue">{lvl}</div>
+                </div>
+
+                <div className="apDetailsRow">
+                  <div className="apDetailsLabel">Activo</div>
+                  <div className="apDetailsValue">
+                    <span className={`apDot ${active ? "ok" : "off"}`} />
+                    {active ? "Sí" : "No"}
+                  </div>
+                </div>
+              </div>
+
+              {/* Acciones bien posicionadas */}
+              <div className="apDetailsActions">
+                <button className="apBtn apBtnGhost" type="button" onClick={closeDetails}>
+                  <TbX /> Cerrar
+                </button>
+
+                <button className="apBtn apBtnPrimary" type="button" onClick={() => { closeDetails(); openEditUser(w); }}>
+                  <TbEdit /> Editar
+                </button>
+
+                <button className="apBtn apBtnGhost apBtnDanger" type="button" onClick={() => { closeDetails(); deleteWorker(w); }}>
+                  <TbTrash /> Eliminar
+                </button>
+              </div>
+            </div>
+          );
+        })()}
+      </Modal>
       {/* MODAL CREAR/EDITAR USUARIO */}
       <Modal open={userModalOpen} title={editMode ? "Editar usuario" : "Crear usuario"} onClose={closeUserModal}>
         <div className="apModalGrid">

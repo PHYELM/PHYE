@@ -44,6 +44,34 @@ const ROUTES = useMemo(() => ({
   sales: "/sales",
   gps: "/gps"
 }), []);
+
+// ✅ Deducir el tab activo desde la URL (fix F5 / refresh)
+const getKeyFromPath = useCallback((pathname) => {
+  // orden: rutas más largas primero por seguridad
+  const entries = Object.entries(ROUTES).sort((a, b) => b[1].length - a[1].length);
+
+  for (const [key, path] of entries) {
+    if (path === "/") {
+      if (pathname === "/") return "home";
+      continue;
+    }
+    if (pathname === path || pathname.startsWith(path + "/")) return key;
+  }
+  return "home";
+}, [ROUTES]);
+
+// ✅ activeKey = el que manda (URL > prop active)
+const activeKey = useMemo(() => {
+  const fromUrl = getKeyFromPath(location.pathname);
+  return fromUrl || active || "home";
+}, [location.pathname, active, getKeyFromPath]);
+
+// ✅ si el padre trae "active" desfasado, lo sincronizamos (sin loops)
+useEffect(() => {
+  if (active !== activeKey) onChange(activeKey);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [activeKey]);
+
 // Perfil
 const [profileOpen, setProfileOpen] = useState(false);
 const [profileClosing, setProfileClosing] = useState(false);
@@ -120,24 +148,40 @@ const handleGo = (key) => {
   setMobileOpen(false);
 };
 useEffect(() => {
+  let raf1 = 0;
+  let raf2 = 0;
+
   const update = () => {
     const container = navCenterRef.current;
-    const btn = navBtnRefs.current?.[active];
+    const btn = navBtnRefs.current?.[activeKey];
     if (!container || !btn) return;
 
     const c = container.getBoundingClientRect();
     const b = btn.getBoundingClientRect();
 
-    const x = (b.left - c.left) + container.scrollLeft; // soporta scroll horizontal
+    const x = (b.left - c.left) + container.scrollLeft;
     const w = b.width;
 
     setActivePill({ x, w, ready: true });
   };
 
-  update();
+  // ✅ Doble RAF: asegura layout final (fonts/icons) antes de medir
+  raf1 = requestAnimationFrame(() => {
+    raf2 = requestAnimationFrame(update);
+  });
+
+  // ✅ Si el browser soporta fonts.ready, recalcula al terminar de cargar fuentes
+  if (document.fonts?.ready) {
+    document.fonts.ready.then(() => update()).catch(() => {});
+  }
+
   window.addEventListener("resize", update);
-  return () => window.removeEventListener("resize", update);
-}, [active, items.length]);
+  return () => {
+    cancelAnimationFrame(raf1);
+    cancelAnimationFrame(raf2);
+    window.removeEventListener("resize", update);
+  };
+}, [activeKey, items.length]);
   // Cerrar dropdown al click afuera
 useEffect(() => {
   const onDown = (e) => {
@@ -453,19 +497,19 @@ if (data?.profile_photo_url) {
     aria-hidden
   />
 
-  {items.map((it) => (
-    <button
-      key={it.key}
-      ref={(el) => (navBtnRefs.current[it.key] = el)}
-      className={`nav-iconBtn ${active === it.key ? "active" : ""}`}
-      onClick={() => handleGo(it.key)}
-      data-tip={it.label}
-      aria-label={it.label}
-      type="button"
-    >
-      <span className="nav-icon">{ICONS[it.key]}</span>
-    </button>
-  ))}
+{items.map((it) => (
+  <button
+    key={it.key}
+    ref={(el) => (navBtnRefs.current[it.key] = el)}
+    className={`nav-iconBtn ${activeKey === it.key ? "active" : ""}`}
+    onClick={() => handleGo(it.key)}
+    data-tip={it.label}
+    aria-label={it.label}
+    type="button"
+  >
+    <span className="nav-icon">{ICONS[it.key]}</span>
+  </button>
+))}
 </nav>
 
         {/* RIGHT (avatar/icon + nombre) */}
