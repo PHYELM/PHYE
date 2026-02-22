@@ -4,7 +4,7 @@ import Navbar from "../components/Navbar.jsx";
 import "./Dashboard.css";
 
 import AdminPanel from "./AdminPanel.jsx";
-
+import { setTitle } from "../utils/setTitle";
 import {
   TbBox,
   TbTruckDelivery,
@@ -42,6 +42,25 @@ export default function Dashboard({ worker, onLogout }) {
 
   const [tab, setTab] = useState(getInitialTab);
     // ✅ “refresh suave” (remonta el contenido sin recargar toda la SPA)
+    // ✅ títulos por tab
+const TAB_TITLES = useMemo(
+  () => ({
+    home: "Inicio",
+    admin: "Admin Panel",
+    forms: "Formularios",
+    inventory: "Inventario",
+    quotes: "Cotizaciones",
+    services: "Servicios",
+    sales: "Ventas / POS",
+    gps: "GPS"
+  }),
+  []
+);
+
+// ✅ setea el title cada que cambie el tab
+useEffect(() => {
+  setTitle(TAB_TITLES[tab] || "Dashboard");
+}, [tab, TAB_TITLES]);
   const [softRefreshTick, setSoftRefreshTick] = useState(0);
   // ✅ cuando cambia la ruta (incluye F5), actualiza el tab
   useEffect(() => {

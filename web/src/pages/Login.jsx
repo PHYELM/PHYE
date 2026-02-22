@@ -1,6 +1,7 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import { apiFetch } from "../api.js";
+import { setTitle } from "../utils/setTitle";
 import "./Login.css";
 
 function toTitleCase(value) {
@@ -47,6 +48,11 @@ export default function Login({ onLogin }) {
   const [showPass, setShowPass] = useState(false);
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // ✅ título
+  useEffect(() => {
+    setTitle("Login");
+  }, []);
 
 const isDirector = useMemo(() => username.trim().toLowerCase() === "director", [username]);
 
