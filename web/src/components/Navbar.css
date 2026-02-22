@@ -1026,3 +1026,35 @@
   outline-offset: 3px;
   background: rgba(255,255,255,0.06);
 }
+/* =========================================================
+   MOBILE NAV FIX (evita corte / overflow)
+   - NO afecta PC
+========================================================= */
+@media (max-width: 760px){
+  .nav-row{
+    /* menos padding en móvil (sin matar el diseño) */
+    padding: 0 14px 0 14px;
+    gap: 12px;
+  }
+
+  .nav-logo-img{
+    /* logo más compacto para que no empuje todo */
+    height: 44px;
+  }
+
+  .nav-userBtn{
+    /* botón usuario un poco más compacto */
+    height: 42px;
+    padding: 0 10px 0 6px;
+    gap: 8px;
+  }
+
+  .nav-userAvatar{
+    width: 34px;
+    height: 34px;
+  }
+
+  .nav-bellBtn{
+    margin-right: 6px;
+  }
+}

@@ -62,21 +62,33 @@ export default function Dashboard({ worker, onLogout }) {
     return () => window.removeEventListener("keydown", onKeyDown, { capture: true });
   }, []);
     // ✅ FIX móvil: 100vh “real” (evita recortes por barra de URL)
-  useEffect(() => {
-    const setVh = () => {
-      const vh = window.innerHeight * 0.01;
-      document.documentElement.style.setProperty("--vh", `${vh}px`);
-    };
+// ✅ FIX móvil: 100vh “real” (evita recortes por barra de URL)
+// Usa VisualViewport (Android/Chrome) para que NO se “corte” el final
+useEffect(() => {
+  const vv = window.visualViewport;
 
-    setVh();
-    window.addEventListener("resize", setVh);
-    window.addEventListener("orientationchange", setVh);
+  const setVh = () => {
+    const h = (vv?.height ?? window.innerHeight) * 0.01;
+    document.documentElement.style.setProperty("--vh", `${h}px`);
+  };
 
-    return () => {
-      window.removeEventListener("resize", setVh);
-      window.removeEventListener("orientationchange", setVh);
-    };
-  }, []);
+  setVh();
+
+  // resize normal
+  window.addEventListener("resize", setVh);
+  window.addEventListener("orientationchange", setVh);
+
+  // resize real del viewport visual (cuando aparece/desaparece barra)
+  vv?.addEventListener("resize", setVh);
+  vv?.addEventListener("scroll", setVh); // algunos android disparan cambios aquí
+
+  return () => {
+    window.removeEventListener("resize", setVh);
+    window.removeEventListener("orientationchange", setVh);
+    vv?.removeEventListener("resize", setVh);
+    vv?.removeEventListener("scroll", setVh);
+  };
+}, []);
   // ✅ persistimos el tab para refrescos y reabrir app
   useEffect(() => {
     localStorage.setItem("ecovisa_active_tab", tab);
@@ -160,12 +172,12 @@ export default function Dashboard({ worker, onLogout }) {
 
             <div className="mosaic mosaic--fit">
               {modules.map((m) => (
-                <button
-                  key={m.key}
-                  className={`mTile mTile--big ${m.tone} ${m.size}`}
-                  onClick={() => setTab(m.key)}
-                  type="button"
-                >
+<button
+  key={m.key}
+  className={`mTile mTile--big mTile--${m.key} ${m.tone} ${m.size}`}
+  onClick={() => setTab(m.key)}
+  type="button"
+>
                   <div className="mTile-hero">
                     <span className="mTile-ico mTile-ico--big" aria-hidden>
                       {m.icon}

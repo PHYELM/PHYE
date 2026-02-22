@@ -1180,6 +1180,109 @@
   overflow: hidden;
 }
 
+/* ✅ Dentro del card, el contenido debe poder scrollear (no cortarse) */
+.apDeptGrid{
+  flex: 1;
+  overflow: auto;          /* 🔥 antes hidden: se cortaba */
+  align-content: start;
+  padding-right: 4px;      /* pequeño margen para scrollbar */
+}
+
+.apMiniTable{
+  flex: 1;
+  overflow: auto;          /* 🔥 antes hidden: se cortaba */
+  align-content: start;
+  padding-right: 4px;
+}
+
+/* ✅ En móvil: cards dejan de ser “fijos” y se adaptan al contenido */
+@media (max-width: 760px){
+  .apCardFixed{
+    height: auto;          /* 🔥 ya no 440 */
+    overflow: visible;     /* deja respirar */
+  }
+  .apDeptGrid,
+  .apMiniTable{
+    overflow: visible;     /* en cel mejor flujo natural */
+    padding-right: 0;
+  }
+}
+/* =========================
+   ✅ Mobile centering: Dept + Puestos igual de centrados que "Usuarios internos"
+========================= */
+@media (max-width: 760px){
+
+  /* Cards ocupan todo el ancho disponible */
+  .apGrid2 > .apCard{
+    width: 100%;
+  }
+
+  /* ===== Departamentos (tiles centrados) ===== */
+  .apDeptGrid{
+    display: grid;
+    justify-items: center;        /* ✅ centra cada tile */
+    justify-content: center;      /* ✅ centra el grid */
+    grid-template-columns: repeat(2, minmax(0, 1fr)); /* 2 cols bonitas en móvil */
+    gap: 12px;
+    padding-right: 0;
+  }
+
+  .apDeptTile{
+    width: 100%;
+    max-width: 180px;            /* ✅ evita tiles gigantes y los centra */
+  }
+
+  /* ===== Puestos (mini table centrada y sin “empujar” el card) ===== */
+  .apMiniTable{
+    width: 100%;
+    justify-content: center;
+  }
+
+  .apMiniHead,
+  .apMiniRow{
+    width: 100%;
+    max-width: 560px;            /* ✅ se ve centrado como “Usuarios internos” */
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* Ajuste de columnas para pantallas angostas (evita overflow lateral) */
+  .apMiniHead{
+    grid-template-columns: 1fr 110px 48px;
+  }
+  .apMiniRow{
+    grid-template-columns: 1fr 110px 48px;
+  }
+
+  /* Texto: puesto alineado bonito, autoridad centrada, acciones a la derecha */
+  .apMiniStrong{
+    justify-content: flex-start;
+    text-align: left;
+  }
+  .apMiniCell.apMiniCenter{
+    justify-content: center;
+  }
+  .apMiniActions{
+    justify-content: flex-end;
+  }
+}
+
+/* Teléfonos muy chicos: 1 columna para departamentos */
+@media (max-width: 420px){
+  .apDeptGrid{
+    grid-template-columns: 1fr;  /* ✅ 1 col centrada */
+  }
+  .apDeptTile{
+    max-width: 260px;
+  }
+
+  .apMiniHead{
+    grid-template-columns: 1fr 92px 44px;
+  }
+  .apMiniRow{
+    grid-template-columns: 1fr 92px 44px;
+  }
+}
 .apInnerBar{
   display: flex;
   align-items: center;
@@ -1207,17 +1310,21 @@
   font-size: 12px;
 }
 
-/* el área de contenido llena el card sin crecer */
+/* el área de contenido llena el card sin crecer (✅ scroll interno real) */
 .apDeptGrid{
   flex: 1;
-  overflow: hidden;
+  overflow: auto;          /* ✅ antes hidden (rompía el layout en móvil) */
+  overflow-x: hidden;
   align-content: start;
+  padding-right: 4px;      /* espacio para scrollbar */
 }
 
 .apMiniTable{
   flex: 1;
-  overflow: hidden;
+  overflow: auto;          /* ✅ antes hidden */
+  overflow-x: hidden;
   align-content: start;
+  padding-right: 4px;
 }
 
 /* pager interno compacto */
@@ -1302,38 +1409,71 @@
 }
 @media (max-width: 760px) {
   .apWrap{
-    /* ✅ simétrico y centrado en móvil */
     padding-top: 12px;
     padding-bottom: 16px;
     padding-left: max(12px, env(safe-area-inset-left));
     padding-right: max(12px, env(safe-area-inset-right));
   }
 
-  .apHeader {
+  .apHeader{
     flex-wrap: wrap;
     align-items: flex-start;
+    gap: 10px;
   }
 
-  .apHeaderMid {
+  /* ✅ Título arriba */
+  .apHeader > div:first-child{
+    width: 100%;
+  }
+
+  /* ✅ Botonera como fila (tipo dashboard) */
+  .apHeaderRight{
+    order: 2;
+    width: 100%;
+    display: flex;
+    justify-content: stretch;
+    gap: 10px;
+  }
+
+  /* ✅ Botón “Usuario” ocupa todo lo posible */
+  .apHeaderRight .apBtnPrimary{
+    flex: 1;
+    justify-content: center;
+  }
+
+  /* ✅ Botón refresh “tap friendly” */
+  .apHeaderRight .apBtnIconOnly{
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+  }
+
+  /* ✅ Buscador FULL-WIDTH abajo (como dashboard) */
+  .apHeaderMid{
     order: 3;
     width: 100%;
     padding: 0;
+    display: flex;
     justify-content: stretch;
   }
 
-  .apHeaderSearch {
+  .apHeaderSearch{
     width: 100%;
   }
 
-  .apHeaderRight {
-    order: 2;
+  .apSearchInput{
     width: 100%;
-    justify-content: flex-end;
   }
+}
 
-  .apSearchInput {
-    width: 100%;
+/* ✅ Extra: en teléfonos chicos, evita que todo se apriete */
+@media (max-width: 420px){
+  .apBtn{
+    height: 44px;
+    border-radius: 14px;
   }
+  .apTitle{ font-size: 20px; }
+  .apSub{ font-size: 12px; }
 }
 /* ✅ Usuarios: layout PRO en móvil (buscador 100% + filtros 2 columnas) */
 @media (max-width: 760px){
