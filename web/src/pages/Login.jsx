@@ -49,6 +49,12 @@ export default function Login({ onLogin }) {
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // ✅ recordar sesión
+  const [rememberSession, setRememberSession] = useState(() => {
+    const v = localStorage.getItem("remember_session");
+    return v === null ? true : v === "true";
+  });
+
   // ✅ título
   useEffect(() => {
     setTitle("Login");
@@ -82,7 +88,17 @@ password: password.replace(/\s+/g, "").trim().toUpperCase()
         body: JSON.stringify(payload)
       });
 
-      localStorage.setItem("worker", JSON.stringify(worker));
+      // ✅ guarda según switch
+      localStorage.setItem("remember_session", String(rememberSession));
+
+      if (rememberSession) {
+        localStorage.setItem("worker", JSON.stringify(worker));
+        sessionStorage.removeItem("worker");
+      } else {
+        sessionStorage.setItem("worker", JSON.stringify(worker));
+        localStorage.removeItem("worker");
+      }
+
       onLogin(worker);
     } catch (e) {
       setErr(e.message);
@@ -178,6 +194,21 @@ password: password.replace(/\s+/g, "").trim().toUpperCase()
             <button className="btn btn-primary" disabled={!canSubmit}>
               {loading ? "ENTRANDO..." : "ENTRAR"}
             </button>
+
+            {/* ✅ recordar sesión */}
+            <div className="remember-row">
+              <span className="remember-label">Recordar sesión</span>
+
+              <button
+                type="button"
+                className={`switch ${rememberSession ? "on" : "off"}`}
+                onClick={() => setRememberSession((v) => !v)}
+                aria-pressed={rememberSession}
+                aria-label="Recordar sesión"
+              >
+                <span className="knob" />
+              </button>
+            </div>
 
             {err && <p className="error">{err}</p>}
           </form>

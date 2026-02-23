@@ -273,3 +273,49 @@
   font-weight: 700;
   color: #b00020;
 }
+.remember-row{
+  margin-top: 14px;
+  display:flex;
+  align-items:center;
+  justify-content:center; /* centrado */
+  gap: 12px;
+  user-select:none;
+}
+
+.remember-label{
+  font-size: 13px;
+  opacity: .9;
+}
+
+.switch{
+  width: 46px;
+  height: 26px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.18);
+  background: rgba(255,255,255,.08);
+  position: relative;
+  cursor: pointer;
+  padding: 0;
+  outline: none;
+}
+
+.switch .knob{
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.92);
+  position:absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  left: 2px;
+  transition: left .18s ease;
+}
+
+.switch.on{
+  background: rgba(80, 200, 120, .25);
+  border-color: rgba(80, 200, 120, .45);
+}
+
+.switch.on .knob{
+  left: 22px;
+}
