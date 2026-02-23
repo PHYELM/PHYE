@@ -35,30 +35,44 @@ app.use((req, res, next) => {
    CORS (Express 5 compatible)
    - NO usar app.options("*", ...)
 ========================= */
-const ALLOWED_ORIGINS = [
-  "http://localhost:3000",
-  "http://localhost:5173",
-  "https://logione.onrender.com",
-  "https://logione-backend.onrender.com",
-];
+const isProd = process.env.NODE_ENV === "production";
 
-const corsOptions = {
-  origin: function (origin, callback) {
-    // permite Postman/cURL sin origin
-    if (!origin) return callback(null, true);
+// ✅ En producción: si front y back viven en el MISMO dominio, NO necesitas CORS
+if (!isProd) {
+  const ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:5173",
+  ];
 
-    if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
+  const corsOptions = {
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+      if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
+      return callback(new Error("CORS blocked: " + origin));
+    },
+    credentials: false,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  };
 
-    return callback(new Error("CORS blocked: " + origin));
-  },
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-};
+  app.use(cors(corsOptions));
+  app.options(/.*/, cors(corsOptions));
 
-app.use(cors(corsOptions));
-// ✅ Express 5: usa regex, NO "*"
-app.options(/.*/, cors(corsOptions));
+  app.use((err, req, res, next) => {
+    if (err && String(err.message || "").startsWith("CORS blocked:")) {
+      return res.status(403).json({ error: err.message, origin: req.headers.origin || "" });
+    }
+    next(err);
+  });
+}
+
+// ✅ si CORS bloquea, responde en JSON (debug real)
+app.use((err, req, res, next) => {
+  if (err && String(err.message || "").startsWith("CORS blocked:")) {
+    return res.status(403).json({ error: err.message, origin: req.headers.origin || "" });
+  }
+  next(err);
+});
 
 /* =========================
    Parsers + logs
