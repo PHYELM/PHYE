@@ -1,10 +1,6 @@
-const PROD_BACKEND = "https://logione-backend.onrender.com"; // <-- cambia si tu backend real es otro
-
 export const API_BASE =
   process.env.REACT_APP_API_URL ||
-  (window.location.hostname === "localhost"
-    ? "http://localhost:3001"
-    : PROD_BACKEND);
+  (window.location.hostname === "localhost" ? "http://localhost:3001" : ""); // ✅ prod = mismo dominio
 
 export async function apiFetch(path, options = {}) {
   const isFormData =
@@ -22,6 +18,7 @@ export async function apiFetch(path, options = {}) {
     let p = String(path || "");
     if (!p.startsWith("/")) p = "/" + p;
 
+    // ✅ evita /api/api cuando el base ya trae /api
     if (base.endsWith("/api") && p.startsWith("/api/")) {
       p = p.replace(/^\/api/, "");
     }
@@ -39,11 +36,10 @@ export async function apiFetch(path, options = {}) {
   const contentType = res.headers.get("content-type") || "";
   const isJson = contentType.includes("application/json");
 
-  // ✅ si el server devolvió HTML, es casi seguro que pegaste al front
   if (!isJson) {
     const text = await res.text().catch(() => "");
     throw new Error(
-      `Respuesta no-JSON (probable URL incorrecta). URL=${url} content-type=${contentType} preview=${text.slice(0, 80)}`
+      `Respuesta no-JSON. URL=${url} content-type=${contentType} preview=${text.slice(0, 80)}`
     );
   }
 
