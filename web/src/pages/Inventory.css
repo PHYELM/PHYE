@@ -1,0 +1,1065 @@
+    :root{
+    --invR: 18px;
+    --invG: 12px;
+    --invShadow: 0 18px 60px rgba(0,0,0,0.16);
+    --invGlass: rgba(255,255,255,0.78);
+    --invLine: rgba(10,12,14,0.10);
+
+    /* tonos que ya usas en dashboard */
+    --invA: linear-gradient(135deg, rgba(9,24,56,0.98), rgba(20,52,98,0.96));
+    --invB: linear-gradient(135deg, rgba(6,61,75,0.98), rgba(10,95,110,0.96));
+    --invIn: linear-gradient(135deg, rgba(12,58,42,0.98), rgba(22,94,68,0.96));
+    --invOut: linear-gradient(135deg, rgba(78,20,36,0.98), rgba(126,35,58,0.96));
+      /* charts colors */
+  --invCyan: #2dd4bf;
+  --invBlue: #60a5fa;
+  --invGreen: #34d399;
+  --invRed: #fb7185;
+  --invPurple: #a78bfa;
+
+  --invChartGrid: rgba(10,12,14,0.14);
+  --invTextSoft: rgba(10,12,14,0.72);
+    }
+
+    .invWrap{
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: max(12px, var(--invG));
+    box-sizing: border-box;
+    }
+
+.invTop{
+  display: grid;
+  grid-template-columns: 1fr minmax(320px, 560px) auto; /* ✅ izquierda / centro / derecha */
+  gap: var(--invG);
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.invTopMid{
+  display: flex;
+  justify-content: center; /* ✅ búsqueda al centro real */
+}
+
+.invTopRight{
+  display:flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end; /* ✅ botones pegados a la derecha */
+}
+
+    .invTitle{
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    font-weight: 1000;
+    letter-spacing: -0.6px;
+    font-size: clamp(18px, 1.4vw, 28px);
+    color: rgba(10,12,14,0.92);
+    }
+    .invSub{
+    margin-top: 4px;
+    font-weight: 900;
+    opacity: 0.74;
+    color: rgba(10,12,14,0.70);
+    font-size: 12px;
+    }
+
+    .invSearch{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--invGlass);
+    border: 1px solid var(--invLine);
+    border-radius: 999px;
+    padding: 10px 12px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.10);
+    }
+    .invSearch input{
+    border: 0;
+    outline: none;
+    width: 100%;
+    background: transparent;
+    font-weight: 900;
+    color: rgba(10,12,14,0.86);
+    }
+
+    .invTopRight{
+    display:flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    }
+
+    .invBtn{
+    border: 0;
+    cursor: pointer;
+    font-weight: 1000;
+    border-radius: 999px;
+    padding: 10px 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 14px 50px rgba(0,0,0,0.16);
+    transition: transform 180ms ease, filter 180ms ease;
+    color: rgba(255,255,255,0.96);
+    }
+    .invBtn:active{ transform: scale(0.99); }
+    .invBtn:hover{ transform: translateY(-1px); filter: brightness(1.03); }
+
+    .invGhost{
+    background: rgba(255,255,255,0.72);
+    color: rgba(10,12,14,0.88);
+    border: 1px solid var(--invLine);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.10);
+    }
+    .invPrimary{ background: var(--invA); }
+    .invIn{ background: var(--invIn); }
+    .invOut{ background: var(--invOut); }
+
+    .invTabs{
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 10px 0 14px;
+    }
+    .invTab{
+    border: 1px solid var(--invLine);
+    background: rgba(255,255,255,0.72);
+    color: rgba(10,12,14,0.86);
+    border-radius: 999px;
+    padding: 10px 12px;
+    font-weight: 1000;
+    cursor: pointer;
+    transition: 180ms ease;
+    }
+    .invTab.on{
+    background: rgba(10,12,14,0.92);
+    color: rgba(255,255,255,0.96);
+    border-color: rgba(10,12,14,0.0);
+    }
+
+    .invLoading{
+    padding: 18px;
+    text-align: center;
+    font-weight: 900;
+    opacity: 0.8;
+    }
+
+    .invGrid{
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--invG);
+    align-items: start; /* ✅ evita cards gigantes por “stretch” */
+    }
+
+    .invSpan2{ grid-column: span 2; }
+    .invSpan4{ grid-column: span 4; }
+
+    .invKpi{
+    border-radius: var(--invR);
+    padding: 14px;
+    color: rgba(255,255,255,0.96);
+    box-shadow: var(--invShadow);
+    position: relative;
+    overflow: hidden;
+    transform: translateZ(0);
+    }
+    .invKpiTop{
+    display:flex;
+    justify-content: space-between;
+    align-items: center;
+    }
+    .invKpiLabel{
+    font-weight: 900;
+    opacity: 0.92;
+    }
+    .invKpiIcon{
+    font-size: 28px;
+    opacity: 0.9;
+    }
+    .invKpiValue{
+    margin-top: 10px;
+    font-size: 28px;
+    font-weight: 1000;
+    letter-spacing: -0.8px;
+    }
+    .invKpiMeta{
+    margin-top: 4px;
+    opacity: 0.9;
+    font-weight: 900;
+    font-size: 12px;
+    }
+
+    .invKpiA{ background: var(--invA); }
+    .invKpiB{ background: var(--invB); }
+    .invKpiIn{ background: var(--invIn); }
+    .invKpiOut{ background: var(--invOut); }
+
+    /* brillo tipo gema */
+    .invKpi::before{
+    content:"";
+    position:absolute;
+    inset:-60%;
+    background: linear-gradient(120deg, rgba(255,255,255,0), rgba(255,255,255,0.16), rgba(255,255,255,0));
+    transform: translateX(-55%) rotate(10deg);
+    opacity: 0;
+    pointer-events:none;
+    mix-blend-mode: screen;
+    }
+    @keyframes invShine{ 0%{transform:translateX(-55%) rotate(10deg)} 100%{transform:translateX(35%) rotate(10deg)} }
+    .invKpi:hover::before{ opacity: 1; animation: invShine 820ms ease forwards; }
+
+.invCard{
+background: rgba(255,255,255,0.76);
+border: 1px solid var(--invLine);
+border-radius: var(--invR);
+box-shadow: 0 18px 60px rgba(0,0,0,0.14);
+overflow: visible; /* ✅ permite que el menú ⋮ no se recorte */
+}
+    .invCardTop{
+    padding: 14px;
+    border-bottom: 1px solid var(--invLine);
+    }
+.invCardTopRow{
+  display:flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px;                 /* ✅ asegura misma altura que otras tops */
+  border-bottom: 1px solid var(--invLine); /* ✅ consistente */
+}
+    .invCardTitle{
+    font-weight: 1000;
+    color: rgba(10,12,14,0.90);
+    display:flex;
+    gap: 8px;
+    align-items: center;
+    }
+    .invCardSub{
+    margin-top: 4px;
+    font-weight: 900;
+    opacity: 0.70;
+    color: rgba(10,12,14,0.70);
+    font-size: 12px;
+    }
+
+    /* mini table */
+    .invMiniTable{ padding: 10px 14px 14px; }
+    .invMiniHead, .invMiniRow{
+    display:grid;
+    grid-template-columns: 1fr 140px 90px;
+    gap: 10px;
+    align-items:center;
+    }
+    .invMiniHead{
+    font-weight: 1000;
+    font-size: 12px;
+    opacity: 0.75;
+    padding-bottom: 8px;
+    }
+    .invMiniRow{
+    padding: 10px 0;
+    border-top: 1px solid rgba(10,12,14,0.08);
+    }
+    .invMiniRow.low .c{ color: rgba(172, 22, 55, 0.95); }
+    .b{ font-weight: 1000; color: rgba(10,12,14,0.90); }
+    .m{ font-weight: 900; opacity: 0.75; color: rgba(10,12,14,0.74); }
+    .c{ text-align:center; }
+
+    /* feed */
+    .invFeed{
+    padding: 12px 14px 14px;
+    display:flex;
+    flex-direction: column;
+    gap: 10px;
+    }
+    .invFeedItem{
+    display:grid;
+    grid-template-columns: 46px 1fr auto;
+    gap: 10px;
+    align-items: center;
+    background: rgba(255,255,255,0.74);
+    border: 1px solid rgba(10,12,14,0.10);
+    border-radius: 14px;
+    padding: 10px;
+    box-shadow: 0 14px 40px rgba(0,0,0,0.10);
+    }
+    .invFeedAvatar{
+    width: 46px; height: 46px;
+    border-radius: 16px;
+    position: relative;
+    overflow: hidden;
+    display:grid;
+    place-items: center;
+    background: rgba(10,12,14,0.06);
+    color: rgba(10,12,14,0.50);
+    }
+    .invFeedAvatar svg{ font-size: 26px; }
+    .invFeedAvatar img{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    object-fit: cover;
+    }
+    .invFeedBody{ min-width:0; }
+    .invFeedLine{
+    display:flex;
+    align-items:center;
+    gap: 8px;
+    }
+    .invFeedDept{
+    font-weight: 1000;
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: rgba(10,12,14,0.08);
+    color: rgba(10,12,14,0.74);
+    }
+    .invFeedAction{
+    margin-top: 4px;
+    font-weight: 900;
+    color: rgba(10,12,14,0.80);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    }
+    .invFeedMeta{ opacity: 0.8; margin-left: 6px; }
+    .invFeedTime{
+    margin-top: 4px;
+    font-weight: 900;
+    opacity: 0.70;
+    font-size: 12px;
+    }
+
+    .invFeedRight{
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    }
+    .invFeedPill{
+    font-weight: 1000;
+    font-size: 12px;
+    padding: 8px 10px;
+    border-radius: 999px;
+    background: rgba(10,12,14,0.08);
+    }
+
+    .invIconBtn{
+    border:0;
+    background: transparent;
+    cursor:pointer;
+    border-radius: 12px;
+    padding: 8px;
+    color: rgba(10,12,14,0.70);
+    }
+    .invIconBtn:hover{ background: rgba(10,12,14,0.06); }
+
+    /* table */
+    .invTableWrap{
+    width: 100%;
+    overflow: auto;
+    }
+    .invTable{
+    width:100%;
+    border-collapse: collapse;
+    min-width: 760px;
+    }
+    .invTable th, .invTable td{
+    text-align:left;
+    padding: 12px 14px;
+    border-bottom: 1px solid rgba(10,12,14,0.10);
+    font-weight: 900;
+    color: rgba(10,12,14,0.82);
+    }
+    .invTable th{
+    font-weight: 1000;
+    font-size: 12px;
+    opacity: 0.74;
+    }
+
+    /* analytics table */
+    .invPerf{
+    padding: 10px 14px 14px;
+    }
+    .invPerfHead, .invPerfRow{
+    display:grid;
+    grid-template-columns: 1fr 90px 90px 140px 140px;
+    gap: 10px;
+    align-items:center;
+    }
+    .invPerfHead{
+    padding: 10px 0;
+    font-weight: 1000;
+    opacity: 0.75;
+    border-bottom: 1px solid rgba(10,12,14,0.10);
+    }
+    .invPerfRow{
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(10,12,14,0.06);
+    }
+
+    /* spark */
+    .invSpark{
+    margin-top: 10px;
+    height: 44px;
+    display:flex;
+    gap: 5px;
+    align-items: flex-end;
+    }
+    .invSparkBar{
+    width: 6px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.92);
+    opacity: 0.72;
+    }
+
+    /* donut */
+    .invDonutWrap{
+    padding: 14px;
+    display:flex;
+    gap: 14px;
+    align-items:center;
+    flex-wrap: wrap;
+    }
+    .invDonut{ width: 120px; height: 120px; }
+    .invDonutBg{
+    fill: none;
+    stroke: rgba(10,12,14,0.10);
+    stroke-width: 8;
+    }
+    .invDonutA{
+    fill: none;
+    stroke: rgba(10,12,14,0.80);
+    stroke-width: 8;
+    stroke-linecap: round;
+    }
+    .invDonutLegend{
+    display:flex;
+    flex-direction: column;
+    gap: 6px;
+    font-weight: 900;
+    color: rgba(10,12,14,0.80);
+    }
+    .invLegendRow{ display:flex; align-items:center; gap: 8px; }
+    .invLegendDot{
+    width: 10px; height: 10px; border-radius: 999px; display:inline-block;
+    background: rgba(10,12,14,0.70);
+    }
+    .invLegendDot.a{ background: rgba(10,12,14,0.80); }
+    .invLegendDot.b{ background: rgba(10,12,14,0.25); }
+
+    .invEmpty{
+    padding: 18px;
+    text-align:center;
+    font-weight: 900;
+    opacity: 0.75;
+    }
+
+    /* modal */
+    .invModalBack{
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    display:grid;
+    place-items: center;
+    z-index: 9999;
+    padding: 16px;
+    }
+    .invModal{
+    width: min(900px, 100%);
+    max-height: min(92vh, 900px);
+    overflow: auto;
+    background: rgba(255,255,255,0.92);
+    border-radius: 18px;
+    box-shadow: 0 30px 120px rgba(0,0,0,0.30);
+    animation: invPop 160ms ease;
+    }
+    @keyframes invPop{ from{ transform: translateY(8px); opacity:0; } to{ transform: translateY(0); opacity:1; } }
+    .invModalTop{
+    display:flex;
+    justify-content: space-between;
+    align-items:center;
+    gap: 10px;
+    padding: 14px;
+    border-bottom: 1px solid rgba(10,12,14,0.12);
+    }
+    .invModalTitle{
+    font-weight: 1000;
+    color: rgba(10,12,14,0.90);
+    }
+    .invModalBody{ padding: 14px; }
+
+    /* form */
+    .invForm{
+    display:grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    }
+    .invSpan2{ grid-column: span 2; }
+
+    .invField label{
+    font-weight: 1000;
+    color: rgba(10,12,14,0.82);
+    display:block;
+    margin-bottom: 6px;
+    }
+    .invField input{
+    width:100%;
+    padding: 12px 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(10,12,14,0.14);
+    background: rgba(255,255,255,0.86);
+    font-weight: 900;
+    outline: none;
+    }
+
+    .invItems{ grid-column: span 2; }
+    .invItemsHead, .invItemsRow{
+    display:grid;
+    grid-template-columns: 1fr 140px 140px 120px;
+    gap: 10px;
+    align-items:center;
+    }
+    .invItemsHead{
+    font-weight: 1000;
+    opacity: 0.75;
+    padding: 6px 0 10px;
+    }
+    .invItemsRow{
+    padding: 8px 0;
+    border-top: 1px solid rgba(10,12,14,0.08);
+    }
+    .invItemsRow select, .invItemsRow input{
+    width:100%;
+    padding: 12px 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(10,12,14,0.14);
+    background: rgba(255,255,255,0.86);
+    font-weight: 900;
+    outline:none;
+    }
+
+    .invFormActions{
+    grid-column: span 2;
+    display:flex;
+    gap: 10px;
+    justify-content:flex-end;
+    margin-top: 8px;
+    }
+
+    /* no access */
+    .invNoAccess{
+    margin-top: 40px;
+    background: rgba(255,255,255,0.78);
+    border: 1px solid rgba(10,12,14,0.12);
+    border-radius: 18px;
+    padding: 18px;
+    box-shadow: 0 18px 60px rgba(0,0,0,0.14);
+    text-align:center;
+    }
+    .invNoAccessTitle{
+    font-weight: 1000;
+    font-size: 18px;
+    }
+    .invNoAccessSub{
+    margin-top: 8px;
+    font-weight: 900;
+    opacity: 0.8;
+    }
+
+    /* =========================
+    RESPONSIVE
+    ========================= */
+@media (max-width: 980px){
+  .invTop{
+    grid-template-columns: 1fr;
+  }
+
+  .invTopMid{
+    justify-content: stretch;
+  }
+
+  .invTopRight{
+    justify-content: flex-start;
+  }
+
+  .invGrid{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .invSpan2, .invSpan4{ grid-column: span 2; }
+}
+
+    @media (max-width: 560px){
+    .invGrid{
+        grid-template-columns: 1fr;
+    }
+    .invSpan2, .invSpan4{ grid-column: span 1; }
+    .invTable{ min-width: 0; }
+    .invItemsHead, .invItemsRow{
+        grid-template-columns: 1fr;
+    }
+    .invForm{
+        grid-template-columns: 1fr;
+    }
+    .invSpan2{ grid-column: span 1; }
+    }
+    .invCardTopActions{
+    position: relative;
+    display:flex;
+    align-items:center;
+    gap: 8px;
+    }
+.invCardBody{
+  padding: 10px 14px 14px;
+}
+
+/* solo algunas cards deben scrollear (feed / listas largas) */
+.invCardBody.isScroll{
+  max-height: 280px;
+  overflow: auto;
+}
+
+    /* mini charts */
+    .invChartBox{
+    width: 100%;
+    height: 190px;          /* ✅ chart fijo, no deforma card */
+    display: grid;
+    place-items: center;
+    }
+    .invChartSvg{
+    width: 100%;
+    height: 100%;
+    }
+    .invChartPie{
+    height: auto;
+    }
+
+    /* menu (3 puntitos) */
+.invCardMenu{
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  left: auto;
+  min-width: 160px;
+  background: rgba(255,255,255,0.96);
+  border: 1px solid rgba(10,12,14,0.12);
+  border-radius: 14px;
+  box-shadow: 0 22px 80px rgba(0,0,0,0.18);
+  padding: 8px;
+  z-index: 99999; /* ✅ por encima de todo */
+}
+.invCardMenu.r{ /* ✅ ya no hace falta, pero lo dejo por compatibilidad */
+  left: auto;
+  right: 0;
+}
+    .invMenuItem{
+    width: 100%;
+    border: 0;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+    padding: 10px 10px;
+    border-radius: 12px;
+    font-weight: 1000;
+    color: rgba(10,12,14,0.86);
+    }
+    .invMenuItem:hover{
+    background: rgba(10,12,14,0.06);
+    }
+    /* =========================
+   Animations / polish
+========================= */
+.invKpi, .invCard{
+  animation: invEnter 220ms ease both;
+}
+@keyframes invEnter{
+  from{ transform: translateY(8px); opacity: 0; }
+  to{ transform: translateY(0); opacity: 1; }
+}
+
+.invCard:hover{
+  box-shadow: 0 22px 90px rgba(0,0,0,0.18);
+  transform: translateY(-1px);
+  transition: 180ms ease;
+}
+
+.invChartSvg text{
+  fill: var(--invTextSoft);
+  font-weight: 900;
+}
+
+/* Donut color */
+.invDonutA{
+  stroke: var(--invCyan);
+  filter: drop-shadow(0 10px 18px rgba(45,212,191,0.25));
+}
+.invLegendDot.a{ background: var(--invCyan); }
+.invLegendDot.b{ background: rgba(10,12,14,0.18); }
+
+/* Spark más “vivo” */
+.invSparkBar{
+  background: rgba(255,255,255,0.92);
+  opacity: 0.80;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.18);
+}
+
+/* KPI height estable (evita deformación fea visual) */
+.invKpi{
+  min-height: 150px;
+  display:flex;
+  flex-direction: column;
+}
+.invKpi .invSpark{ margin-top: auto; }
+/* =========================
+   DASHBOARD PRO (estilo IMG2)
+========================= */
+.invDash{
+  display: flex;
+  flex-direction: column;
+  gap: var(--invG);
+}
+
+/* Fila KPIs como tiles */
+.invKpiRow{
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--invG);
+  align-items: stretch;
+}
+
+.invKpiTile{
+  border-radius: 16px;
+  padding: 14px 14px 12px;
+  color: rgba(255,255,255,0.96);
+  box-shadow: 0 18px 60px rgba(0,0,0,0.16);
+  border: 1px solid rgba(255,255,255,0.14);
+  position: relative;
+  overflow: hidden;
+  min-height: 122px;
+  display: flex;
+  flex-direction: column;
+  transform: translateZ(0);
+}
+
+.invKpiTileTop{
+  display:flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.invKpiTileTitle{
+  font-weight: 1000;
+  letter-spacing: 0.6px;
+  font-size: 11px;
+  opacity: 0.92;
+}
+
+.invKpiTileIcon{
+  font-size: 26px;
+  opacity: 0.92;
+}
+
+.invKpiTileValue{
+  margin-top: 10px;
+  font-weight: 1000;
+  letter-spacing: -0.8px;
+  font-size: 26px;
+  line-height: 1.05;
+}
+
+.invKpiTileSub{
+  margin-top: 4px;
+  font-weight: 900;
+  font-size: 12px;
+  opacity: 0.88;
+}
+
+.invKpiTile .invSpark{
+  margin-top: auto;
+  height: 32px;
+  opacity: 0.95;
+}
+
+/* tonos */
+.invKpiTile.toneA{ background: var(--invA); }
+.invKpiTile.toneB{ background: var(--invB); }
+.invKpiTile.toneIn{ background: var(--invIn); }
+.invKpiTile.toneOut{ background: var(--invOut); }
+.invKpiTile.toneMoney{
+  background: linear-gradient(135deg, rgba(60,45,120,0.98), rgba(128,88,240,0.94));
+}
+
+/* brillo tipo “software premium” */
+.invKpiTile::after{
+  content:"";
+  position:absolute;
+  inset:-60%;
+  background: linear-gradient(120deg, rgba(255,255,255,0), rgba(255,255,255,0.18), rgba(255,255,255,0));
+  transform: translateX(-55%) rotate(12deg);
+  opacity: 0;
+  pointer-events:none;
+  mix-blend-mode: screen;
+}
+.invKpiTile:hover::after{
+  opacity: 1;
+  animation: invShine2 900ms ease forwards;
+}
+@keyframes invShine2{
+  0%{ transform: translateX(-55%) rotate(12deg); }
+  100%{ transform: translateX(35%) rotate(12deg); }
+}
+
+/* Grid principal como “panel” (centro grande + derecha stacked) */
+.invDashGrid{
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--invG);
+  align-items: start;
+}
+
+/* Card grande (gráfica central) */
+.invBigCard .invCardBody{
+  padding: 10px 14px 14px;
+}
+
+/* Columna derecha apilada */
+.invRightStack{
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--invG);
+}
+
+/* compact header */
+.invCardTopCompact{
+  padding: 12px 14px;
+  display:flex;                 /* ✅ */
+  justify-content: space-between; /* ✅ */
+  align-items: flex-start;      /* ✅ */
+  gap: 12px;
+}
+
+/* spans en dashboard grid */
+.invSpanDash2{ grid-column: 1 / 2; } /* izquierda */
+.invSpanDash1{ grid-column: 2 / 3; } /* derecha */
+
+/* Accesos rápidos */
+.invQuick{
+  padding: 12px 14px 14px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.invQuickBtn{
+  width: 100%;
+  border: 1px solid rgba(10,12,14,0.12);
+  background: rgba(255,255,255,0.86);
+  border-radius: 14px;
+  padding: 12px 12px;
+  font-weight: 1000;
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  cursor: pointer;
+  color: rgba(10,12,14,0.86);
+  box-shadow: 0 14px 40px rgba(0,0,0,0.10);
+  transition: 160ms ease;
+}
+.invQuickBtn:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 18px 60px rgba(0,0,0,0.14);
+}
+.invQuickBtn:active{ transform: scale(0.99); }
+
+/* Responsive */
+@media (max-width: 1180px){
+  .invKpiRow{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .invDashGrid{ grid-template-columns: 1fr; }
+  .invSpanDash2, .invSpanDash1{ grid-column: auto; }
+}
+
+@media (max-width: 560px){
+  .invKpiRow{ grid-template-columns: 1fr; }
+}
+.invDashGridPro{
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-auto-flow: dense;
+
+  /* ✅ separa menos vertical (quita el “toc” abajo de la big card) */
+  column-gap: var(--invG);
+  row-gap: 6px;
+
+  align-items: start;
+}
+
+/* spans */
+.invCol4{ grid-column: span 4; }
+.invCol6{ grid-column: span 6; }
+.invCol8{ grid-column: span 8; }
+.invCol12{ grid-column: span 12; }
+.invRow2{ grid-row: span 2; }
+
+/* grande estable */
+.invBigCard{
+  min-height: 520px;
+}
+
+/* ✅ evita el “hueco” en la card grande: la gráfica crece */
+.invBigCard .invChartBox{
+  height: 420px;
+}
+
+/* si está en modo tabla, no la infles tanto */
+.invBigCard .invCardBody.viewTable{
+  max-height: 420px;
+}
+
+/* Responsive: baja a 6 columnas (tablet) */
+@media (max-width: 1180px){
+  .invDashGridPro{
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+  .invCol8{ grid-column: span 6; }   /* ocupa toda la fila */
+  .invCol6{ grid-column: span 6; }   /* ocupa toda la fila */
+  .invCol4{ grid-column: span 6; }   /* ocupa toda la fila */
+  .invCol12{ grid-column: span 6; }  /* ocupa toda la fila */
+  .invRow2{ grid-row: auto; }
+  .invBigCard{ min-height: 420px; }
+}
+
+/* Responsive: 1 columna (cel) */
+@media (max-width: 560px){
+  .invDashGridPro{
+    grid-template-columns: 1fr;
+  }
+  .invCol4, .invCol6, .invCol8, .invCol12{ grid-column: span 1; }
+  .invBigCard{ min-height: 360px; }
+}
+
+
+/* =========================
+  VIEW TABLE (compacta, scroll interno)
+========================= */
+.invMiniTableView{
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.invMiniTableHead{
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 10px;
+  font-weight: 1000;
+  font-size: 12px;
+  opacity: 0.78;
+  padding: 0 2px;
+}
+
+.invMiniTableBody{
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.invMiniTableRow{
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 10px;
+  align-items: center;
+  background: rgba(255,255,255,0.72);
+  border: 1px solid rgba(10,12,14,0.10);
+  border-radius: 14px;
+  padding: 10px 10px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+.invMiniCell.l{ text-align: left; }
+.invMiniCell.c{ text-align: center; }
+.invMiniCell.r{ text-align: right; }
+
+/* tabla no rompe card: scroll interno fijo */
+.invCardBody.viewTable{
+  max-height: 220px;
+}
+
+/* =========================
+  CHART TONES (colores por card)
+  (sin librerías, sin deformar)
+========================= */
+.invChartTone{
+  --invChartMain: rgba(10,12,14,0.82); /* fallback */
+}
+
+.invChartTone.teal{   --invChartMain: var(--invCyan); }
+.invChartTone.blue{   --invChartMain: var(--invBlue); }
+.invChartTone.green{  --invChartMain: var(--invGreen); }
+.invChartTone.red{    --invChartMain: var(--invRed); }
+.invChartTone.purple{ --invChartMain: var(--invPurple); }
+
+/* charts no deforman */
+.invChartBox{
+  width: 100%;
+  height: 210px;
+  display: grid;
+  place-items: center;
+}
+.invChartSvg{ width: 100%; height: 100%; }
+
+/* Donut toma el tono */
+.invDonutA{
+  stroke: var(--invChartMain);
+  filter: drop-shadow(0 10px 18px rgba(0,0,0,0.10));
+}
+
+/* dots del donut */
+.invLegendDot.a{ background: var(--invChartMain); }
+/* ==== Money input (prefijo $ PRO, sin overlays raros) ==== */
+.invMoneyWrap{
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+}
+
+.invMoneyPrefix{
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  font-weight: 800;
+  opacity: 0.65;
+
+  /* que se vea parte del mismo input */
+  border: 1px solid rgba(10,12,14,0.12);
+  border-right: 0;
+  border-radius: 14px 0 0 14px;
+  background: rgba(255,255,255,0.55);
+
+  user-select: none;
+}
+
+.invMoneyInput{
+  flex: 1;
+  width: 100%;
+
+  /* “une” con el prefijo */
+  border-left: 0 !important;
+  border-radius: 0 14px 14px 0 !important;
+}
+.invMoneyWrap .invMoneyInput{
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+}
+
+.invMoneyWrap .invMoneyPrefix{
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+}

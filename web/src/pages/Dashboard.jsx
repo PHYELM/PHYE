@@ -4,6 +4,7 @@ import Navbar from "../components/Navbar.jsx";
 import "./Dashboard.css";
 
 import AdminPanel from "./AdminPanel.jsx";
+import Inventory from "./Inventory.jsx"; // ✅ NUEVO
 import { setTitle } from "../utils/setTitle";
 import {
   TbBox,
@@ -219,21 +220,27 @@ useEffect(() => {
 
 {tab === "admin" && (
   <section className="module">
-    <div className="module-head">
-
-    </div>
+    <div className="module-head"></div>
     <AdminPanel currentWorker={worker} />
   </section>
 )}
-        {tab !== "home" && tab !== "admin" && (
-          <section className="module">
-            <div className="module-head">
-              <h2>{tab.toUpperCase()}</h2>
-              <p>MVP: este módulo lo conectamos en el siguiente paso.</p>
-            </div>
-            <div className="placeholder">Listo para conectar: {tab}</div>
-          </section>
-        )}
+
+{tab === "inventory" && (
+  <section className="module">
+    <div className="module-head"></div>
+    <Inventory currentWorker={worker} />
+  </section>
+)}
+
+{tab !== "home" && tab !== "admin" && tab !== "inventory" && (
+  <section className="module">
+    <div className="module-head">
+      <h2>{tab.toUpperCase()}</h2>
+      <p>MVP: este módulo lo conectamos en el siguiente paso.</p>
+    </div>
+    <div className="placeholder">Listo para conectar: {tab}</div>
+  </section>
+)}
       </main>
     </div>
   );
