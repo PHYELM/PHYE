@@ -16,9 +16,15 @@ import {
   TbDotsVertical,
   TbUserCircle,
   TbCurrencyDollar,
-  TbX, // ✅ cerrar pro
+  TbEdit,
+  TbTrash,
+  TbX,
 } from "react-icons/tb";
 import ReactECharts from "echarts-for-react";
+
+/* ✅ MUI DataGrid */
+import { DataGrid } from "@mui/x-data-grid";
+import { Box } from "@mui/material";
 
 /* =========================
   5) Activity UI Mapper (NO backend changes)
@@ -322,23 +328,31 @@ function CardMenu({ open, anchorRight = false, onPick }) {
 function MiniTableView({ rows = [], cols = [] }) {
   // cols: [{ key, label, align?: "l"|"c"|"r", render?: (row)=>node }]
   return (
-    <div className="invMiniTableView">
-      <div className="invMiniTableHead">
+    <div className="invMiniGrid">
+      <div className="invMiniGridHead">
         {cols.map((c) => (
-          <div key={c.key} className={`invMiniCell ${c.align || "l"}`}>
+          <div
+            key={c.key}
+            className={`invMiniGridCell ${c.align || "c"}`}   // ✅ default CENTER
+            title={String(c.label || "")}
+          >
             {c.label}
           </div>
         ))}
       </div>
 
-      <div className="invMiniTableBody">
+      <div className="invMiniGridBody">
         {rows.length === 0 ? (
           <div className="invEmpty" style={{ padding: 12 }}>Sin datos</div>
         ) : (
           rows.map((r, i) => (
-            <div className="invMiniTableRow" key={r.id || r.product_id || i}>
+            <div className="invMiniGridRow" key={r.id || r.product_id || i}>
               {cols.map((c) => (
-                <div key={c.key} className={`invMiniCell ${c.align || "l"}`}>
+                <div
+                  key={c.key}
+                  className={`invMiniGridCell ${c.align || "c"}`} // ✅ default CENTER
+                  title={String((r?.[c.key] ?? "") || "")}
+                >
                   {c.render ? c.render(r) : (r?.[c.key] ?? "-")}
                 </div>
               ))}
@@ -809,6 +823,7 @@ const [metrics, setMetrics] = useState(null);
 
 // ui
 const [q, setQ] = useState("");
+const [onlyLowStock, setOnlyLowStock] = useState(false); // ✅ NUEVO
 const [movementOpen, setMovementOpen] = useState(false);
 const [movementType, setMovementType] = useState("IN");
 const [movementReason, setMovementReason] = useState("");
@@ -818,6 +833,11 @@ const [movementItems, setMovementItems] = useState([]);
 const [movementDirty, setMovementDirty] = useState(false);
 
 const [productOpen, setProductOpen] = useState(false);
+
+// ✅ create | edit
+const [productMode, setProductMode] = useState("create");
+const [editingProductId, setEditingProductId] = useState(null);
+
 const [productDraft, setProductDraft] = useState({
   name: "",
   sku: "",
@@ -1125,14 +1145,29 @@ es.onmessage = (ev) => {
     });
   }, [products, q]);
 
-  const filteredStock = useMemo(() => {
-    const s = q.trim().toLowerCase();
-    if (!s) return stock;
-    return stock.filter((p) => {
+const filteredStock = useMemo(() => {
+  const base = stock || [];
+  const s = q.trim().toLowerCase();
+
+  let out = base;
+
+  if (s) {
+    out = out.filter((p) => {
       const hay = `${p.sku || ""} ${p.name || ""}`.toLowerCase();
       return hay.includes(s);
     });
-  }, [stock, q]);
+  }
+
+  if (onlyLowStock) {
+    out = out.filter((p) => Number(p.stock || 0) <= 10);
+  }
+
+  return out;
+}, [stock, q, onlyLowStock]);
+/* =========================
+   ✅ DataGrid: Products & Stock
+========================= */
+
 const stockByProductId = useMemo(() => {
   const m = new Map();
   (stock || []).forEach((s) => {
@@ -1142,6 +1177,214 @@ const stockByProductId = useMemo(() => {
   });
   return m;
 }, [stock]);
+
+// rows PRODUCTS (DataGrid pide "id")
+const productRows = useMemo(() => {
+  return (filteredProducts || []).map((p) => {
+    const st = stockByProductId.get(String(p.id)) ?? 0;
+    return {
+      id: p.id,
+      name: p.name || "",
+      sku: p.sku || "",
+      unit: p.unit || "",
+      cost: Number(p.cost || 0),
+      price: Number(p.price || 0),
+      stock: Number(st || 0),
+      _raw: p,
+    };
+  });
+}, [filteredProducts, stockByProductId]);
+
+const productColumns = useMemo(
+  () => [
+    {
+      field: "name",
+      headerName: "Nombre",
+      flex: 1.3,
+      minWidth: 220,
+      sortable: true,
+      renderCell: (params) => {
+        const st = Number(params.row.stock || 0);
+        const low = st <= 10;
+        return (
+          <div style={{ display: "flex", gap: 10, alignItems: "center", minWidth: 0 }}>
+            <div style={{ fontWeight: 900, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {params.value}
+            </div>
+            {low ? <span className="invBadgeLow">Bajo</span> : null}
+          </div>
+        );
+      },
+    },
+    {
+      field: "sku",
+      headerName: "SKU",
+      width: 140,
+      align: "center",
+      headerAlign: "center",
+      sortable: true,
+      renderCell: (params) => <span className="invSkuPill">{params.value || "-"}</span>,
+    },
+    {
+      field: "unit",
+      headerName: "Unidad",
+      width: 130,
+      align: "center",
+      headerAlign: "center",
+      sortable: true,
+    },
+    {
+      field: "cost",
+      headerName: "Costo",
+      width: 140,
+      align: "center",
+      headerAlign: "center",
+      sortable: true,
+      valueFormatter: (v) => MXN.format(Number(v || 0)),
+    },
+    {
+      field: "price",
+      headerName: "Precio",
+      width: 140,
+      align: "center",
+      headerAlign: "center",
+      sortable: true,
+      valueFormatter: (v) => MXN.format(Number(v || 0)),
+    },
+    {
+      field: "stock",
+      headerName: "Stock",
+      width: 130,
+      align: "center",
+      headerAlign: "center",
+      sortable: true,
+      renderCell: (params) => {
+        const st = Number(params.value || 0);
+        const low = st <= 10;
+        return <span className={`invStockPill ${low ? "low" : ""}`}>{st}</span>;
+      },
+    },
+    {
+      field: "actions",
+      headerName: "Acciones",
+      width: 170,
+      align: "center",
+      headerAlign: "center",
+      sortable: false,
+      filterable: false,
+      disableColumnMenu: true,
+      renderCell: (params) => {
+        const p = params.row._raw;
+        return (
+          <div className="invRowActions">
+            <button
+              type="button"
+              className="invActBtn edit"
+              title="Editar"
+              onClick={() => openEditProduct(p)}
+            >
+              <TbEdit />
+            </button>
+
+            <button
+              type="button"
+              className="invActBtn del"
+              title="Eliminar"
+              onClick={() => deleteProduct(p)}
+            >
+              <TbTrash />
+            </button>
+          </div>
+        );
+      },
+    },
+  ],
+  [openEditProduct, deleteProduct]
+);
+
+// rows STOCK
+const stockRows = useMemo(() => {
+  return (filteredStock || []).map((s) => ({
+    id: s.product_id || s.id,
+    name: s.name || s.product_name || "",
+    sku: s.sku || "",
+    stock: Number(s.stock || 0),
+  }));
+}, [filteredStock]);
+const stockStats = useMemo(() => {
+  const rows = stockRows || [];
+  const totalSkus = rows.length;
+  const totalQty = rows.reduce((a, r) => a + Number(r.stock || 0), 0);
+
+  const lowThreshold = 10;
+  const lowCount = rows.filter((r) => Number(r.stock || 0) <= lowThreshold).length;
+
+  const lowPct = totalSkus ? (lowCount / totalSkus) * 100 : 0;
+
+  return {
+    totalSkus,
+    totalQty,
+    lowCount,
+    lowPct,
+    lowThreshold,
+  };
+}, [stockRows]);
+const stockColumns = useMemo(
+  () => [
+    { field: "name", headerName: "Producto", flex: 1.2, minWidth: 240, sortable: true,
+      renderCell: (p) => <b style={{ fontWeight: 900 }}>{p.value}</b>
+    },
+    { field: "sku", headerName: "SKU", width: 160, align: "center", headerAlign: "center", sortable: true },
+    { field: "stock", headerName: "Stock", width: 140, align: "center", headerAlign: "center", sortable: true,
+      renderCell: (p) => <b style={{ fontWeight: 900 }}>{Number(p.value || 0)}</b>
+    },
+  ],
+  []
+);
+
+// ✅ estilo MUI DataGrid usando tus tokens CSS
+const dataGridSx = useMemo(
+  () => ({
+    border: 0,
+    fontFamily: "var(--inv-font)",
+    color: "var(--inv-text)",
+    backgroundColor: "var(--inv-card)",
+
+    "& .MuiDataGrid-columnHeaders": {
+      backgroundColor: "#fbfcfe",
+      borderBottom: "1px solid var(--inv-line2)",
+      fontWeight: 900,
+    },
+
+    "& .MuiDataGrid-columnHeaderTitle": {
+      fontWeight: 900,
+      color: "var(--inv-muted)",
+      width: "100%",
+      textAlign: "center",       // ✅ centra texto header
+    },
+
+    "& .MuiDataGrid-columnHeaderTitleContainer": {
+      justifyContent: "center",  // ✅ centra contenedor header
+    },
+
+    "& .MuiDataGrid-row": { borderBottom: "1px solid var(--inv-line)" },
+
+    "& .MuiDataGrid-cell": {
+      borderBottom: "1px solid var(--inv-line)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",  // ✅ centra contenido
+      textAlign: "center",       // ✅ centra texto
+    },
+
+    "& .MuiDataGrid-row:hover": { backgroundColor: "#f9fafc" },
+
+    "& .MuiDataGrid-footerContainer": { borderTop: "1px solid var(--inv-line)" },
+
+    "& .MuiCheckbox-root": { color: "rgba(10,12,14,0.45)" },
+  }),
+  []
+);
   function openMovement(type) {
     setMovementType(type);
     setMovementReason("");
@@ -1240,7 +1483,42 @@ async function saveMovement() {
   await loadAll();
   setTab("dashboard");
 }
+async function deleteProduct(p) {
+  if (!p?.id) return;
+
+  const st = stockByProductId.get(String(p.id)) ?? 0;
+
+  const ok = await swalConfirm({
+    title: "Eliminar producto",
+    text:
+      st > 0
+        ? `Este producto aún tiene stock (${st}). Si lo eliminas puedes romper reportes/historial. ¿Continuar?`
+        : `¿Seguro que deseas eliminar "${p.name}"?`,
+    confirmText: "Eliminar",
+    icon: "warning",
+  });
+  if (!ok) return;
+
+  await swalApiWrap(
+    () =>
+      apiFetch(`/api/inventory/products/${p.id}`, {
+        method: "DELETE",
+      }),
+    {
+      loadingTitle: "Eliminando producto…",
+      successTitle: "Producto eliminado",
+    }
+  );
+
+  // ✅ refresca TODO (cards incluidas)
+  await loadAll();
+  setTab("products");
+}
 function openCreateProduct() {
+  setProductMode("create");
+  setEditingProductId(null);
+  setProductDirty(false);
+
   setProductDraft({
     name: "",
     sku: "",
@@ -1248,11 +1526,36 @@ function openCreateProduct() {
     cost: "",
     price: "",
   });
+
+  setProductOpen(true);
+}
+
+function openEditProduct(p) {
+  if (!p?.id) return;
+
+  setProductMode("edit");
+  setEditingProductId(p.id);
+  setProductDirty(false);
+
+  setProductDraft({
+    name: p.name || "",
+    sku: p.sku || "",
+    unit: p.unit || "pz",
+    cost: String(p.cost ?? ""),
+    price: String(p.price ?? ""),
+  });
+
   setProductOpen(true);
 }
 
 async function saveProduct() {
   const name = String(productDraft.name || "").trim();
+  const sku = String(productDraft.sku || "").trim();
+  const unit = productDraft.unit || "pz";
+  const cost = parseMoneyToNumber(productDraft.cost);
+  const price = parseMoneyToNumber(productDraft.price);
+
+  const isEdit = productMode === "edit" && !!editingProductId;
 
   // ✅ CIERRA MODAL ANTES de cualquier SweetAlert
   setProductOpen(false);
@@ -1269,36 +1572,43 @@ async function saveProduct() {
   }
 
   const ok = await swalConfirm({
-    title: "Confirmar producto",
-    text: `¿Crear el producto "${name}"?`,
-    confirmText: "Crear",
+    title: isEdit ? "Confirmar cambios" : "Confirmar producto",
+    text: isEdit
+      ? `¿Guardar cambios del producto "${name}"?`
+      : `¿Crear el producto "${name}"?`,
+    confirmText: isEdit ? "Guardar" : "Crear",
     icon: "question",
   });
   if (!ok) return;
 
   await swalApiWrap(
     () =>
-      apiFetch("/api/inventory/products", {
-        method: "POST",
-        body: JSON.stringify({
-          name,
-          sku: String(productDraft.sku || "").trim(),
-          unit: productDraft.unit || "pz",
-          cost: parseMoneyToNumber(productDraft.cost),
-          price: parseMoneyToNumber(productDraft.price),
-          created_by: currentWorker?.id || null,
-        }),
-      }),
+      apiFetch(
+        isEdit ? `/api/inventory/products/${editingProductId}` : "/api/inventory/products",
+        {
+          method: isEdit ? "PUT" : "POST",
+          body: JSON.stringify({
+            name,
+            sku,
+            unit,
+            cost,
+            price,
+            updated_by: currentWorker?.id || null,
+            created_by: currentWorker?.id || null, // por si backend lo ignora en PUT
+          }),
+        }
+      ),
     {
-      loadingTitle: "Creando producto…",
-      successTitle: "Producto creado",
+      loadingTitle: isEdit ? "Guardando cambios…" : "Creando producto…",
+      successTitle: isEdit ? "Producto actualizado" : "Producto creado",
     }
   );
 
+  // ✅ esto refresca productos, stock, top, metrics, activity = cards en tiempo real
   await loadAll();
+
   setTab("products");
 }
-
 /* =========================
    ✅ 2.5 Confirmación al cerrar (ESC / backdrop / X / Cancelar)
 ========================= */
@@ -1747,86 +2057,103 @@ return (
     {filteredProducts.length === 0 ? (
       <div className="invEmpty">No hay productos. Crea uno con “Crear”.</div>
     ) : (
-      <div className="invTableWrap">
-        <table className="invTable invTableSku">
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th className="c">SKU</th>
-              <th className="c">Unidad</th>
-              <th className="c">Costo</th>
-              <th className="c">Precio</th>
-              <th className="c">Stock</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredProducts.map((p) => {
-              const st = stockByProductId.get(String(p.id)) ?? 0;
-              const low = st <= 10;
-
-              return (
-                <tr key={p.id} className={low ? "isLow" : ""}>
-                  <td>
-                    <div className="invProdName">
-                      <b>{p.name}</b>
-                      {low ? <span className="invBadgeLow">Bajo</span> : null}
-                    </div>
-                  </td>
-                  <td className="c">
-                    <span className="invSkuPill">{p.sku || "-"}</span>
-                  </td>
-                  <td className="c">{p.unit || "-"}</td>
-                  <td className="c">{MXN.format(Number(p.cost || 0))}</td>
-                  <td className="c">{MXN.format(Number(p.price || 0))}</td>
-                  <td className="c">
-                    <span className={`invStockPill ${low ? "low" : ""}`}>
-                      {Number(st)}
-                    </span>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+<Box sx={{ height: 520, width: "100%" }}>
+  <DataGrid
+    rows={productRows}
+    columns={productColumns}
+    getRowHeight={() => 56}
+    initialState={{
+      pagination: { paginationModel: { pageSize: 10, page: 0 } },
+      sorting: { sortModel: [{ field: "name", sort: "asc" }] },
+    }}
+    pageSizeOptions={[5, 10, 25, 50]}
+    checkboxSelection
+    disableRowSelectionOnClick
+    sx={dataGridSx}
+  />
+</Box>
     )}
   </div>
 )}
     {/* =========================
         STOCK
     ========================= */}
-    {tab === "stock" && (
-      <div className="invCard">
-        <div className="invCardTop">
-          <div className="invCardTitle"><TbPackage /> Stock</div>
+{tab === "stock" && (
+  <div className="invCard">
+    <div className="invCardTop invCardTopRow">
+      <div>
+        <div className="invCardTitle"><TbPackage /> Stock</div>
+        <div className="invCardSub">
+          Resumen en vivo · Bajo stock ≤ {stockStats.lowThreshold}
         </div>
-
-        {filteredStock.length === 0 ? (
-          <div className="invEmpty">Sin stock (o no hay productos aún).</div>
-        ) : (
-          <div className="invTableWrap">
-            <table className="invTable">
-              <thead>
-                <tr>
-                  <th>Producto</th>
-                  <th>SKU</th>
-                  <th className="c">Stock</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredStock.map((s) => (
-                  <tr key={s.product_id || s.id}>
-                    <td><b>{s.name || s.product_name}</b></td>
-                    <td>{s.sku || "-"}</td>
-                    <td className="c"><b>{Number(s.stock || 0)}</b></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
       </div>
+
+      <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+        <button
+          type="button"
+          className={`invBtn ${onlyLowStock ? "invPrimary" : "invGhost"}`}
+          onClick={() => setOnlyLowStock((v) => !v)}
+          title="Filtra productos con stock bajo"
+        >
+          {onlyLowStock ? "Mostrando bajos" : "Solo bajos"}
+        </button>
+
+        <button
+          className="invBtn"
+          type="button"
+          onClick={() => loadAll()}
+          title="Refrescar"
+        >
+          <TbRefresh /> Refrescar
+        </button>
+      </div>
+    </div>
+
+    {/* ✅ Header pro arriba de la tabla */}
+    <div className="invStockProBar">
+      <div className="invStockStat">
+        <div className="k">SKUs</div>
+        <div className="v">{stockStats.totalSkus}</div>
+      </div>
+
+      <div className="invStockStat">
+        <div className="k">Stock total</div>
+        <div className="v">{stockStats.totalQty}</div>
+      </div>
+
+      <div className="invStockStat warn">
+        <div className="k">Bajo stock</div>
+        <div className="v">
+          {stockStats.lowCount} <span className="p">({stockStats.lowPct.toFixed(0)}%)</span>
+        </div>
+      </div>
+
+      <div className="invStockHint">
+        Tip: usa la búsqueda + “Solo bajos” para auditoría rápida.
+      </div>
+    </div>
+
+    {filteredStock.length === 0 ? (
+      <div className="invEmpty">Sin stock (o no hay productos aún).</div>
+    ) : (
+      <Box sx={{ height: 520, width: "100%" }}>
+        <DataGrid
+          rows={stockRows}
+          columns={stockColumns}
+          getRowHeight={() => 56}
+          initialState={{
+            pagination: { paginationModel: { pageSize: 10, page: 0 } },
+            sorting: { sortModel: [{ field: "stock", sort: "desc" }] },
+          }}
+          pageSizeOptions={[5, 10, 25, 50]}
+          checkboxSelection
+          disableRowSelectionOnClick
+          sx={dataGridSx}
+        />
+      </Box>
     )}
+  </div>
+)}
 
     {/* =========================
         ANALYTICS
@@ -2198,9 +2525,9 @@ return (
           ========================= */}
 <Modal
   open={productOpen}
-  title="Crear producto"
-  onClose={() => setProductOpen(false)}          // cierre directo (solo lo usa el modal internamente)
-  onRequestClose={requestCloseProductModal}     // ✅ ESC / backdrop / X preguntan si hay cambios
+  title={productMode === "edit" ? "Editar producto" : "Crear producto"}
+  onClose={() => setProductOpen(false)}
+  onRequestClose={requestCloseProductModal}
 >
   <div className="invForm invFormPro">
     <div className="invField invSpan2">
