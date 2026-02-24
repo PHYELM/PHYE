@@ -171,30 +171,31 @@ app.post("/api/login", async (req, res) => {
     const rawPass = req.body?.password ?? "";
 
     const username = String(rawUser).trim().toLowerCase();
-    const password = String(rawPass).trim();
+    const password = String(rawPass).replace(/\s+/g, "").trim().toUpperCase();
 
     if (!username || !password) {
       return res.status(400).json({ error: "Missing credentials" });
     }
 
-    const { data, error } = await supabaseAdmin
-      .from("workers")
-      .select(
-        `
-        id,
-        username,
-        password_plain,
-        full_name,
-        profile_photo_url,
-        active,
-        department_id,
-        level_id,
-        department:departments!workers_department_id_fkey(name),
-        level:worker_levels!workers_level_id_fkey(name)
-      `
-      )
-      .eq("username", username)
-      .maybeSingle();
+const { data, error } = await supabaseAdmin
+  .from("workers")
+  .select(
+    `
+    id,
+    username,
+    password_plain,
+    full_name,
+    profile_photo_url,
+    active,
+    department_id,
+    level_id,
+    department:departments!workers_department_id_fkey(name),
+    level:worker_levels!workers_level_id_fkey(name)
+  `
+  )
+  // ✅ case-insensitive exact match
+  .ilike("username", username)
+  .maybeSingle();
 
     if (error) return res.status(500).json({ error: error.message });
 
