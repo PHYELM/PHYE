@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import React, { useEffect, useMemo, useRef, useState, useCallback, useLayoutEffect } from "react";
 import { FiMenu, FiX, FiLogOut, FiCamera, FiBell } from "react-icons/fi";
 import Cropper from "react-easy-crop";
 import Swal from "sweetalert2";
@@ -60,18 +60,12 @@ const getKeyFromPath = useCallback((pathname) => {
   return "home";
 }, [ROUTES]);
 
-// ✅ activeKey = el que manda (URL > prop active)
+// ✅ Activo 100% estable: SOLO desde la URL (no depende de mediciones ni props)
 const activeKey = useMemo(() => {
-  const fromUrl = getKeyFromPath(location.pathname);
-  return fromUrl || active || "home";
-}, [location.pathname, active, getKeyFromPath]);
+  return getKeyFromPath(location.pathname);
+}, [location.pathname, getKeyFromPath]);
 
-// ✅ si el padre trae "active" desfasado, lo sincronizamos (sin loops)
-useEffect(() => {
-  if (active !== activeKey) onChange(activeKey);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [activeKey]);
-
+console.log("NAV DEBUG:", { pathname: location.pathname, activeKey });
 // Perfil
 const [profileOpen, setProfileOpen] = useState(false);
 const [profileClosing, setProfileClosing] = useState(false);
@@ -112,8 +106,17 @@ const closeNotif = () => {
   const fileRef = useRef(null);
   const profileRef = useRef(null);
   const navCenterRef = useRef(null);
-const navBtnRefs = useRef({});
-const [activePill, setActivePill] = useState({ x: 0, w: 44, ready: false });
+const pillRef = useRef(null);
+const btnRefs = useRef({}); // key -> button element
+const [activePill, setActivePill] = useState({ x: 0, y: 0, w: 44, h: 44, ready: false });
+// ✅ refs estables (evita refs "fantasma" en re-mount / refresh)
+const setBtnRef = useCallback(
+  (key) => (el) => {
+    if (el) btnRefs.current[key] = el;
+    else delete btnRefs.current[key];
+  },
+  []
+);
 // --- Avatar crop (tipo Facebook)
 const [cropOpen, setCropOpen] = useState(false);
 const [rawImageUrl, setRawImageUrl] = useState("");
@@ -136,52 +139,100 @@ const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
   );
 
 const handleGo = (key) => {
-  onChange(key);
-
-  // ✅ Navegación real si existe route para ese key
-  const path = ROUTES[key];
-  if (path && location.pathname !== path) {
-    navigate(path);
-  }
-
-  // ✅ Cierre con animación (no “desaparece” de golpe)
+  const path = ROUTES[key] || "/";
+  if (location.pathname !== path) navigate(path); // ✅ Navbar navega SIEMPRE
+  onChange?.(key); // opcional (por si quieres guardar en localStorage en el padre)
   setMobileOpen(false);
 };
-useEffect(() => {
+useLayoutEffect(() => {
+  const container = navCenterRef.current;
+  const btn = btnRefs.current[activeKey];
+
+  // si aún no están listos, reintenta en el siguiente frame
+  if (!container || !btn) {
+    const id = requestAnimationFrame(() => {
+      // fuerza un render mínimo sin cambiar activeKey:
+      setActivePill((p) => ({ ...p, ready: false }));
+    });
+    return () => cancelAnimationFrame(id);
+  }
+
   let raf1 = 0;
   let raf2 = 0;
 
   const update = () => {
-    const container = navCenterRef.current;
-    const btn = navBtnRefs.current?.[activeKey];
-    if (!container || !btn) return;
+    const b = btnRefs.current[activeKey];
+    const c = navCenterRef.current;
+    if (!c || !b) return;
 
-    const c = container.getBoundingClientRect();
-    const b = btn.getBoundingClientRect();
-
-    const x = (b.left - c.left) + container.scrollLeft;
-    const w = b.width;
-
-    setActivePill({ x, w, ready: true });
+    setActivePill({
+      x: b.offsetLeft,
+      y: b.offsetTop,
+      w: b.offsetWidth,
+      h: b.offsetHeight,
+      ready: true
+    });
   };
 
-  // ✅ Doble RAF: asegura layout final (fonts/icons) antes de medir
+  const center = (behavior = "auto") => {
+    const b = btnRefs.current[activeKey];
+    const c = navCenterRef.current;
+    if (!c || !b) return;
+
+    const target = b.offsetLeft - (c.clientWidth - b.offsetWidth) / 2;
+    c.scrollTo({ left: Math.max(0, target), behavior });
+  };
+
+  // ✅ 1) primer cálculo
+  update();
+
+  // ✅ 2) estabiliza tras 2 frames (cuando icon fonts / layout terminan)
   raf1 = requestAnimationFrame(() => {
-    raf2 = requestAnimationFrame(update);
+    update();
+    center("auto"); // sin anim al cargar/refresh
+    raf2 = requestAnimationFrame(() => {
+      update();
+    });
   });
 
-  // ✅ Si el browser soporta fonts.ready, recalcula al terminar de cargar fuentes
+  // ✅ ResizeObserver: si cambia el tamaño del nav o del botón, recalcula
+let ro;
+if (typeof ResizeObserver !== "undefined") {
+  ro = new ResizeObserver(() => update());
+  ro.observe(container);
+  ro.observe(btn);
+}
+
+  // ✅ cuando termina el load (imágenes/fonts/etc), recalcula
+  const onLoad = () => {
+    update();
+    center("auto");
+  };
+  window.addEventListener("load", onLoad);
+
+  // ✅ cuando las fonts están listas (iconos), recalcula
+  let cancelled = false;
   if (document.fonts?.ready) {
-    document.fonts.ready.then(() => update()).catch(() => {});
+    document.fonts.ready.then(() => {
+      if (cancelled) return;
+      update();
+      center("auto");
+    });
   }
 
+  // resize normal
   window.addEventListener("resize", update);
+
   return () => {
-    cancelAnimationFrame(raf1);
-    cancelAnimationFrame(raf2);
+    cancelled = true;
+    if (raf1) cancelAnimationFrame(raf1);
+    if (raf2) cancelAnimationFrame(raf2);
+    ro.disconnect();
     window.removeEventListener("resize", update);
+    window.removeEventListener("load", onLoad);
   };
-}, [activeKey, items.length]);
+}, [activeKey]);
+
   // Cerrar dropdown al click afuera
 useEffect(() => {
   const onDown = (e) => {
@@ -249,6 +300,13 @@ useEffect(() => {
     document.body.style.overflow = prev;
   };
 }, [mobileOpen]);
+
+useEffect(() => {
+  const c = navCenterRef.current;
+  if (!c) return;
+  // ✅ al montar / refresh, fuerza scrollLeft estable
+  c.scrollLeft = 0;
+}, []);
   // --- Helpers (Title Case)
   const toTitleCase = (str = "") =>
     String(str)
@@ -487,21 +545,25 @@ if (data?.profile_photo_url) {
 
         {/* CENTER */}
 <nav className="nav-center" aria-label="Módulos" ref={navCenterRef}>
-  {/* Indicador que se desliza */}
+  {/* ✅ pill animado (circulo) */}
   <span
+    ref={pillRef}
     className={`nav-activePill ${activePill.ready ? "ready" : ""}`}
     style={{
-      transform: `translateX(${activePill.x}px) translateY(-50%)`,
-      width: `${activePill.w}px`
+      width: `${activePill.w}px`,
+      height: `${activePill.h}px`,
+      transform: `translate3d(${activePill.x}px, ${activePill.y}px, 0)`
     }}
-    aria-hidden
+    aria-hidden="true"
   />
 
 {items.map((it) => (
   <button
     key={it.key}
-    ref={(el) => (navBtnRefs.current[it.key] = el)}
+    ref={setBtnRef(it.key)}
+    data-key={it.key}
     className={`nav-iconBtn ${activeKey === it.key ? "active" : ""}`}
+    onMouseDown={(e) => e.preventDefault()}
     onClick={() => handleGo(it.key)}
     data-tip={it.label}
     aria-label={it.label}
@@ -517,6 +579,7 @@ if (data?.profile_photo_url) {
   {/* Campana */}
 <button
   className={`nav-iconBtn nav-bellBtn ${notifOpen ? "active" : ""}`}
+  onMouseDown={(e) => e.preventDefault()}
   onClick={() => (notifOpen ? closeNotif() : openNotif())}
   aria-label="Abrir notificaciones"
   title="Notificaciones"
@@ -749,7 +812,7 @@ if (data?.profile_photo_url) {
       {items.map((it) => (
         <button
           key={it.key}
-          className={`nav-drawer-item ${active === it.key ? "active" : ""}`}
+          className={`nav-drawer-item ${activeKey === it.key ? "active" : ""}`}
           onClick={() => handleGo(it.key)}
           type="button"
         >

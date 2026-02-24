@@ -95,6 +95,15 @@ app.get("/api/health", (req, res) => res.json({ ok: true }));
 app.use("/api/admin", adminRoutes);
 app.use("/api/forms", formsRoutes);
 
+/* =========================
+   ✅ DEBUG DIRECTO (BYPASS ROUTER)
+   - si esto responde, tu server y montaje están bien
+   - si tu frontend daba 404, el problema está en routes/inventory.js
+========================= */
+app.get("/api/inventory/metrics-ping", (req, res) => {
+  return res.json({ ok: true, from: "SERVER_DIRECT" });
+});
+
 // Inventory (con log extra)
 app.use(
   "/api/inventory",

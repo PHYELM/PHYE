@@ -1,1065 +1,1135 @@
-    :root{
-    --invR: 18px;
-    --invG: 12px;
-    --invShadow: 0 18px 60px rgba(0,0,0,0.16);
-    --invGlass: rgba(255,255,255,0.78);
-    --invLine: rgba(10,12,14,0.10);
+/* =========================
+   INVENTORY - MONDAY STYLE (Enterprise stable)
+   - 1 sola fuente de verdad (tokens)
+   - sin glass, sin gradients pesados, sin sombras enormes
+   - layout estable (sin hover transform que "brinca")
+========================= */
 
-    /* tonos que ya usas en dashboard */
-    --invA: linear-gradient(135deg, rgba(9,24,56,0.98), rgba(20,52,98,0.96));
-    --invB: linear-gradient(135deg, rgba(6,61,75,0.98), rgba(10,95,110,0.96));
-    --invIn: linear-gradient(135deg, rgba(12,58,42,0.98), rgba(22,94,68,0.96));
-    --invOut: linear-gradient(135deg, rgba(78,20,36,0.98), rgba(126,35,58,0.96));
-      /* charts colors */
-  --invCyan: #2dd4bf;
-  --invBlue: #60a5fa;
-  --invGreen: #34d399;
-  --invRed: #fb7185;
-  --invPurple: #a78bfa;
+/* ✅ tokens (una sola vez) */
+:root{
+  --inv-bg: #f6f7fb;
+  --inv-card: #ffffff;
+  --inv-text: rgba(10,12,14,0.92);
+  --inv-soft: rgba(10,12,14,0.72);
+  --inv-muted: rgba(10,12,14,0.56);
 
-  --invChartGrid: rgba(10,12,14,0.14);
-  --invTextSoft: rgba(10,12,14,0.72);
-    }
+  --inv-line: #e6e9ef;
+  --inv-line2: #dde2ea;
 
-    .invWrap{
-    width: 100%;
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: max(12px, var(--invG));
-    box-sizing: border-box;
-    }
+  --inv-r: 12px;
+  --inv-g: 12px;
 
+  /* monday-ish accents */
+  --inv-blue: #2f6fed;
+  --inv-teal: #00c1a8;
+  --inv-green: #13a96f;
+  --inv-red: #e04646;
+  --inv-purple: #7c5cff;
+  --inv-amber: #f5a623;
+
+  --inv-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+  --inv-shadow2: 0 10px 26px rgba(15, 23, 42, 0.08);
+
+  --inv-font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+}
+
+.invWrap{
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: max(12px, var(--inv-g));
+  box-sizing: border-box;
+  font-family: var(--inv-font);
+  color: var(--inv-text);
+}
+
+/* ✅ fondo Monday (no lila) */
+.invWrap.invMonday{
+  background: transparent;
+}
+body{
+  background: var(--inv-bg);
+}
+
+/* =========================
+   TOP BAR
+========================= */
 .invTop{
   display: grid;
-  grid-template-columns: 1fr minmax(320px, 560px) auto; /* ✅ izquierda / centro / derecha */
-  gap: var(--invG);
+  grid-template-columns: 1fr minmax(380px, 720px) 1fr;
+  gap: var(--inv-g);
   align-items: center;
   margin-bottom: 10px;
 }
 
-.invTopMid{
-  display: flex;
-  justify-content: center; /* ✅ búsqueda al centro real */
+.invTopLeft{ justify-self: start; min-width: 0; }
+.invTopMid{ justify-self: center; width: 100%; min-width: 0; }
+.invTopRight{ justify-self: end; display:flex; gap: 10px; flex-wrap: wrap; }
+
+@media (max-width: 980px){
+  .invTop{ grid-template-columns: 1fr; }
+  .invTopMid{ justify-self: stretch; }
+  .invTopRight{ justify-self: start; }
 }
 
-.invTopRight{
+.invTitle{
   display:flex;
   gap: 10px;
+  align-items: center;
+  font-weight: 900;
+  letter-spacing: -0.3px;
+  font-size: clamp(18px, 1.4vw, 26px);
+  color: var(--inv-text);
+}
+
+.invSub{
+  margin-top: 4px;
+  font-weight: 700;
+  color: var(--inv-muted);
+  font-size: 12px;
+}
+
+/* search monday */
+.invSearch{
+  width: 100%;
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  background: var(--inv-card);
+  border: 1px solid var(--inv-line);
+  border-radius: 999px;
+  padding: 12px 14px;
+  box-shadow: var(--inv-shadow);
+}
+
+.invSearch svg{ opacity: .70; }
+.invSearch input{
+  border: 0;
+  outline: none;
+  width: 100%;
+  background: transparent;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--inv-text);
+}
+
+/* =========================
+   BUTTONS (enterprise)
+========================= */
+.invBtn{
+  border: 1px solid var(--inv-line);
+  background: var(--inv-card);
+  color: var(--inv-text);
+  cursor: pointer;
+  font-weight: 800;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display:inline-flex;
+  align-items:center;
+  gap: 8px;
+  box-shadow: none;
+  transition: background 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+}
+.invBtn:hover{
+  background: #f9fafc;
+  border-color: var(--inv-line2);
+}
+.invBtn:active{
+  background: #f2f4f8;
+}
+
+/* primary */
+.invPrimary{
+  background: var(--inv-blue);
+  border-color: var(--inv-blue);
+  color: #fff;
+}
+.invPrimary:hover{
+  background: #2a63d7;
+  border-color: #2a63d7;
+}
+.invGhost{
+  background: var(--inv-card);
+}
+
+/* Entrada/Salida */
+.invIn{
+  background: var(--inv-green);
+  border-color: var(--inv-green);
+  color:#fff;
+}
+.invIn:hover{ background:#0f9a64; border-color:#0f9a64; }
+
+.invOut{
+  background: var(--inv-red);
+  border-color: var(--inv-red);
+  color:#fff;
+}
+.invOut:hover{ background:#cf3e3e; border-color:#cf3e3e; }
+
+/* =========================
+   TABS (segmented control)
+========================= */
+.invTabs{
+  display:flex;
+  gap: 8px;
   flex-wrap: wrap;
-  justify-content: flex-end; /* ✅ botones pegados a la derecha */
+  margin: 10px 0 14px;
 }
 
-    .invTitle{
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    font-weight: 1000;
-    letter-spacing: -0.6px;
-    font-size: clamp(18px, 1.4vw, 28px);
-    color: rgba(10,12,14,0.92);
-    }
-    .invSub{
-    margin-top: 4px;
-    font-weight: 900;
-    opacity: 0.74;
-    color: rgba(10,12,14,0.70);
-    font-size: 12px;
-    }
+.invTab{
+  border: 1px solid var(--inv-line);
+  background: var(--inv-card);
+  color: var(--inv-soft);
+  border-radius: 999px;
+  padding: 9px 12px;
+  font-weight: 800;
+  cursor:pointer;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
+}
+.invTab:hover{
+  border-color: var(--inv-line2);
+  background: #f9fafc;
+}
+.invTab.on{
+  background: rgba(47,111,237,0.10);
+  border-color: rgba(47,111,237,0.35);
+  color: #1b4fc9;
+}
 
-    .invSearch{
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: var(--invGlass);
-    border: 1px solid var(--invLine);
-    border-radius: 999px;
-    padding: 10px 12px;
-    box-shadow: 0 12px 40px rgba(0,0,0,0.10);
-    }
-    .invSearch input{
-    border: 0;
-    outline: none;
-    width: 100%;
-    background: transparent;
-    font-weight: 900;
-    color: rgba(10,12,14,0.86);
-    }
-
-    .invTopRight{
-    display:flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    }
-
-    .invBtn{
-    border: 0;
-    cursor: pointer;
-    font-weight: 1000;
-    border-radius: 999px;
-    padding: 10px 12px;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    box-shadow: 0 14px 50px rgba(0,0,0,0.16);
-    transition: transform 180ms ease, filter 180ms ease;
-    color: rgba(255,255,255,0.96);
-    }
-    .invBtn:active{ transform: scale(0.99); }
-    .invBtn:hover{ transform: translateY(-1px); filter: brightness(1.03); }
-
-    .invGhost{
-    background: rgba(255,255,255,0.72);
-    color: rgba(10,12,14,0.88);
-    border: 1px solid var(--invLine);
-    box-shadow: 0 12px 40px rgba(0,0,0,0.10);
-    }
-    .invPrimary{ background: var(--invA); }
-    .invIn{ background: var(--invIn); }
-    .invOut{ background: var(--invOut); }
-
-    .invTabs{
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    margin: 10px 0 14px;
-    }
-    .invTab{
-    border: 1px solid var(--invLine);
-    background: rgba(255,255,255,0.72);
-    color: rgba(10,12,14,0.86);
-    border-radius: 999px;
-    padding: 10px 12px;
-    font-weight: 1000;
-    cursor: pointer;
-    transition: 180ms ease;
-    }
-    .invTab.on{
-    background: rgba(10,12,14,0.92);
-    color: rgba(255,255,255,0.96);
-    border-color: rgba(10,12,14,0.0);
-    }
-
-    .invLoading{
-    padding: 18px;
-    text-align: center;
-    font-weight: 900;
-    opacity: 0.8;
-    }
-
-    .invGrid{
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: var(--invG);
-    align-items: start; /* ✅ evita cards gigantes por “stretch” */
-    }
-
-    .invSpan2{ grid-column: span 2; }
-    .invSpan4{ grid-column: span 4; }
-
-    .invKpi{
-    border-radius: var(--invR);
-    padding: 14px;
-    color: rgba(255,255,255,0.96);
-    box-shadow: var(--invShadow);
-    position: relative;
-    overflow: hidden;
-    transform: translateZ(0);
-    }
-    .invKpiTop{
-    display:flex;
-    justify-content: space-between;
-    align-items: center;
-    }
-    .invKpiLabel{
-    font-weight: 900;
-    opacity: 0.92;
-    }
-    .invKpiIcon{
-    font-size: 28px;
-    opacity: 0.9;
-    }
-    .invKpiValue{
-    margin-top: 10px;
-    font-size: 28px;
-    font-weight: 1000;
-    letter-spacing: -0.8px;
-    }
-    .invKpiMeta{
-    margin-top: 4px;
-    opacity: 0.9;
-    font-weight: 900;
-    font-size: 12px;
-    }
-
-    .invKpiA{ background: var(--invA); }
-    .invKpiB{ background: var(--invB); }
-    .invKpiIn{ background: var(--invIn); }
-    .invKpiOut{ background: var(--invOut); }
-
-    /* brillo tipo gema */
-    .invKpi::before{
-    content:"";
-    position:absolute;
-    inset:-60%;
-    background: linear-gradient(120deg, rgba(255,255,255,0), rgba(255,255,255,0.16), rgba(255,255,255,0));
-    transform: translateX(-55%) rotate(10deg);
-    opacity: 0;
-    pointer-events:none;
-    mix-blend-mode: screen;
-    }
-    @keyframes invShine{ 0%{transform:translateX(-55%) rotate(10deg)} 100%{transform:translateX(35%) rotate(10deg)} }
-    .invKpi:hover::before{ opacity: 1; animation: invShine 820ms ease forwards; }
-
+/* =========================
+   CARDS (monday)
+========================= */
 .invCard{
-background: rgba(255,255,255,0.76);
-border: 1px solid var(--invLine);
-border-radius: var(--invR);
-box-shadow: 0 18px 60px rgba(0,0,0,0.14);
-overflow: visible; /* ✅ permite que el menú ⋮ no se recorte */
+  background: var(--inv-card);
+  border: 1px solid var(--inv-line);
+  border-radius: var(--inv-r);
+  box-shadow: var(--inv-shadow);
+  overflow: visible;
+  display:flex;
+  flex-direction: column;
+  min-height: 0;
 }
-    .invCardTop{
-    padding: 14px;
-    border-bottom: 1px solid var(--invLine);
-    }
+
+.invCardTop{
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--inv-line);
+}
+
 .invCardTopRow{
   display:flex;
   justify-content: space-between;
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
-  padding: 14px;                 /* ✅ asegura misma altura que otras tops */
-  border-bottom: 1px solid var(--invLine); /* ✅ consistente */
-}
-    .invCardTitle{
-    font-weight: 1000;
-    color: rgba(10,12,14,0.90);
-    display:flex;
-    gap: 8px;
-    align-items: center;
-    }
-    .invCardSub{
-    margin-top: 4px;
-    font-weight: 900;
-    opacity: 0.70;
-    color: rgba(10,12,14,0.70);
-    font-size: 12px;
-    }
-
-    /* mini table */
-    .invMiniTable{ padding: 10px 14px 14px; }
-    .invMiniHead, .invMiniRow{
-    display:grid;
-    grid-template-columns: 1fr 140px 90px;
-    gap: 10px;
-    align-items:center;
-    }
-    .invMiniHead{
-    font-weight: 1000;
-    font-size: 12px;
-    opacity: 0.75;
-    padding-bottom: 8px;
-    }
-    .invMiniRow{
-    padding: 10px 0;
-    border-top: 1px solid rgba(10,12,14,0.08);
-    }
-    .invMiniRow.low .c{ color: rgba(172, 22, 55, 0.95); }
-    .b{ font-weight: 1000; color: rgba(10,12,14,0.90); }
-    .m{ font-weight: 900; opacity: 0.75; color: rgba(10,12,14,0.74); }
-    .c{ text-align:center; }
-
-    /* feed */
-    .invFeed{
-    padding: 12px 14px 14px;
-    display:flex;
-    flex-direction: column;
-    gap: 10px;
-    }
-    .invFeedItem{
-    display:grid;
-    grid-template-columns: 46px 1fr auto;
-    gap: 10px;
-    align-items: center;
-    background: rgba(255,255,255,0.74);
-    border: 1px solid rgba(10,12,14,0.10);
-    border-radius: 14px;
-    padding: 10px;
-    box-shadow: 0 14px 40px rgba(0,0,0,0.10);
-    }
-    .invFeedAvatar{
-    width: 46px; height: 46px;
-    border-radius: 16px;
-    position: relative;
-    overflow: hidden;
-    display:grid;
-    place-items: center;
-    background: rgba(10,12,14,0.06);
-    color: rgba(10,12,14,0.50);
-    }
-    .invFeedAvatar svg{ font-size: 26px; }
-    .invFeedAvatar img{
-    position:absolute;
-    inset:0;
-    width:100%;
-    height:100%;
-    object-fit: cover;
-    }
-    .invFeedBody{ min-width:0; }
-    .invFeedLine{
-    display:flex;
-    align-items:center;
-    gap: 8px;
-    }
-    .invFeedDept{
-    font-weight: 1000;
-    font-size: 11px;
-    padding: 4px 8px;
-    border-radius: 999px;
-    background: rgba(10,12,14,0.08);
-    color: rgba(10,12,14,0.74);
-    }
-    .invFeedAction{
-    margin-top: 4px;
-    font-weight: 900;
-    color: rgba(10,12,14,0.80);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    }
-    .invFeedMeta{ opacity: 0.8; margin-left: 6px; }
-    .invFeedTime{
-    margin-top: 4px;
-    font-weight: 900;
-    opacity: 0.70;
-    font-size: 12px;
-    }
-
-    .invFeedRight{
-    display:flex;
-    align-items:center;
-    justify-content:flex-end;
-    }
-    .invFeedPill{
-    font-weight: 1000;
-    font-size: 12px;
-    padding: 8px 10px;
-    border-radius: 999px;
-    background: rgba(10,12,14,0.08);
-    }
-
-    .invIconBtn{
-    border:0;
-    background: transparent;
-    cursor:pointer;
-    border-radius: 12px;
-    padding: 8px;
-    color: rgba(10,12,14,0.70);
-    }
-    .invIconBtn:hover{ background: rgba(10,12,14,0.06); }
-
-    /* table */
-    .invTableWrap{
-    width: 100%;
-    overflow: auto;
-    }
-    .invTable{
-    width:100%;
-    border-collapse: collapse;
-    min-width: 760px;
-    }
-    .invTable th, .invTable td{
-    text-align:left;
-    padding: 12px 14px;
-    border-bottom: 1px solid rgba(10,12,14,0.10);
-    font-weight: 900;
-    color: rgba(10,12,14,0.82);
-    }
-    .invTable th{
-    font-weight: 1000;
-    font-size: 12px;
-    opacity: 0.74;
-    }
-
-    /* analytics table */
-    .invPerf{
-    padding: 10px 14px 14px;
-    }
-    .invPerfHead, .invPerfRow{
-    display:grid;
-    grid-template-columns: 1fr 90px 90px 140px 140px;
-    gap: 10px;
-    align-items:center;
-    }
-    .invPerfHead{
-    padding: 10px 0;
-    font-weight: 1000;
-    opacity: 0.75;
-    border-bottom: 1px solid rgba(10,12,14,0.10);
-    }
-    .invPerfRow{
-    padding: 10px 0;
-    border-bottom: 1px solid rgba(10,12,14,0.06);
-    }
-
-    /* spark */
-    .invSpark{
-    margin-top: 10px;
-    height: 44px;
-    display:flex;
-    gap: 5px;
-    align-items: flex-end;
-    }
-    .invSparkBar{
-    width: 6px;
-    border-radius: 999px;
-    background: rgba(255,255,255,0.92);
-    opacity: 0.72;
-    }
-
-    /* donut */
-    .invDonutWrap{
-    padding: 14px;
-    display:flex;
-    gap: 14px;
-    align-items:center;
-    flex-wrap: wrap;
-    }
-    .invDonut{ width: 120px; height: 120px; }
-    .invDonutBg{
-    fill: none;
-    stroke: rgba(10,12,14,0.10);
-    stroke-width: 8;
-    }
-    .invDonutA{
-    fill: none;
-    stroke: rgba(10,12,14,0.80);
-    stroke-width: 8;
-    stroke-linecap: round;
-    }
-    .invDonutLegend{
-    display:flex;
-    flex-direction: column;
-    gap: 6px;
-    font-weight: 900;
-    color: rgba(10,12,14,0.80);
-    }
-    .invLegendRow{ display:flex; align-items:center; gap: 8px; }
-    .invLegendDot{
-    width: 10px; height: 10px; border-radius: 999px; display:inline-block;
-    background: rgba(10,12,14,0.70);
-    }
-    .invLegendDot.a{ background: rgba(10,12,14,0.80); }
-    .invLegendDot.b{ background: rgba(10,12,14,0.25); }
-
-    .invEmpty{
-    padding: 18px;
-    text-align:center;
-    font-weight: 900;
-    opacity: 0.75;
-    }
-
-    /* modal */
-    .invModalBack{
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.45);
-    display:grid;
-    place-items: center;
-    z-index: 9999;
-    padding: 16px;
-    }
-    .invModal{
-    width: min(900px, 100%);
-    max-height: min(92vh, 900px);
-    overflow: auto;
-    background: rgba(255,255,255,0.92);
-    border-radius: 18px;
-    box-shadow: 0 30px 120px rgba(0,0,0,0.30);
-    animation: invPop 160ms ease;
-    }
-    @keyframes invPop{ from{ transform: translateY(8px); opacity:0; } to{ transform: translateY(0); opacity:1; } }
-    .invModalTop{
-    display:flex;
-    justify-content: space-between;
-    align-items:center;
-    gap: 10px;
-    padding: 14px;
-    border-bottom: 1px solid rgba(10,12,14,0.12);
-    }
-    .invModalTitle{
-    font-weight: 1000;
-    color: rgba(10,12,14,0.90);
-    }
-    .invModalBody{ padding: 14px; }
-
-    /* form */
-    .invForm{
-    display:grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
-    }
-    .invSpan2{ grid-column: span 2; }
-
-    .invField label{
-    font-weight: 1000;
-    color: rgba(10,12,14,0.82);
-    display:block;
-    margin-bottom: 6px;
-    }
-    .invField input{
-    width:100%;
-    padding: 12px 12px;
-    border-radius: 14px;
-    border: 1px solid rgba(10,12,14,0.14);
-    background: rgba(255,255,255,0.86);
-    font-weight: 900;
-    outline: none;
-    }
-
-    .invItems{ grid-column: span 2; }
-    .invItemsHead, .invItemsRow{
-    display:grid;
-    grid-template-columns: 1fr 140px 140px 120px;
-    gap: 10px;
-    align-items:center;
-    }
-    .invItemsHead{
-    font-weight: 1000;
-    opacity: 0.75;
-    padding: 6px 0 10px;
-    }
-    .invItemsRow{
-    padding: 8px 0;
-    border-top: 1px solid rgba(10,12,14,0.08);
-    }
-    .invItemsRow select, .invItemsRow input{
-    width:100%;
-    padding: 12px 12px;
-    border-radius: 14px;
-    border: 1px solid rgba(10,12,14,0.14);
-    background: rgba(255,255,255,0.86);
-    font-weight: 900;
-    outline:none;
-    }
-
-    .invFormActions{
-    grid-column: span 2;
-    display:flex;
-    gap: 10px;
-    justify-content:flex-end;
-    margin-top: 8px;
-    }
-
-    /* no access */
-    .invNoAccess{
-    margin-top: 40px;
-    background: rgba(255,255,255,0.78);
-    border: 1px solid rgba(10,12,14,0.12);
-    border-radius: 18px;
-    padding: 18px;
-    box-shadow: 0 18px 60px rgba(0,0,0,0.14);
-    text-align:center;
-    }
-    .invNoAccessTitle{
-    font-weight: 1000;
-    font-size: 18px;
-    }
-    .invNoAccessSub{
-    margin-top: 8px;
-    font-weight: 900;
-    opacity: 0.8;
-    }
-
-    /* =========================
-    RESPONSIVE
-    ========================= */
-@media (max-width: 980px){
-  .invTop{
-    grid-template-columns: 1fr;
-  }
-
-  .invTopMid{
-    justify-content: stretch;
-  }
-
-  .invTopRight{
-    justify-content: flex-start;
-  }
-
-  .invGrid{
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .invSpan2, .invSpan4{ grid-column: span 2; }
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--inv-line);
 }
 
-    @media (max-width: 560px){
-    .invGrid{
-        grid-template-columns: 1fr;
-    }
-    .invSpan2, .invSpan4{ grid-column: span 1; }
-    .invTable{ min-width: 0; }
-    .invItemsHead, .invItemsRow{
-        grid-template-columns: 1fr;
-    }
-    .invForm{
-        grid-template-columns: 1fr;
-    }
-    .invSpan2{ grid-column: span 1; }
-    }
-    .invCardTopActions{
-    position: relative;
-    display:flex;
-    align-items:center;
-    gap: 8px;
-    }
+.invCardTopCompact{
+  padding: 12px 14px;
+  display:flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+}
+.invCardTopCompact > div:first-child{
+  min-width: 0;
+  flex: 1;
+}
+
+.invCardTitle{
+  font-weight: 900;
+  color: var(--inv-text);
+  display:flex;
+  gap: 8px;
+  align-items: center;
+  min-width:0;
+  line-height: 1.15;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.invCardSub{
+  margin-top: 4px;
+  font-weight: 700;
+  color: var(--inv-muted);
+  font-size: 12px;
+  min-width:0;
+  line-height: 1.2;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
 .invCardBody{
-  padding: 10px 14px 14px;
+  padding: 12px 14px 14px;
+  flex: 1;
+  min-height: 0;
 }
 
-/* solo algunas cards deben scrollear (feed / listas largas) */
+/* scroll pro (no recortes raros) */
 .invCardBody.isScroll{
-  max-height: 280px;
+  overflow: auto;
+}
+.invCardBody.viewTable{
   overflow: auto;
 }
 
-    /* mini charts */
-    .invChartBox{
-    width: 100%;
-    height: 190px;          /* ✅ chart fijo, no deforma card */
-    display: grid;
-    place-items: center;
-    }
-    .invChartSvg{
-    width: 100%;
-    height: 100%;
-    }
-    .invChartPie{
-    height: auto;
-    }
-
-    /* menu (3 puntitos) */
-.invCardMenu{
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-  left: auto;
-  min-width: 160px;
-  background: rgba(255,255,255,0.96);
-  border: 1px solid rgba(10,12,14,0.12);
-  border-radius: 14px;
-  box-shadow: 0 22px 80px rgba(0,0,0,0.18);
-  padding: 8px;
-  z-index: 99999; /* ✅ por encima de todo */
+/* scrollbars discretas */
+.invCardBody.isScroll::-webkit-scrollbar,
+.invCardBody.viewTable::-webkit-scrollbar,
+.invTableWrap::-webkit-scrollbar{
+  width: 10px; height: 10px;
 }
-.invCardMenu.r{ /* ✅ ya no hace falta, pero lo dejo por compatibilidad */
-  left: auto;
-  right: 0;
-}
-    .invMenuItem{
-    width: 100%;
-    border: 0;
-    background: transparent;
-    text-align: left;
-    cursor: pointer;
-    padding: 10px 10px;
-    border-radius: 12px;
-    font-weight: 1000;
-    color: rgba(10,12,14,0.86);
-    }
-    .invMenuItem:hover{
-    background: rgba(10,12,14,0.06);
-    }
-    /* =========================
-   Animations / polish
-========================= */
-.invKpi, .invCard{
-  animation: invEnter 220ms ease both;
-}
-@keyframes invEnter{
-  from{ transform: translateY(8px); opacity: 0; }
-  to{ transform: translateY(0); opacity: 1; }
+.invCardBody.isScroll::-webkit-scrollbar-thumb,
+.invCardBody.viewTable::-webkit-scrollbar-thumb,
+.invTableWrap::-webkit-scrollbar-thumb{
+  background: rgba(10,12,14,0.14);
+  border-radius: 999px;
 }
 
-.invCard:hover{
-  box-shadow: 0 22px 90px rgba(0,0,0,0.18);
-  transform: translateY(-1px);
-  transition: 180ms ease;
-}
-
-.invChartSvg text{
-  fill: var(--invTextSoft);
-  font-weight: 900;
-}
-
-/* Donut color */
-.invDonutA{
-  stroke: var(--invCyan);
-  filter: drop-shadow(0 10px 18px rgba(45,212,191,0.25));
-}
-.invLegendDot.a{ background: var(--invCyan); }
-.invLegendDot.b{ background: rgba(10,12,14,0.18); }
-
-/* Spark más “vivo” */
-.invSparkBar{
-  background: rgba(255,255,255,0.92);
-  opacity: 0.80;
-  box-shadow: 0 8px 18px rgba(0,0,0,0.18);
-}
-
-/* KPI height estable (evita deformación fea visual) */
-.invKpi{
-  min-height: 150px;
-  display:flex;
-  flex-direction: column;
-}
-.invKpi .invSpark{ margin-top: auto; }
 /* =========================
-   DASHBOARD PRO (estilo IMG2)
+   KPI (monday: flat + left accent)
 ========================= */
-.invDash{
-  display: flex;
-  flex-direction: column;
-  gap: var(--invG);
-}
-
-/* Fila KPIs como tiles */
 .invKpiRow{
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: var(--invG);
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--inv-g);
   align-items: stretch;
 }
 
 .invKpiTile{
-  border-radius: 16px;
-  padding: 14px 14px 12px;
-  color: rgba(255,255,255,0.96);
-  box-shadow: 0 18px 60px rgba(0,0,0,0.16);
-  border: 1px solid rgba(255,255,255,0.14);
+  height: 120px;
+  border-radius: var(--inv-r);
+  background: var(--inv-card);
+  border: 1px solid var(--inv-line);
+  box-shadow: var(--inv-shadow);
+  padding: 12px 14px;
   position: relative;
   overflow: hidden;
-  min-height: 122px;
-  display: flex;
+  display:flex;
   flex-direction: column;
-  transform: translateZ(0);
+  justify-content: space-between;
+}
+
+/* left accent bar */
+.invKpiTile::before{
+  content:"";
+  position:absolute;
+  left:0; top:0; bottom:0;
+  width: 6px;
+  background: rgba(10,12,14,0.10);
 }
 
 .invKpiTileTop{
   display:flex;
   justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-}
-
-.invKpiTileTitle{
-  font-weight: 1000;
-  letter-spacing: 0.6px;
-  font-size: 11px;
-  opacity: 0.92;
-}
-
-.invKpiTileIcon{
-  font-size: 26px;
-  opacity: 0.92;
-}
-
-.invKpiTileValue{
-  margin-top: 10px;
-  font-weight: 1000;
-  letter-spacing: -0.8px;
-  font-size: 26px;
-  line-height: 1.05;
-}
-
-.invKpiTileSub{
-  margin-top: 4px;
-  font-weight: 900;
-  font-size: 12px;
-  opacity: 0.88;
-}
-
-.invKpiTile .invSpark{
-  margin-top: auto;
-  height: 32px;
-  opacity: 0.95;
-}
-
-/* tonos */
-.invKpiTile.toneA{ background: var(--invA); }
-.invKpiTile.toneB{ background: var(--invB); }
-.invKpiTile.toneIn{ background: var(--invIn); }
-.invKpiTile.toneOut{ background: var(--invOut); }
-.invKpiTile.toneMoney{
-  background: linear-gradient(135deg, rgba(60,45,120,0.98), rgba(128,88,240,0.94));
-}
-
-/* brillo tipo “software premium” */
-.invKpiTile::after{
-  content:"";
-  position:absolute;
-  inset:-60%;
-  background: linear-gradient(120deg, rgba(255,255,255,0), rgba(255,255,255,0.18), rgba(255,255,255,0));
-  transform: translateX(-55%) rotate(12deg);
-  opacity: 0;
-  pointer-events:none;
-  mix-blend-mode: screen;
-}
-.invKpiTile:hover::after{
-  opacity: 1;
-  animation: invShine2 900ms ease forwards;
-}
-@keyframes invShine2{
-  0%{ transform: translateX(-55%) rotate(12deg); }
-  100%{ transform: translateX(35%) rotate(12deg); }
-}
-
-/* Grid principal como “panel” (centro grande + derecha stacked) */
-.invDashGrid{
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: var(--invG);
-  align-items: start;
-}
-
-/* Card grande (gráfica central) */
-.invBigCard .invCardBody{
-  padding: 10px 14px 14px;
-}
-
-/* Columna derecha apilada */
-.invRightStack{
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--invG);
-}
-
-/* compact header */
-.invCardTopCompact{
-  padding: 12px 14px;
-  display:flex;                 /* ✅ */
-  justify-content: space-between; /* ✅ */
-  align-items: flex-start;      /* ✅ */
-  gap: 12px;
-}
-
-/* spans en dashboard grid */
-.invSpanDash2{ grid-column: 1 / 2; } /* izquierda */
-.invSpanDash1{ grid-column: 2 / 3; } /* derecha */
-
-/* Accesos rápidos */
-.invQuick{
-  padding: 12px 14px 14px;
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 10px;
-}
-
-.invQuickBtn{
-  width: 100%;
-  border: 1px solid rgba(10,12,14,0.12);
-  background: rgba(255,255,255,0.86);
-  border-radius: 14px;
-  padding: 12px 12px;
-  font-weight: 1000;
-  display:flex;
   align-items:center;
   gap: 10px;
-  cursor: pointer;
-  color: rgba(10,12,14,0.86);
-  box-shadow: 0 14px 40px rgba(0,0,0,0.10);
-  transition: 160ms ease;
+  min-height: 30px;
 }
-.invQuickBtn:hover{
-  transform: translateY(-1px);
-  box-shadow: 0 18px 60px rgba(0,0,0,0.14);
+.invKpiTileTitle{
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  font-size: 11px;
+  color: var(--inv-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.invQuickBtn:active{ transform: scale(0.99); }
+.invKpiTileIcon{
+  font-size: 22px;
+  opacity: .70;
+}
+.invKpiTileValue{
+  font-weight: 900;
+  letter-spacing: -0.4px;
+  font-size: clamp(20px, 2vw, 26px);
+  line-height: 1.05;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.invKpiTileSub{
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--inv-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
-/* Responsive */
-@media (max-width: 1180px){
-  .invKpiRow{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .invDashGrid{ grid-template-columns: 1fr; }
-  .invSpanDash2, .invSpanDash1{ grid-column: auto; }
+/* tones (solo accent bar, no gradient) */
+.invKpiTile.toneA::before{ background: var(--inv-blue); }
+.invKpiTile.toneB::before{ background: var(--inv-teal); }
+.invKpiTile.toneIn::before{ background: var(--inv-green); }
+.invKpiTile.toneOut::before{ background: var(--inv-red); }
+.invKpiTile.toneMoney::before{ background: var(--inv-purple); }
+
+/* =========================
+   DASHBOARD GRID (estable)
+========================= */
+.invDash{
+  display:flex;
+  flex-direction: column;
+  gap: var(--inv-g);
 }
 
-@media (max-width: 560px){
-  .invKpiRow{ grid-template-columns: 1fr; }
-}
 .invDashGridPro{
-  display: grid;
+  display:grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
-  grid-auto-flow: dense;
-
-  /* ✅ separa menos vertical (quita el “toc” abajo de la big card) */
-  column-gap: var(--invG);
-  row-gap: 6px;
-
+  column-gap: var(--inv-g);
+  row-gap: var(--inv-g);
   align-items: start;
 }
 
-/* spans */
+/* =========================
+   DASHBOARD CARDS HOMOGÉNEAS
+   - evita deformaciones/cortes en charts
+========================= */
+.invDashGridPro .invCard{
+  min-height: 360px; /* ✅ todas parejas */
+}
+
+@media (max-width: 1180px){
+  .invDashGridPro .invCard{ min-height: 360px; }
+}
+@media (max-width: 560px){
+  .invDashGridPro .invCard{ min-height: auto; } /* ✅ en celular que fluya */
+}
+
+/* ✅ ECharts siempre toma altura real del contenedor */
+.invEChartWrap{
+  width: 100%;
+  min-height: 260px;
+  height: 100%;
+}
+.invEChartWrap > div{
+  height: 100% !important;
+  width: 100% !important;
+}
+
 .invCol4{ grid-column: span 4; }
 .invCol6{ grid-column: span 6; }
 .invCol8{ grid-column: span 8; }
 .invCol12{ grid-column: span 12; }
-.invRow2{ grid-row: span 2; }
 
-/* grande estable */
-.invBigCard{
-  min-height: 520px;
+@media (max-width: 1180px){
+  .invDashGridPro{ grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .invCol8, .invCol6, .invCol4, .invCol12{ grid-column: span 6; }
+}
+@media (max-width: 560px){
+  .invDashGridPro{ grid-template-columns: 1fr; }
+  .invCol8, .invCol6, .invCol4, .invCol12{ grid-column: span 1; }
 }
 
-/* ✅ evita el “hueco” en la card grande: la gráfica crece */
-.invBigCard .invChartBox{
-  height: 420px;
+/* =========================
+   ECHARTS WRAP (evita "Can't get DOM width/height")
+========================= */
+.invEChartWrap{
+  width: 100%;
+  min-height: 260px;
+  height: 100%;
 }
 
-/* si está en modo tabla, no la infles tanto */
-.invBigCard .invCardBody.viewTable{
-  max-height: 420px;
+/* =========================
+   ICON MENU (⋮) stable
+========================= */
+.invIconBtn{
+  border: 1px solid transparent;
+  background: transparent;
+  cursor:pointer;
+  border-radius: 10px;
+  padding: 8px;
+  color: var(--inv-muted);
+  transition: background 140ms ease, border-color 140ms ease;
+}
+.invIconBtn:hover{
+  background: #f3f5f9;
+  border-color: var(--inv-line);
 }
 
-/* Responsive: baja a 6 columnas (tablet) */
+.invCardTopActions{
+  position: relative;
+  display:flex;
+  align-items:center;
+  gap: 8px;
+}
+
+.invCardMenu{
+  position:absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 170px;
+  background: var(--inv-card);
+  border: 1px solid var(--inv-line);
+  border-radius: 12px;
+  box-shadow: var(--inv-shadow2);
+  padding: 8px;
+  z-index: 99999;
+}
+.invMenuItem{
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor:pointer;
+  padding: 10px 10px;
+  border-radius: 10px;
+  font-weight: 800;
+  color: var(--inv-text);
+}
+.invMenuItem:hover{
+  background: #f3f5f9;
+}
+
+/* =========================
+   TABLES (monday grid-like)
+========================= */
+.invTableWrap{ width: 100%; overflow:auto; }
+
+.invTable{
+  width:100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 760px;
+}
+
+.invTable th, .invTable td{
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--inv-line);
+  font-weight: 700;
+  color: var(--inv-soft);
+  background: #fff;
+}
+
+.invTable th{
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  font-weight: 900;
+  font-size: 12px;
+  color: var(--inv-muted);
+  background: #fbfcfe;
+  border-bottom: 1px solid var(--inv-line2);
+}
+
+.invTable tbody tr:hover td{
+  background: #f9fafc;
+}
+
+.c{ text-align:center; }
+.b{ font-weight: 900; color: var(--inv-text); }
+
+/* products pills */
+.invSkuPill{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-weight: 900;
+  font-size: 12px;
+  background: #f3f5f9;
+  border: 1px solid var(--inv-line);
+  color: var(--inv-text);
+}
+
+.invStockPill{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width: 46px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-weight: 900;
+  background: rgba(19,169,111,0.10);
+  border: 1px solid rgba(19,169,111,0.25);
+  color: #0a7f53;
+}
+.invStockPill.low{
+  background: rgba(224,70,70,0.10);
+  border: 1px solid rgba(224,70,70,0.25);
+  color: #b22f2f;
+}
+.invBadgeLow{
+  font-weight: 900;
+  font-size: 11px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: rgba(224,70,70,0.10);
+  border: 1px solid rgba(224,70,70,0.25);
+  color: #b22f2f;
+}
+
+/* =========================
+   MINI TABLE VIEW (cards)
+========================= */
+.invMiniTableView{
+  width:100%;
+  display:flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.invMiniTableHead{
+  display:grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 10px;
+  font-weight: 900;
+  font-size: 12px;
+  color: var(--inv-muted);
+}
+.invMiniTableBody{
+  display:flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.invMiniTableRow{
+  display:grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 10px;
+  align-items:center;
+  background: #fff;
+  border: 1px solid var(--inv-line);
+  border-radius: 12px;
+  padding: 10px 10px;
+}
+.invMiniCell{
+  min-width:0;
+  overflow:hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.invMiniCell.l{
+  text-align:left;
+  white-space: normal;
+  overflow-wrap:anywhere;
+}
+.invMiniCell.c{ text-align:center; }
+.invMiniCell.r{ text-align:right; }
+
+/* =========================
+   ACTIVITY (monday feed)
+========================= */
+.invFeed{
+  display:flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.invActRow{
+  display:grid;
+  grid-template-columns: 46px 1fr;
+  gap: 12px;
+  align-items: start;
+  padding: 12px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid var(--inv-line);
+}
+
+.invActAvatar{
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  overflow:hidden;
+  background: #f3f5f9;
+  display:grid;
+  place-items: center;
+}
+.invActAvatar img{
+  width:100%;
+  height:100%;
+  object-fit: cover;
+}
+.invActAvatarPh{ opacity: .55; font-size: 24px; }
+
+.invActTopLine{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+}
+.invActIcon{
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display:grid;
+  place-items:center;
+  background: #f3f5f9;
+  color: var(--inv-muted);
+}
+.invActTitle{ font-weight: 900; color: var(--inv-text); }
+.invActTime{
+  margin-left:auto;
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--inv-muted);
+}
+.invActText{
+  margin-top: 6px;
+  font-weight: 700;
+  color: var(--inv-soft);
+}
+.invActMeta{
+  margin-top: 8px;
+  display:flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.invActChip{
+  font-weight: 800;
+  font-size: 11px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #f3f5f9;
+  border: 1px solid var(--inv-line);
+  color: var(--inv-muted);
+}
+
+/* tonos (solo borde izquierdo) */
+.tone-green{ border-left: 5px solid rgba(19,169,111,0.75); }
+.tone-blue{ border-left: 5px solid rgba(47,111,237,0.75); }
+.tone-red{ border-left: 5px solid rgba(224,70,70,0.75); }
+.tone-purple{ border-left: 5px solid rgba(124,92,255,0.75); }
+.tone-amber{ border-left: 5px solid rgba(245,166,35,0.75); }
+.tone-neutral{ border-left: 5px solid rgba(10,12,14,0.12); }
+
+/* =========================
+   MODAL (monday clean)
+========================= */
+.invModalBack{
+  position: fixed;
+  inset: 0;
+  background: rgba(2,6,23,0.50);
+  display:grid;
+  place-items: center;
+  z-index: 9999;
+  padding: 16px;
+}
+.invModal{
+  width: min(900px, 100%);
+  max-height: min(92vh, 900px);
+  overflow:auto;
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid var(--inv-line);
+  box-shadow: 0 24px 80px rgba(2,6,23,0.28);
+}
+
+.invModalTop{
+  display:flex;
+  justify-content: space-between;
+  align-items:center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--inv-line);
+}
+.invModalTitle{
+  font-weight: 900;
+  color: var(--inv-text);
+}
+.invModalBody{ padding: 14px; }
+
+.invCloseBtn{
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display:grid;
+  place-items:center;
+  background: #fff;
+  border: 1px solid var(--inv-line);
+}
+.invCloseBtn:hover{ background: #f3f5f9; }
+
+/* =========================
+   FORMS
+========================= */
+.invForm{
+  display:grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.invSpan2{ grid-column: span 2; }
+
+@media (max-width: 560px){
+  .invForm{ grid-template-columns: 1fr; }
+  .invSpan2{ grid-column: span 1; }
+  .invTable{ min-width: 0; }
+}
+
+.invField label{
+  font-weight: 900;
+  color: var(--inv-soft);
+  display:block;
+  margin-bottom: 6px;
+}
+.invField input{
+  width:100%;
+  padding: 12px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--inv-line);
+  background: #fff;
+  font-weight: 700;
+  outline: none;
+}
+.invField input:focus{
+  border-color: rgba(47,111,237,0.45);
+  box-shadow: 0 0 0 3px rgba(47,111,237,0.10);
+}
+
+.invItems{ grid-column: span 2; }
+.invItemsHead, .invItemsRow{
+  display:grid;
+  grid-template-columns: 1fr 140px 140px 120px;
+  gap: 10px;
+  align-items:center;
+}
+@media (max-width: 560px){
+  .invItemsHead, .invItemsRow{ grid-template-columns: 1fr; }
+  .invItems{ grid-column: span 1; }
+}
+.invItemsHead{
+  font-weight: 900;
+  color: var(--inv-muted);
+  padding: 6px 0 10px;
+  border-bottom: 1px solid var(--inv-line);
+}
+.invItemsRow{
+  padding: 10px 0;
+  border-bottom: 1px solid var(--inv-line);
+}
+
+.invFormActions{
+  grid-column: span 2;
+  display:flex;
+  gap: 10px;
+  justify-content:flex-end;
+  margin-top: 8px;
+}
+
+/* money input */
+.invMoneyWrap{
+  display:flex;
+  align-items: stretch;
+  width: 100%;
+}
+.invMoneyPrefix{
+  display:flex;
+  align-items:center;
+  padding: 0 12px;
+  font-weight: 900;
+  color: var(--inv-muted);
+  border: 1px solid var(--inv-line);
+  border-right: 0;
+  border-radius: 12px 0 0 12px;
+  background: #fbfcfe;
+  user-select:none;
+}
+.invMoneyInput{
+  flex:1;
+  width:100%;
+  border-left: 0 !important;
+  border-radius: 0 12px 12px 0 !important;
+}
+
+/* empty / loading */
+.invEmpty{
+  padding: 18px;
+  text-align:center;
+  font-weight: 800;
+  color: var(--inv-muted);
+}
+.invLoading{
+  padding: 18px;
+  text-align:center;
+  font-weight: 800;
+  color: var(--inv-muted);
+}
+
+/* no access */
+.invNoAccess{
+  margin-top: 40px;
+  background: #fff;
+  border: 1px solid var(--inv-line);
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: var(--inv-shadow);
+  text-align:center;
+}
+.invNoAccessTitle{ font-weight: 900; font-size: 18px; }
+.invNoAccessSub{ margin-top: 8px; font-weight: 700; color: var(--inv-muted); }
+/* =========================
+   ANALYTICS LAYOUT (Rendimientos)
+   - separa secciones como "Inicio"
+========================= */
+.invAnalyticsCol{
+  display:flex;
+  flex-direction: column;
+  gap: var(--inv-g);
+}
+/* =========================================================
+   ✅ INVENTORY RESPONSIVE PATCH (Phone/Tablet/Desktop)
+   Pegar al FINAL de Inventory.css
+========================================================= */
+
+/* 0) NO lateral scroll + viewport safe */
+.invWrap{
+  max-width: none;           /* ✅ deja que use todo el ancho */
+}
+
+/* ✅ modo fluido: NO dupliques padding con app-main */
+.invWrap.invFluid{
+  width: 100%;
+  margin: 0 auto;
+  padding: 0;               /* ✅ app-main ya da padding */
+}
+
+/* ✅ en caso de que Inventory se use fuera del shell,
+   damos un fallback de padding mínimo */
+@supports not (padding: max(1px, 2px)){
+  .invWrap.invFluid{ padding: 12px; }
+}
+
+/* 1) TOP BAR - responsive real */
+.invTop{
+  grid-template-columns: 1fr minmax(240px, 720px) 1fr;
+}
+
+@media (max-width: 1180px){
+  .invTop{
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .invTopLeft{ justify-self: start; }
+  .invTopMid{ justify-self: stretch; }
+  .invTopRight{
+    justify-self: start;
+    width: 100%;
+    display:flex;
+    gap: 10px;
+  }
+  .invTopRight .invBtn{
+    flex: 1;               /* ✅ botones ocupan ancho en móvil */
+    justify-content: center;
+  }
+}
+
+/* 2) Tabs - wrap bonito y tocable */
+.invTabs{
+  gap: 8px;
+  flex-wrap: wrap;
+}
+@media (max-width: 560px){
+  .invTab{
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+}
+
+/* 3) KPIs - que no se vean apretados en teléfono */
+.invKpiRow{
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+@media (max-width: 560px){
+  .invKpiRow{
+    grid-template-columns: 1fr;
+  }
+  .invKpiTile{
+    height: auto;          /* ✅ evita tiles recortados */
+    min-height: 112px;
+  }
+  .invKpiTileTitle{ white-space: normal; }
+  .invKpiTileSub{ white-space: normal; }
+}
+
+/* 4) Dashboard Grid - 12 -> 6 -> 1, sin huecos */
+.invDashGridPro{
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+}
+
 @media (max-width: 1180px){
   .invDashGridPro{
     grid-template-columns: repeat(6, minmax(0, 1fr));
   }
-  .invCol8{ grid-column: span 6; }   /* ocupa toda la fila */
-  .invCol6{ grid-column: span 6; }   /* ocupa toda la fila */
-  .invCol4{ grid-column: span 6; }   /* ocupa toda la fila */
-  .invCol12{ grid-column: span 6; }  /* ocupa toda la fila */
-  .invRow2{ grid-row: auto; }
-  .invBigCard{ min-height: 420px; }
+  .invCol12{ grid-column: span 6; }
+  .invCol8, .invCol6, .invCol4{ grid-column: span 6; }
 }
 
-/* Responsive: 1 columna (cel) */
-@media (max-width: 560px){
+@media (max-width: 720px){
   .invDashGridPro{
     grid-template-columns: 1fr;
   }
-  .invCol4, .invCol6, .invCol8, .invCol12{ grid-column: span 1; }
-  .invBigCard{ min-height: 360px; }
+  .invCol12, .invCol8, .invCol6, .invCol4{
+    grid-column: span 1;
+  }
 }
 
+/* 5) Cards - quita min-height rígida en móvil/tablet */
+.invDashGridPro .invCard{
+  min-height: 340px;       /* desktop: se ven parejas */
+}
+@media (max-width: 720px){
+  .invDashGridPro .invCard{
+    min-height: unset;     /* ✅ móvil: que fluya */
+  }
+}
 
-/* =========================
-  VIEW TABLE (compacta, scroll interno)
-========================= */
-.invMiniTableView{
-  width: 100%;
+/* 6) CardTopCompact - que el header no se rompa */
+.invCardTopCompact{
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+.invCardTopCompact > div:first-child{
+  flex: 1 1 260px;
+}
+.invCardTopCompact > div:last-child{
+  flex: 0 0 auto;
+}
+
+/* ✅ ProSelect en headers (filtros) que no rompa */
+.invCardTopCompact select,
+.invCardTopCompact .proSelect,
+.invCardTopCompact .ProSelect{
+  max-width: 100%;
+}
+
+/* 7) ECharts - altura responsiva real */
+.invEChartWrap{
+  min-height: 240px;
+}
+@media (max-width: 560px){
+  .invEChartWrap{
+    min-height: 220px;
+    height: 220px;         /* ✅ evita “grandes vacíos” */
+  }
+}
+
+/* 8) Tablas - “modo móvil” (sin min-width 760) */
+@media (max-width: 720px){
+  .invTable{
+    min-width: 0;          /* ✅ deja de forzar scroll gigante */
+  }
+
+  /* ✅ en móvil, tabla tipo cards si quieres sin reescribir JSX:
+     hacemos scroll horizontal ligero con buena UX */
+  .invTableWrap{
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .invTable th, .invTable td{
+    padding: 10px 10px;
+    font-size: 13px;
+  }
+}
+
+/* 9) Activity feed - compact en móvil */
+@media (max-width: 560px){
+  .invActRow{
+    grid-template-columns: 40px 1fr;
+    padding: 10px;
+  }
+  .invActAvatar{
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+  }
+  .invActIcon{
+    width: 30px;
+    height: 30px;
+    border-radius: 10px;
+  }
+  .invActTime{
+    font-size: 11px;
+  }
+}
+
+/* 10) Modales - full width en móvil */
+@media (max-width: 560px){
+  .invModalBack{ padding: 10px; }
+  .invModal{
+    width: 100%;
+    max-height: 92vh;
+    border-radius: 14px;
+  }
+  .invFormActions{
+    justify-content: stretch;
+  }
+  .invFormActions .invBtn{
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+/* 11) Inputs + selects - mejores targets táctiles */
+@media (max-width: 560px){
+  .invSearch{ padding: 12px 14px; }
+  .invSearch input{ font-size: 14px; }
+  .invField input{ padding: 12px 12px; }
+}
+
+/* 12) Evitar recortes raros por overflow en móvil */
+.invCard, .invCardBody, .invDash, .invDashGridPro{
+  min-width: 0;
+}
+/* =========================================================
+   ✅ Card header tools (Range + Segmented + ⋮) responsive
+========================================================= */
+.invCardTools{
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
   gap: 10px;
+  flex-wrap: wrap;     /* ✅ clave: permite bajar de línea */
+  min-width: 0;
 }
 
-.invMiniTableHead{
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 1fr;
-  gap: 10px;
-  font-weight: 1000;
-  font-size: 12px;
-  opacity: 0.78;
-  padding: 0 2px;
+.invRange{
+  min-width: 180px;    /* desktop ok */
 }
 
-.invMiniTableBody{
+.invSeg{
   display: flex;
-  flex-direction: column;
   gap: 8px;
+  flex-wrap: nowrap;   /* desktop: en una línea */
+  min-width: 0;
 }
 
-.invMiniTableRow{
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 1fr;
-  gap: 10px;
-  align-items: center;
-  background: rgba(255,255,255,0.72);
-  border: 1px solid rgba(10,12,14,0.10);
-  border-radius: 14px;
-  padding: 10px 10px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+.invDots{
+  flex: 0 0 auto;
 }
 
-.invMiniCell.l{ text-align: left; }
-.invMiniCell.c{ text-align: center; }
-.invMiniCell.r{ text-align: right; }
+/* ✅ Mobile: todo cabe dentro de la card */
+@media (max-width: 560px){
+  .invCardTools{
+    justify-content: stretch;
+    width: 100%;
+  }
 
-/* tabla no rompe card: scroll interno fijo */
-.invCardBody.viewTable{
-  max-height: 220px;
-}
+  .invRange{
+    flex: 1 1 100%;
+    min-width: 0;      /* ✅ mata el “minWidth 180” en móvil */
+  }
 
-/* =========================
-  CHART TONES (colores por card)
-  (sin librerías, sin deformar)
-========================= */
-.invChartTone{
-  --invChartMain: rgba(10,12,14,0.82); /* fallback */
-}
+  .invSeg{
+    flex: 1 1 100%;
+    width: 100%;
+    flex-wrap: wrap;   /* ✅ si no cabe, se acomoda */
+  }
 
-.invChartTone.teal{   --invChartMain: var(--invCyan); }
-.invChartTone.blue{   --invChartMain: var(--invBlue); }
-.invChartTone.green{  --invChartMain: var(--invGreen); }
-.invChartTone.red{    --invChartMain: var(--invRed); }
-.invChartTone.purple{ --invChartMain: var(--invPurple); }
+  .invSeg .invTab{
+    flex: 1 1 0;       /* ✅ 2 botones, mitad y mitad */
+    display: inline-flex;
+    justify-content: center;
+    white-space: nowrap;
+  }
 
-/* charts no deforman */
-.invChartBox{
-  width: 100%;
-  height: 210px;
-  display: grid;
-  place-items: center;
-}
-.invChartSvg{ width: 100%; height: 100%; }
-
-/* Donut toma el tono */
-.invDonutA{
-  stroke: var(--invChartMain);
-  filter: drop-shadow(0 10px 18px rgba(0,0,0,0.10));
-}
-
-/* dots del donut */
-.invLegendDot.a{ background: var(--invChartMain); }
-/* ==== Money input (prefijo $ PRO, sin overlays raros) ==== */
-.invMoneyWrap{
-  display: flex;
-  align-items: stretch;
-  width: 100%;
-}
-
-.invMoneyPrefix{
-  display: flex;
-  align-items: center;
-  padding: 0 12px;
-  font-weight: 800;
-  opacity: 0.65;
-
-  /* que se vea parte del mismo input */
-  border: 1px solid rgba(10,12,14,0.12);
-  border-right: 0;
-  border-radius: 14px 0 0 14px;
-  background: rgba(255,255,255,0.55);
-
-  user-select: none;
-}
-
-.invMoneyInput{
-  flex: 1;
-  width: 100%;
-
-  /* “une” con el prefijo */
-  border-left: 0 !important;
-  border-radius: 0 14px 14px 0 !important;
-}
-.invMoneyWrap .invMoneyInput{
-  border-top-left-radius: 0 !important;
-  border-bottom-left-radius: 0 !important;
-}
-
-.invMoneyWrap .invMoneyPrefix{
-  border-top-right-radius: 0 !important;
-  border-bottom-right-radius: 0 !important;
+  .invDots{
+    margin-left: auto; /* ✅ ⋮ se pega a la derecha y ya no empuja nada afuera */
+  }
 }

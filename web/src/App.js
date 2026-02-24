@@ -6,6 +6,13 @@ import Dashboard from "./pages/Dashboard";
 export default function App() {
   const [worker, setWorker] = useState(null);
 
+  // ✅ Evita que el navegador restaure scroll (incluye scroll horizontal del nav)
+  useEffect(() => {
+    if ("scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
+  }, []);
+
   useEffect(() => {
     const raw = localStorage.getItem("worker");
     if (raw) setWorker(JSON.parse(raw));

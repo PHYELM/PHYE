@@ -6,6 +6,7 @@ console.log("🧩 inventory routes has:", {
   products: "/products",
   stock: "/stock",
   analytics: "/analytics",
+  metrics: "/metrics",        // ✅ agrega esto
   activity: "/activity",
   topStock: "/top-stock",
   topIn: "/top-in",
@@ -148,6 +149,7 @@ router.get("/stock", async (req, res) => {
 ========================= */
 router.post("/movements", async (req, res) => {
   const { type, reason, created_by, items } = req.body || {};
+
   if (!type || !Array.isArray(items) || items.length === 0) {
     return res.status(400).json({ error: "type and items required" });
   }
@@ -155,7 +157,70 @@ router.post("/movements", async (req, res) => {
     return res.status(400).json({ error: "type must be IN or OUT" });
   }
 
-  // 1) crear movimiento
+  // normaliza items (seguro)
+  const cleanItems = items
+    .map((it) => ({
+      product_id: it.product_id,
+      qty: Number(it.qty || 0),
+      unit_cost: Number(it.unit_cost || 0),
+    }))
+    .filter((x) => x.product_id && x.qty > 0);
+
+  if (cleanItems.length === 0) {
+    return res.status(400).json({ error: "items must include product_id and qty > 0" });
+  }
+
+  /* =========================
+     ✅ VALIDACIÓN STOCK (solo OUT)
+     - si quieren sacar más de lo que hay => 400
+  ========================= */
+  let stockById = new Map();
+
+  if (type === "OUT") {
+    const ids = Array.from(new Set(cleanItems.map((x) => x.product_id)));
+
+    const { data: stocks, error: sErr } = await supabaseAdmin
+      .from("v_product_stock")
+      .select("product_id, stock, name, sku")
+      .in("product_id", ids);
+
+    if (sErr) return res.status(500).json({ error: sErr.message });
+
+    (stocks || []).forEach((r) => {
+      stockById.set(String(r.product_id), {
+        stock: Number(r.stock || 0),
+        name: r.name || "",
+        sku: r.sku || "",
+      });
+    });
+
+    // revisa insuficientes
+    const insufficient = [];
+    for (const it of cleanItems) {
+      const snap = stockById.get(String(it.product_id)) || { stock: 0, name: "", sku: "" };
+      if (it.qty > snap.stock) {
+        insufficient.push({
+          product_id: it.product_id,
+          name: snap.name,
+          sku: snap.sku,
+          available: snap.stock,
+          requested: it.qty,
+        });
+      }
+    }
+
+    if (insufficient.length) {
+      return res.status(400).json({
+        error: "INSUFFICIENT_STOCK",
+        message: "No hay stock suficiente para completar la salida.",
+        details: insufficient,
+      });
+    }
+  }
+
+  /* =========================
+     1) crear movimiento
+  ========================= */
   const { data: movement, error: mErr } = await supabaseAdmin
     .from("inventory_movements")
     .insert({ type, reason, created_by })
@@ -164,23 +229,32 @@ router.post("/movements", async (req, res) => {
 
   if (mErr) return res.status(500).json({ error: mErr.message });
 
-  // 2) items
-  const payload = items.map((it) => ({
+  /* =========================
+     2) items
+  ========================= */
+  const payload = cleanItems.map((it) => ({
     movement_id: movement.id,
     product_id: it.product_id,
     qty: it.qty,
-    unit_cost: it.unit_cost ?? 0
+    unit_cost: it.unit_cost ?? 0,
   }));
 
-  const { error: iErr } = await supabaseAdmin.from("inventory_movement_items").insert(payload);
+  const { error: iErr } = await supabaseAdmin
+    .from("inventory_movement_items")
+    .insert(payload);
+
   if (iErr) return res.status(500).json({ error: iErr.message });
 
-  // 3) meta para historial (totales)
+  /* =========================
+     3) meta / activity
+  ========================= */
   const total_items = payload.length;
   const total_qty = payload.reduce((a, x) => a + Number(x.qty || 0), 0);
-  const total_value = payload.reduce((a, x) => a + Number(x.qty || 0) * Number(x.unit_cost || 0), 0);
+  const total_value = payload.reduce(
+    (a, x) => a + Number(x.qty || 0) * Number(x.unit_cost || 0),
+    0
+  );
 
-  // ✅ activity feed (con foto, depto, fecha)
   await logActivity({
     module_key: "inventory",
     action: "MOVEMENT_CREATED",
@@ -192,21 +266,44 @@ router.post("/movements", async (req, res) => {
       reason: reason || "",
       total_items,
       total_qty,
-      total_value
-    }
+      total_value,
+    },
   });
 
-  // ✅ realtime push
+  /* =========================
+     ✅ LOW STOCK ALERT (solo OUT)
+     - si queda <= 10: manda SSE a TODOS los conectados
+  ========================= */
+  if (type === "OUT") {
+    for (const it of cleanItems) {
+      const snap = stockById.get(String(it.product_id)) || { stock: 0, name: "", sku: "" };
+      const remaining = Math.max(0, Number(snap.stock || 0) - Number(it.qty || 0));
+
+      if (remaining <= 10) {
+        sseSend({
+          type: "LOW_STOCK",
+          product_id: it.product_id,
+          name: snap.name,
+          sku: snap.sku,
+          remaining,
+          ts: Date.now(),
+        });
+      }
+    }
+  }
+
+  /* =========================
+     realtime push general
+  ========================= */
   sseSend({
     type: "MOVEMENT_CREATED",
     movement_id: movement.id,
     meta: { type, total_items, total_qty, total_value },
-    ts: Date.now()
+    ts: Date.now(),
   });
 
   res.json({ ok: true, movement_id: movement.id });
 });
-
 /* =========================
    Kardex (detalle)
 ========================= */
@@ -243,6 +340,141 @@ router.get("/analytics", async (req, res) => {
   // invierte para graficar ascendente
   res.json({ data: (data || []).reverse() });
 });
+
+
+
+/* =========================
+   Metrics (Rendimientos PRO)
+   - Rotación de inventario (aprox)
+   - Margen bruto por producto
+   - Entradas vs salidas (qty/value)
+   - Valor total inventario (hoy)
+   - Utilidad estimada del periodo (OUT * (price - costBase))
+========================= */
+router.get("/metrics", async (req, res) => {
+  const days = Math.min(Math.max(Number(req.query.days || 30), 7), 365);
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+
+  // 1) productos (cost/price)
+  const { data: prod, error: pErr } = await supabaseAdmin
+    .from("products")
+    .select("id, name, sku, cost, price");
+  if (pErr) return res.status(500).json({ error: pErr.message });
+
+  const prodById = new Map();
+  (prod || []).forEach((p) => {
+    prodById.set(String(p.id), {
+      id: p.id,
+      name: p.name || "",
+      sku: p.sku || "",
+      cost: Number(p.cost || 0),
+      price: Number(p.price || 0),
+    });
+  });
+
+  // 2) stock actual
+  const { data: st, error: sErr } = await supabaseAdmin
+    .from("v_product_stock")
+    .select("product_id, stock");
+  if (sErr) return res.status(500).json({ error: sErr.message });
+
+  let totalInventoryValue = 0;
+  for (const r of st || []) {
+    const info = prodById.get(String(r.product_id));
+    const qty = Number(r.stock || 0);
+    const unitCost = Number(info?.cost || 0);
+    totalInventoryValue += qty * unitCost;
+  }
+
+  // 3) kardex periodo
+  const { data: kx, error: kErr } = await supabaseAdmin
+    .from("v_inventory_kardex")
+    .select("type, product_id, sku, product_name, qty, unit_cost, created_at")
+    .gte("created_at", since);
+
+  if (kErr) return res.status(500).json({ error: kErr.message });
+
+  let qtyIn = 0, qtyOut = 0, valIn = 0, valOut = 0;
+
+  // por producto: margen y utilidad
+  const perProduct = new Map();
+
+  for (const r of kx || []) {
+    const pid = String(r.product_id || "");
+    const qty = Number(r.qty || 0);
+    const uc = Number(r.unit_cost || 0);
+    const info = prodById.get(pid);
+
+    const price = Number(info?.price || 0);
+    const fallbackCost = Number(info?.cost || 0);
+    const costBase = uc > 0 ? uc : fallbackCost;
+
+    if (r.type === "IN") {
+      qtyIn += qty;
+      valIn += qty * costBase;
+    } else if (r.type === "OUT") {
+      qtyOut += qty;
+      valOut += qty * costBase;
+
+      // utilidad estimada si ese OUT representa venta/consumo valorizado
+      const profit = qty * Math.max(0, price - costBase);
+
+      const prev = perProduct.get(pid) || {
+        product_id: r.product_id,
+        sku: r.sku || info?.sku || "",
+        name: r.product_name || info?.name || "",
+        qty_out: 0,
+        revenue_est: 0,
+        cogs_est: 0,
+        profit_est: 0,
+        margin_pct: 0,
+      };
+
+      prev.qty_out += qty;
+      prev.revenue_est += qty * price;
+      prev.cogs_est += qty * costBase;
+      prev.profit_est += profit;
+
+      // margen bruto %
+      prev.margin_pct = prev.revenue_est > 0 ? ((prev.revenue_est - prev.cogs_est) / prev.revenue_est) * 100 : 0;
+
+      perProduct.set(pid, prev);
+    }
+  }
+
+  const flow = {
+    qty_in: qtyIn,
+    qty_out: qtyOut,
+    value_in: valIn,
+    value_out: valOut,
+  };
+
+  // utilidad periodo (sum OUT)
+  const profitPeriod = Array.from(perProduct.values()).reduce((a, x) => a + Number(x.profit_est || 0), 0);
+
+  // top margen por producto (por % y con volumen)
+  const topMargin = Array.from(perProduct.values())
+    .filter((x) => Number(x.qty_out || 0) > 0)
+    .sort((a, b) => (b.margin_pct - a.margin_pct) || (b.profit_est - a.profit_est))
+    .slice(0, 10);
+
+  // rotación aproximada = COGS periodo / valor inventario actual
+  // (sin inventario promedio histórico, es aproximación práctica)
+  const rotation = totalInventoryValue > 0 ? (valOut / totalInventoryValue) : 0;
+
+  res.json({
+    data: {
+      days,
+      rotation,
+      total_inventory_value: totalInventoryValue,
+      profit_period_est: profitPeriod,
+      flow,
+      top_margin_products: topMargin,
+    },
+  });
+});
+
+
 /* =========================
    TOP endpoints (dashboard pro)
    - /top-stock  -> productos con más stock (v_product_stock)
@@ -360,15 +592,22 @@ router.get("/activity", async (req, res) => {
   const limit = Math.min(Number(req.query.limit || 25), 100);
   const offset = Math.max(Number(req.query.offset || 0), 0);
 
-  const { data, error } = await supabaseAdmin
+  const days = req.query.days ? Math.min(Math.max(Number(req.query.days || 30), 1), 365) : null;
+  const since = days ? new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString() : null;
+
+  let q = supabaseAdmin
     .from("activity_log")
     .select("*")
-    .eq("module_key", "inventory")
+    .eq("module_key", "inventory");
+
+  if (since) q = q.gte("created_at", since);
+
+  const { data, error } = await q
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
 
   if (error) return res.status(500).json({ error: error.message });
-  res.json({ data });
+  res.json({ data: data || [] });
 });
 
 module.exports = router;

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import "./ProSelect.css";
 
@@ -40,26 +40,23 @@ export default function ProSelect({
   const typeTimer = useRef(null);
 
   const selectedIndex = useMemo(() => {
-    const i = options.findIndex((o) => String(o.value) === String(value));
-    return i;
+    return options.findIndex((o) => String(o.value) === String(value));
   }, [options, value]);
 
   const selectedLabel = selectedIndex >= 0 ? options[selectedIndex]?.label : "";
 
-  const openMenu = () => {
-    if (disabled) return;
-    setOpen(true);
-  };
-
-  const closeMenu = () => {
+  const closeMenu = useCallback(() => {
     setOpen(false);
     setTypeBuf("");
     setActiveIndex(-1);
-  };
+  }, []);
 
-  // posicionar en portal
-  useEffect(() => {
-    if (!open) return;
+  const openMenu = useCallback(() => {
+    if (disabled) return;
+    setOpen(true);
+  }, [disabled]);
+
+  const computePosition = useCallback(() => {
     const b = btnRef.current;
     if (!b) return;
 
@@ -88,24 +85,54 @@ export default function ProSelect({
       selectedIndex >= 0 && !options[selectedIndex]?.disabled
         ? selectedIndex
         : options.findIndex((o) => !o.disabled);
-    setActiveIndex(startIdx);
-  }, [open, options, selectedIndex]);
 
-  // cerrar al click afuera
+    setActiveIndex(startIdx);
+  }, [options, selectedIndex]);
+
+  // posicionar en portal al abrir
   useEffect(() => {
-    function onDown(e) {
-      if (!open) return;
+    if (!open) return;
+    computePosition();
+  }, [open, computePosition]);
+
+  // ✅ re-posicionar al scroll/resize (muy importante en portals)
+  useEffect(() => {
+    if (!open) return;
+
+    const onScroll = () => computePosition();
+    const onResize = () => computePosition();
+
+    window.addEventListener("scroll", onScroll, true); // true = captura scroll de contenedores
+    window.addEventListener("resize", onResize);
+
+    return () => {
+      window.removeEventListener("scroll", onScroll, true);
+      window.removeEventListener("resize", onResize);
+    };
+  }, [open, computePosition]);
+
+  // ✅ cerrar al click afuera (robusto: pointerdown + capture)
+  useEffect(() => {
+    if (!open) return;
+
+    const onPointerDown = (e) => {
       const b = btnRef.current;
       const m = menuRef.current;
-      if (b && b.contains(e.target)) return;
-      if (m && m.contains(e.target)) return;
-      closeMenu();
-    }
-    if (open) window.addEventListener("mousedown", onDown);
-    return () => window.removeEventListener("mousedown", onDown);
-  }, [open]);
 
-  // teclado global cuando está abierto
+      const t = e.target;
+
+      // click en botón o dentro del menú => no cerrar
+      if (b && b.contains(t)) return;
+      if (m && m.contains(t)) return;
+
+      closeMenu();
+    };
+
+    window.addEventListener("pointerdown", onPointerDown, true); // capture
+    return () => window.removeEventListener("pointerdown", onPointerDown, true);
+  }, [open, closeMenu]);
+
+  // ✅ teclado global cuando está abierto
   useEffect(() => {
     function onKey(e) {
       if (!open) return;
@@ -129,7 +156,6 @@ export default function ProSelect({
 
       const moveTo = (idx) => {
         setActiveIndex(idx);
-        // scroll into view
         requestAnimationFrame(() => {
           const node = menuRef.current?.querySelector(`[data-idx="${idx}"]`);
           node?.scrollIntoView?.({ block: "nearest" });
@@ -199,7 +225,14 @@ export default function ProSelect({
 
     if (open) window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, options, activeIndex, onChange, typeBuf, searchable]);
+  }, [open, options, activeIndex, onChange, typeBuf, searchable, closeMenu]);
+
+  // ✅ limpiar timer al desmontar
+  useEffect(() => {
+    return () => {
+      if (typeTimer.current) clearTimeout(typeTimer.current);
+    };
+  }, []);
 
   const handleBtnKeyDown = (e) => {
     if (disabled) return;
@@ -234,7 +267,9 @@ export default function ProSelect({
         <span className={`proSelectValue ${selectedLabel ? "" : "isPlaceholder"}`}>
           {selectedLabel || placeholder}
         </span>
-        <span className="proSelectArrow" aria-hidden="true">▾</span>
+        <span className="proSelectArrow" aria-hidden="true">
+          ▾
+        </span>
       </button>
 
       {open
@@ -245,8 +280,6 @@ export default function ProSelect({
               style={{ top: pos.top, left: pos.left, width: pos.width }}
               role="listbox"
               aria-label={ariaLabel || "select-options"}
-              onMouseDown={(e) => e.stopPropagation()}
-              onClick={(e) => e.stopPropagation()}
             >
               <div className="proSelectMenuInner">
                 {options.map((opt, idx) => {
@@ -257,7 +290,9 @@ export default function ProSelect({
                     <button
                       key={`${String(opt.value)}-${idx}`}
                       type="button"
-                      className={`proSelectItem ${isSel ? "isSelected" : ""} ${isActive ? "isActive" : ""}`}
+                      className={`proSelectItem ${isSel ? "isSelected" : ""} ${
+                        isActive ? "isActive" : ""
+                      }`}
                       disabled={opt.disabled}
                       data-idx={idx}
                       onMouseEnter={() => setActiveIndex(idx)}
@@ -267,7 +302,11 @@ export default function ProSelect({
                       title={String(opt.label)}
                     >
                       <span className="proSelectItemLabel">{opt.label}</span>
-                      {isSel ? <span className="proSelectCheck">✓</span> : <span className="proSelectCheck" />}
+                      {isSel ? (
+                        <span className="proSelectCheck">✓</span>
+                      ) : (
+                        <span className="proSelectCheck" />
+                      )}
                     </button>
                   );
                 })}

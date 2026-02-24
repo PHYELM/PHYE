@@ -1,10 +1,10 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { useLocation } from "react-router-dom";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar.jsx";
 import "./Dashboard.css";
 
 import AdminPanel from "./AdminPanel.jsx";
-import Inventory from "./Inventory.jsx"; // ✅ NUEVO
+import Inventory from "./Inventory.jsx";
 import { setTitle } from "../utils/setTitle";
 import {
   TbBox,
@@ -18,8 +18,24 @@ import {
 
 export default function Dashboard({ worker, onLogout }) {
   const location = useLocation();
+  const navigate = useNavigate();
 
-  // URL -> TAB (debe coincidir con tus ROUTES del Navbar)
+  // ✅ Mapa único: TAB <-> PATH (debe coincidir con Navbar)
+  const ROUTES = useMemo(
+    () => ({
+      home: "/",
+      admin: "/admin",
+      forms: "/forms",
+      inventory: "/inventory",
+      quotes: "/quotes",
+      services: "/services",
+      sales: "/sales",
+      gps: "/gps"
+    }),
+    []
+  );
+
+  // ✅ PATH -> TAB (rápido)
   const TAB_FROM_PATH = useMemo(
     () => ({
       "/": "home",
@@ -34,85 +50,99 @@ export default function Dashboard({ worker, onLogout }) {
     []
   );
 
-  // ✅ arranca sincronizado con la URL (y fallback a localStorage)
-  const getInitialTab = () => {
-    const byPath = TAB_FROM_PATH[location.pathname];
-    const saved = localStorage.getItem("ecovisa_active_tab");
-    return byPath || saved || "home";
-  };
+  // ✅ 1 sola fuente de verdad: la URL
+  // Derivamos "tab" desde location.pathname (sin setTab, sin carreras)
+  const getKeyFromPath = useCallback(
+    (pathname) => {
+      // rutas más largas primero (por seguridad)
+      const entries = Object.entries(ROUTES).sort(
+        (a, b) => b[1].length - a[1].length
+      );
 
-  const [tab, setTab] = useState(getInitialTab);
-    // ✅ “refresh suave” (remonta el contenido sin recargar toda la SPA)
-    // ✅ títulos por tab
-const TAB_TITLES = useMemo(
-  () => ({
-    home: "Inicio",
-    admin: "Admin Panel",
-    forms: "Formularios",
-    inventory: "Inventario",
-    quotes: "Cotizaciones",
-    services: "Servicios",
-    sales: "Ventas / POS",
-    gps: "GPS"
-  }),
-  []
-);
-
-// ✅ setea el title cada que cambie el tab
-useEffect(() => {
-  setTitle(TAB_TITLES[tab] || "Dashboard");
-}, [tab, TAB_TITLES]);
-  const [softRefreshTick, setSoftRefreshTick] = useState(0);
-  // ✅ cuando cambia la ruta (incluye F5), actualiza el tab
-  useEffect(() => {
-    const byPath = TAB_FROM_PATH[location.pathname];
-    if (byPath && byPath !== tab) setTab(byPath);
-  }, [location.pathname, TAB_FROM_PATH]); // intencional: no dependemos de tab para evitar loops
-  useEffect(() => {
-    const onKeyDown = (e) => {
-      const isF5 = e.key === "F5";
-      const isCtrlR = (e.ctrlKey || e.metaKey) && (e.key === "r" || e.key === "R");
-      if (isF5 || isCtrlR) {
-        e.preventDefault();
-        setSoftRefreshTick((t) => t + 1);
+      for (const [key, path] of entries) {
+        if (path === "/") {
+          if (pathname === "/") return "home";
+          continue;
+        }
+        if (pathname === path || pathname.startsWith(path + "/")) return key;
       }
+      return "home";
+    },
+    [ROUTES]
+  );
+
+  const tab = useMemo(() => getKeyFromPath(location.pathname), [
+    location.pathname,
+    getKeyFromPath
+  ]);
+// ✅ Restore: si vuelves a abrir en "/" pero antes estabas en otro módulo,
+// te manda a ese módulo (sin bug del pill)
+useEffect(() => {
+  const saved = localStorage.getItem("ecovisa_active_tab");
+  if (!saved) return;
+
+  // si estás en home por URL, pero tu última pestaña fue otra -> redirige
+  if (location.pathname === "/" && saved !== "home") {
+    const path = ROUTES[saved] || "/";
+    navigate(path, { replace: true });
+  }
+}, [location.pathname, ROUTES, navigate]);
+  // ✅ Cambio de módulo: SOLO navega (el render se actualiza por URL)
+  const goTab = useCallback(
+    (key) => {
+      const path = ROUTES[key] || "/";
+      if (location.pathname !== path) navigate(path);
+      localStorage.setItem("ecovisa_active_tab", key); // opcional (por si quieres usarlo luego)
+    },
+    [ROUTES, navigate, location.pathname]
+  );
+
+  // ✅ títulos por tab
+  const TAB_TITLES = useMemo(
+    () => ({
+      home: "Inicio",
+      admin: "Admin Panel",
+      forms: "Formularios",
+      inventory: "Inventario",
+      quotes: "Cotizaciones",
+      services: "Servicios",
+      sales: "Ventas / POS",
+      gps: "GPS"
+    }),
+    []
+  );
+
+  // ✅ setea el title cada que cambie el tab (derivado de URL)
+  useEffect(() => {
+    setTitle(TAB_TITLES[tab] || "Dashboard");
+  }, [tab, TAB_TITLES]);
+
+
+
+  // ✅ FIX móvil: 100vh real (no tocar)
+  useEffect(() => {
+    const vv = window.visualViewport;
+
+    const setVh = () => {
+      const h = (vv?.height ?? window.innerHeight) * 0.01;
+      document.documentElement.style.setProperty("--vh", `${h}px`);
     };
 
-    window.addEventListener("keydown", onKeyDown, { capture: true });
-    return () => window.removeEventListener("keydown", onKeyDown, { capture: true });
+    setVh();
+
+    window.addEventListener("resize", setVh);
+    window.addEventListener("orientationchange", setVh);
+
+    vv?.addEventListener("resize", setVh);
+    vv?.addEventListener("scroll", setVh);
+
+    return () => {
+      window.removeEventListener("resize", setVh);
+      window.removeEventListener("orientationchange", setVh);
+      vv?.removeEventListener("resize", setVh);
+      vv?.removeEventListener("scroll", setVh);
+    };
   }, []);
-    // ✅ FIX móvil: 100vh “real” (evita recortes por barra de URL)
-// ✅ FIX móvil: 100vh “real” (evita recortes por barra de URL)
-// Usa VisualViewport (Android/Chrome) para que NO se “corte” el final
-useEffect(() => {
-  const vv = window.visualViewport;
-
-  const setVh = () => {
-    const h = (vv?.height ?? window.innerHeight) * 0.01;
-    document.documentElement.style.setProperty("--vh", `${h}px`);
-  };
-
-  setVh();
-
-  // resize normal
-  window.addEventListener("resize", setVh);
-  window.addEventListener("orientationchange", setVh);
-
-  // resize real del viewport visual (cuando aparece/desaparece barra)
-  vv?.addEventListener("resize", setVh);
-  vv?.addEventListener("scroll", setVh); // algunos android disparan cambios aquí
-
-  return () => {
-    window.removeEventListener("resize", setVh);
-    window.removeEventListener("orientationchange", setVh);
-    vv?.removeEventListener("resize", setVh);
-    vv?.removeEventListener("scroll", setVh);
-  };
-}, []);
-  // ✅ persistimos el tab para refrescos y reabrir app
-  useEffect(() => {
-    localStorage.setItem("ecovisa_active_tab", tab);
-  }, [tab]);
   const modules = useMemo(
     () => [
       {
@@ -177,12 +207,8 @@ useEffect(() => {
 
   return (
     <div className="app-shell">
-      <Navbar worker={worker} active={tab} onChange={setTab} onLogout={onLogout} />
-
-           <main
-        className={`app-main ${tab === "home" ? "app-main--home" : ""}`}
-        key={`${tab}-${softRefreshTick}`}
-      >
+    <Navbar worker={worker} active={tab} onChange={goTab} onLogout={onLogout} />
+<main className={`app-main ${tab === "home" ? "app-main--home" : ""}`}>
         {tab === "home" && (
           <section className="dash dash--fit">
             <div className="dash-head dash-head--center dash-head--tight">
@@ -195,7 +221,7 @@ useEffect(() => {
 <button
   key={m.key}
   className={`mTile mTile--big mTile--${m.key} ${m.tone} ${m.size}`}
-  onClick={() => setTab(m.key)}
+  onClick={() => goTab(m.key)}
   type="button"
 >
                   <div className="mTile-hero">
