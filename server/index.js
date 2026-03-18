@@ -11,6 +11,7 @@ const quotesRoutes = require("./routes/quotes");
 const servicesRoutes = require("./routes/services");
 const salesRoutes = require("./routes/sales");
 const gpsRoutes = require("./routes/gps");
+const calendarRoutes = require("./routes/calendar");
 const workersRoutes = require("./routes/workers");
 
 const { supabaseAdmin } = require("./supabaseAdmin");
@@ -109,15 +110,28 @@ app.use(
   "/api/inventory",
   (req, res, next) => {
     console.log("✅ HIT /api/inventory ->", req.method, req.url);
+    console.log("✅ inventory router file mounted from:", require.resolve("./routes/inventory"));
     next();
   },
   inventoryRoutes
 );
 
+// ✅ DEBUG DIRECTO PARA COMPARAR CONTRA EL ROUTER
+app.get("/api/inventory/performance-summary-direct", async (req, res) => {
+  return res.json({
+    ok: true,
+    from: "SERVER_DIRECT_PERFORMANCE",
+    server_file: __filename,
+    inventory_router_file: require.resolve("./routes/inventory"),
+    ts: Date.now(),
+  });
+});
+
 app.use("/api/quotes", quotesRoutes);
 app.use("/api/services", servicesRoutes);
 app.use("/api/sales", salesRoutes);
 app.use("/api/gps", gpsRoutes);
+app.use("/api/calendar", calendarRoutes);
 app.use("/api/workers", workersRoutes);
 
 /* =========================
@@ -151,6 +165,7 @@ app.get("/api/__routes", (req, res) => {
       else if (base.includes("\\/api\\/services")) basePretty = "/api/services";
       else if (base.includes("\\/api\\/sales")) basePretty = "/api/sales";
       else if (base.includes("\\/api\\/gps")) basePretty = "/api/gps";
+      else if (base.includes("\\/api\\/calendar")) basePretty = "/api/calendar";
       else if (base.includes("\\/api\\/workers")) basePretty = "/api/workers";
 
       layer.handle.stack.forEach((l2) => pushRoute(basePretty, l2));

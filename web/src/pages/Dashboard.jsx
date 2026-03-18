@@ -1,15 +1,17 @@
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import React, { useEffect, useMemo, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar.jsx";
 import "./Dashboard.css";
 
 import AdminPanel from "./AdminPanel.jsx";
 import Inventory from "./Inventory.jsx";
+import FormsModule from "./FormsModule.jsx";
+import CalendarModule from "./CalendarModule.jsx";
 import { setTitle } from "../utils/setTitle";
 import {
   TbBox,
   TbTruckDelivery,
-  TbMapPin,
+  TbCalendarMonth,
   TbFileInvoice,
   TbCurrencyDollar,
   TbClipboardText,
@@ -20,7 +22,6 @@ export default function Dashboard({ worker, onLogout }) {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // ✅ Mapa único: TAB <-> PATH (debe coincidir con Navbar)
   const ROUTES = useMemo(
     () => ({
       home: "/",
@@ -30,31 +31,13 @@ export default function Dashboard({ worker, onLogout }) {
       quotes: "/quotes",
       services: "/services",
       sales: "/sales",
-      gps: "/gps"
+      calendar: "/calendar"
     }),
     []
   );
 
-  // ✅ PATH -> TAB (rápido)
-  const TAB_FROM_PATH = useMemo(
-    () => ({
-      "/": "home",
-      "/admin": "admin",
-      "/forms": "forms",
-      "/inventory": "inventory",
-      "/quotes": "quotes",
-      "/services": "services",
-      "/sales": "sales",
-      "/gps": "gps"
-    }),
-    []
-  );
-
-  // ✅ 1 sola fuente de verdad: la URL
-  // Derivamos "tab" desde location.pathname (sin setTab, sin carreras)
   const getKeyFromPath = useCallback(
     (pathname) => {
-      // rutas más largas primero (por seguridad)
       const entries = Object.entries(ROUTES).sort(
         (a, b) => b[1].length - a[1].length
       );
@@ -66,6 +49,7 @@ export default function Dashboard({ worker, onLogout }) {
         }
         if (pathname === path || pathname.startsWith(path + "/")) return key;
       }
+
       return "home";
     },
     [ROUTES]
@@ -75,29 +59,26 @@ export default function Dashboard({ worker, onLogout }) {
     location.pathname,
     getKeyFromPath
   ]);
-// ✅ Restore: si vuelves a abrir en "/" pero antes estabas en otro módulo,
-// te manda a ese módulo (sin bug del pill)
-useEffect(() => {
-  const saved = localStorage.getItem("ecovisa_active_tab");
-  if (!saved) return;
 
-  // si estás en home por URL, pero tu última pestaña fue otra -> redirige
-  if (location.pathname === "/" && saved !== "home") {
-    const path = ROUTES[saved] || "/";
-    navigate(path, { replace: true });
-  }
-}, [location.pathname, ROUTES, navigate]);
-  // ✅ Cambio de módulo: SOLO navega (el render se actualiza por URL)
+  useEffect(() => {
+    const saved = localStorage.getItem("ecovisa_active_tab");
+    if (!saved) return;
+
+    if (location.pathname === "/" && saved !== "home") {
+      const path = ROUTES[saved] || "/";
+      navigate(path, { replace: true });
+    }
+  }, [location.pathname, ROUTES, navigate]);
+
   const goTab = useCallback(
     (key) => {
       const path = ROUTES[key] || "/";
       if (location.pathname !== path) navigate(path);
-      localStorage.setItem("ecovisa_active_tab", key); // opcional (por si quieres usarlo luego)
+      localStorage.setItem("ecovisa_active_tab", key);
     },
     [ROUTES, navigate, location.pathname]
   );
 
-  // ✅ títulos por tab
   const TAB_TITLES = useMemo(
     () => ({
       home: "Inicio",
@@ -107,19 +88,15 @@ useEffect(() => {
       quotes: "Cotizaciones",
       services: "Servicios",
       sales: "Ventas / POS",
-      gps: "GPS"
+      calendar: "Calendario"
     }),
     []
   );
 
-  // ✅ setea el title cada que cambie el tab (derivado de URL)
   useEffect(() => {
     setTitle(TAB_TITLES[tab] || "Dashboard");
   }, [tab, TAB_TITLES]);
 
-
-
-  // ✅ FIX móvil: 100vh real (no tocar)
   useEffect(() => {
     const vv = window.visualViewport;
 
@@ -143,6 +120,7 @@ useEffect(() => {
       vv?.removeEventListener("scroll", setVh);
     };
   }, []);
+
   const modules = useMemo(
     () => [
       {
@@ -162,12 +140,12 @@ useEffect(() => {
         icon: <TbTruckDelivery />
       },
       {
-        key: "gps",
-        title: "GPS",
-        desc: "Unidades · Tracking · Historial",
+        key: "calendar",
+        title: "Calendario",
+        desc: "Citas · Visitas · Eventos · Cumpleaños",
         tone: "navy",
         size: "span1",
-        icon: <TbMapPin />
+        icon: <TbCalendarMonth />
       },
       {
         key: "quotes",
@@ -207,23 +185,21 @@ useEffect(() => {
 
   return (
     <div className="app-shell">
-    <Navbar worker={worker} active={tab} onChange={goTab} onLogout={onLogout} />
-<main className={`app-main ${tab === "home" ? "app-main--home" : ""}`}>
+      <Navbar worker={worker} active={tab} onChange={goTab} onLogout={onLogout} />
+
+      <main className={`app-main ${tab === "home" ? "app-main--home" : ""}`}>
         {tab === "home" && (
           <section className="dash dash--fit">
-            <div className="dash-head dash-head--center dash-head--tight">
-              <h1 className="dash-title">Panel principal</h1>
-              <p className="dash-sub">Selecciona un módulo</p>
-            </div>
+            <div className="dash-head dash-head--center dash-head--tight"></div>
 
             <div className="mosaic mosaic--fit">
               {modules.map((m) => (
-<button
-  key={m.key}
-  className={`mTile mTile--big mTile--${m.key} ${m.tone} ${m.size}`}
-  onClick={() => goTab(m.key)}
-  type="button"
->
+                <button
+                  key={m.key}
+                  className={`mTile mTile--big mTile--${m.key} ${m.tone} ${m.size}`}
+                  onClick={() => goTab(m.key)}
+                  type="button"
+                >
                   <div className="mTile-hero">
                     <span className="mTile-ico mTile-ico--big" aria-hidden>
                       {m.icon}
@@ -244,29 +220,47 @@ useEffect(() => {
           </section>
         )}
 
-{tab === "admin" && (
-  <section className="module">
-    <div className="module-head"></div>
-    <AdminPanel currentWorker={worker} />
-  </section>
-)}
+        {tab === "admin" && (
+          <section className="module">
+            <div className="module-head"></div>
+            <AdminPanel currentWorker={worker} />
+          </section>
+        )}
 
-{tab === "inventory" && (
-  <section className="module">
-    <div className="module-head"></div>
-    <Inventory currentWorker={worker} />
-  </section>
-)}
+        {tab === "inventory" && (
+          <section className="module">
+            <div className="module-head"></div>
+            <Inventory currentWorker={worker} />
+          </section>
+        )}
 
-{tab !== "home" && tab !== "admin" && tab !== "inventory" && (
-  <section className="module">
-    <div className="module-head">
-      <h2>{tab.toUpperCase()}</h2>
-      <p>MVP: este módulo lo conectamos en el siguiente paso.</p>
-    </div>
-    <div className="placeholder">Listo para conectar: {tab}</div>
-  </section>
-)}
+        {tab === "forms" && (
+          <section className="module">
+            <div className="module-head"></div>
+            <FormsModule currentWorker={worker} />
+          </section>
+        )}
+
+        {tab === "calendar" && (
+          <section className="module">
+            <div className="module-head"></div>
+            <CalendarModule currentWorker={worker} />
+          </section>
+        )}
+
+        {tab !== "home" &&
+          tab !== "admin" &&
+          tab !== "inventory" &&
+          tab !== "forms" &&
+          tab !== "calendar" && (
+            <section className="module">
+              <div className="module-head">
+                <h2>{tab.toUpperCase()}</h2>
+                <p>MVP: este módulo lo conectamos en el siguiente paso.</p>
+              </div>
+              <div className="placeholder">Listo para conectar: {tab}</div>
+            </section>
+          )}
       </main>
     </div>
   );

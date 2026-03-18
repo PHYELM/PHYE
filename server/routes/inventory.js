@@ -1,12 +1,20 @@
 const router = require("express").Router();
 const { supabaseAdmin } = require("../supabaseAdmin");
+
+const INVENTORY_ROUTE_VERSION = "inventory-router-v2-performance-summary";
+
 console.log("🧩 LOADED inventory routes from:", __filename);
+console.log("🧩 inventory route version:", INVENTORY_ROUTE_VERSION);
 console.log("🧩 inventory routes has:", {
   ping: "/ping",
+  routeVersion: INVENTORY_ROUTE_VERSION,
   products: "/products",
   stock: "/stock",
+  stockMovements: "/stock/:productId/movements",
+  kardex: "/kardex",
   analytics: "/analytics",
-  metrics: "/metrics",        // ✅ agrega esto
+  metrics: "/metrics",
+  performanceSummary: "/performance-summary",
   activity: "/activity",
   topStock: "/top-stock",
   topIn: "/top-in",
@@ -17,7 +25,15 @@ console.log("🧩 inventory routes has:", {
 router.get("/ping", (req, res) => {
   res.json({ ok: true, route: "/api/inventory/ping" });
 });
-
+router.get("/route-version", (req, res) => {
+  res.json({
+    ok: true,
+    route: "/api/inventory/route-version",
+    version: INVENTORY_ROUTE_VERSION,
+    file: __filename,
+    ts: Date.now(),
+  });
+});
 /* =========================
    Realtime (SSE) - Inventory
    - Frontend se conecta a /api/inventory/stream
@@ -102,10 +118,16 @@ async function logActivity(payload) {
    Products
 ========================= */
 router.get("/products", async (req, res) => {
-  const { data, error } = await supabaseAdmin.from("products").select("*").order("created_at", { ascending: false });
+  const { data, error } = await supabaseAdmin
+    .from("products")
+    .select("*")
+    .eq("is_active", true)
+    .order("created_at", { ascending: false });
+
   if (error) return res.status(500).json({ error: error.message });
   res.json({ data });
 });
+
 
 router.post("/products", async (req, res) => {
   const { sku, name, unit, cost, price, stock_min, created_by } = req.body || {};
@@ -113,13 +135,20 @@ router.post("/products", async (req, res) => {
 
   const { data, error } = await supabaseAdmin
     .from("products")
-    .insert({ sku, name, unit, cost: cost ?? 0, price: price ?? 0, stock_min: stock_min ?? 0 })
+    .insert({
+      sku,
+      name,
+      unit,
+      cost: cost ?? 0,
+      price: price ?? 0,
+      stock_min: stock_min ?? 0,
+      is_active: true,
+    })
     .select("*")
     .single();
 
   if (error) return res.status(500).json({ error: error.message });
 
-  // ✅ activity
   await logActivity({
     module_key: "inventory",
     action: "PRODUCT_CREATED",
@@ -129,12 +158,68 @@ router.post("/products", async (req, res) => {
     meta: { sku: sku || "", name }
   });
 
-  // ✅ realtime push
   sseSend({ type: "PRODUCT_CREATED", product_id: data.id, ts: Date.now() });
 
   res.json({ data });
 });
+router.delete("/products/:id", async (req, res) => {
+  try {
+    const productId = req.params.id;
+    const { deleted_by } = req.body || {};
 
+    if (!productId) {
+      return res.status(400).json({ error: "product id required" });
+    }
+
+    const { data: existingProduct, error: existingError } = await supabaseAdmin
+      .from("products")
+      .select("id, name, sku, is_active")
+      .eq("id", productId)
+      .maybeSingle();
+
+    if (existingError) {
+      return res.status(500).json({ error: existingError.message });
+    }
+
+    if (!existingProduct) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    const { error: archiveError } = await supabaseAdmin
+      .from("products")
+      .update({ is_active: false })
+      .eq("id", productId);
+
+    if (archiveError) {
+      return res.status(500).json({ error: archiveError.message });
+    }
+
+    await logActivity({
+      module_key: "inventory",
+      action: "PRODUCT_DELETED",
+      actor_id: deleted_by || null,
+      entity_type: "product",
+      entity_id: productId,
+      meta: {
+        sku: existingProduct.sku || "",
+        name: existingProduct.name || "",
+      },
+    });
+
+    sseSend({
+      type: "PRODUCT_DELETED",
+      product_id: productId,
+      ts: Date.now(),
+    });
+
+    return res.json({
+      ok: true,
+      message: "Producto eliminado correctamente",
+    });
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
+  }
+});
 /* =========================
    Stock
 ========================= */
@@ -143,7 +228,143 @@ router.get("/stock", async (req, res) => {
   if (error) return res.status(500).json({ error: error.message });
   res.json({ data });
 });
+router.get("/stock/:productId/movements", async (req, res) => {
+  const { productId } = req.params;
+  const limit = Math.min(Number(req.query.limit || 50), 200);
+  const offset = Math.max(Number(req.query.offset || 0), 0);
 
+  if (!productId) {
+    return res.status(400).json({ error: "productId required" });
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from("v_inventory_kardex")
+    .select("*")
+    .eq("product_id", productId)
+    .order("created_at", { ascending: false })
+    .range(offset, offset + limit - 1);
+
+  if (error) {
+    return res.status(500).json({
+      error: error.message,
+      route: "/api/inventory/stock/:productId/movements",
+      productId,
+    });
+  }
+
+  return res.json({
+    ok: true,
+    route: "/api/inventory/stock/:productId/movements",
+    productId,
+    data: data || [],
+  });
+});
+
+/* ✅ Alias plano enriquecido para detalle visual del historial */
+router.get("/stock-movements/:productId", async (req, res) => {
+  const { productId } = req.params;
+  const limit = Math.min(Number(req.query.limit || 50), 200);
+  const offset = Math.max(Number(req.query.offset || 0), 0);
+
+  if (!productId) {
+    return res.status(400).json({ error: "productId required" });
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from("v_inventory_kardex")
+    .select("*")
+    .eq("product_id", productId)
+    .order("created_at", { ascending: false })
+    .range(offset, offset + limit - 1);
+
+  if (error) {
+    return res.status(500).json({
+      error: error.message,
+      route: "/api/inventory/stock-movements/:productId",
+      productId,
+    });
+  }
+
+  const rows = data || [];
+  const movementIds = Array.from(
+    new Set(rows.map((r) => r.movement_id).filter(Boolean))
+  );
+
+  let movementMap = new Map();
+  let workerMap = new Map();
+
+  if (movementIds.length) {
+    const { data: movementRows, error: movementErr } = await supabaseAdmin
+      .from("inventory_movements")
+      .select("id, created_by, created_at, type, reason")
+      .in("id", movementIds);
+
+    if (movementErr) {
+      return res.status(500).json({
+        error: movementErr.message,
+        route: "/api/inventory/stock-movements/:productId",
+        productId,
+      });
+    }
+
+    const createdByIds = Array.from(
+      new Set((movementRows || []).map((m) => m.created_by).filter(Boolean))
+    );
+
+    movementMap = new Map(
+      (movementRows || []).map((m) => [String(m.id), m])
+    );
+
+    if (createdByIds.length) {
+      const { data: workerRows, error: workerErr } = await supabaseAdmin
+        .from("workers")
+        .select(`
+          id,
+          username,
+          full_name,
+          profile_photo_url,
+          department:departments!workers_department_id_fkey(name)
+        `)
+        .in("id", createdByIds);
+
+      if (workerErr) {
+        return res.status(500).json({
+          error: workerErr.message,
+          route: "/api/inventory/stock-movements/:productId",
+          productId,
+        });
+      }
+
+      workerMap = new Map(
+        (workerRows || []).map((w) => [String(w.id), w])
+      );
+    }
+  }
+
+  const enriched = rows.map((row) => {
+    const movement = movementMap.get(String(row.movement_id || "")) || null;
+    const worker = workerMap.get(String(movement?.created_by || "")) || null;
+
+    return {
+      ...row,
+      actor_id: worker?.id || movement?.created_by || null,
+      actor_username: worker?.username || "",
+      actor_full_name: worker?.full_name || worker?.username || "",
+      actor_department: worker?.department?.name || "",
+      actor_profile_photo_url: worker?.profile_photo_url || "",
+      movement_reason: movement?.reason || row.reason || "",
+      movement_type: movement?.type || row.type || "",
+      movement_created_at: movement?.created_at || row.created_at || null,
+    };
+  });
+
+  return res.json({
+    ok: true,
+    route: "/api/inventory/stock-movements/:productId",
+    productId,
+    data: enriched,
+  });
+});
 /* =========================
    Movements (IN/OUT)
 ========================= */
@@ -474,6 +695,278 @@ router.get("/metrics", async (req, res) => {
   });
 });
 
+/* =========================
+   Performance Summary (Rendimientos PRO)
+   - Salud operativa
+   - Capital inmovilizado
+   - Cobertura
+   - Riesgo
+   - Top rotación / margen
+========================= */
+router.get("/performance-summary", async (req, res) => {
+  const days = Math.min(Math.max(Number(req.query.days || 30), 7), 365);
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+
+  const { data: prod, error: pErr } = await supabaseAdmin
+    .from("products")
+    .select("id, name, sku, cost, price, stock_min");
+
+  if (pErr) return res.status(500).json({ error: pErr.message });
+
+  const { data: stockRows, error: sErr } = await supabaseAdmin
+    .from("v_product_stock")
+    .select("product_id, name, sku, stock, stock_min, is_low_stock");
+
+  if (sErr) return res.status(500).json({ error: sErr.message });
+
+  const { data: kardexRows, error: kErr } = await supabaseAdmin
+    .from("v_inventory_kardex")
+    .select("type, product_id, sku, product_name, qty, unit_cost, created_at")
+    .gte("created_at", since);
+
+  if (kErr) return res.status(500).json({ error: kErr.message });
+
+  const prodById = new Map();
+  (prod || []).forEach((p) => {
+    prodById.set(String(p.id), {
+      id: p.id,
+      name: p.name || "",
+      sku: p.sku || "",
+      cost: Number(p.cost || 0),
+      price: Number(p.price || 0),
+      stock_min: Number(p.stock_min || 0),
+    });
+  });
+
+  const perfById = new Map();
+
+  for (const row of kardexRows || []) {
+    const pid = String(row.product_id || "");
+    const info = prodById.get(pid);
+
+    const prev = perfById.get(pid) || {
+      product_id: row.product_id,
+      sku: row.sku || info?.sku || "",
+      name: row.product_name || info?.name || "",
+      qty_in: 0,
+      qty_out: 0,
+      value_in: 0,
+      value_out: 0,
+      last_movement_at: row.created_at || null,
+      profit_est: 0,
+      margin_pct: 0,
+      revenue_est: 0,
+      cogs_est: 0,
+    };
+
+    const qty = Number(row.qty || 0);
+    const unitCost = Number(row.unit_cost || 0);
+    const fallbackCost = Number(info?.cost || 0);
+    const price = Number(info?.price || 0);
+    const costBase = unitCost > 0 ? unitCost : fallbackCost;
+
+    if (row.type === "IN") {
+      prev.qty_in += qty;
+      prev.value_in += qty * costBase;
+    }
+
+    if (row.type === "OUT") {
+      prev.qty_out += qty;
+      prev.value_out += qty * costBase;
+      prev.revenue_est += qty * price;
+      prev.cogs_est += qty * costBase;
+      prev.profit_est += qty * Math.max(0, price - costBase);
+    }
+
+    if (!prev.last_movement_at || new Date(row.created_at) > new Date(prev.last_movement_at)) {
+      prev.last_movement_at = row.created_at;
+    }
+
+    prev.margin_pct =
+      prev.revenue_est > 0
+        ? ((prev.revenue_est - prev.cogs_est) / prev.revenue_est) * 100
+        : 0;
+
+    perfById.set(pid, prev);
+  }
+
+  let capitalImmobilized = 0;
+  let avgCoverageAcc = 0;
+  let avgCoverageCount = 0;
+
+  const criticalProducts = [];
+  const deadStockProducts = [];
+  const overstockProducts = [];
+  const lowCoverageProducts = [];
+  const topRotationProducts = [];
+  const productRows = [];
+
+  let healthyCount = 0;
+  let criticalCount = 0;
+  let deadCount = 0;
+  let overstockCount = 0;
+
+  for (const stockRow of stockRows || []) {
+    const pid = String(stockRow.product_id || "");
+    const info = prodById.get(pid) || {};
+    const perf = perfById.get(pid) || {
+      product_id: stockRow.product_id,
+      sku: stockRow.sku || info?.sku || "",
+      name: stockRow.name || info?.name || "",
+      qty_in: 0,
+      qty_out: 0,
+      value_in: 0,
+      value_out: 0,
+      last_movement_at: null,
+      profit_est: 0,
+      margin_pct: 0,
+      revenue_est: 0,
+      cogs_est: 0,
+    };
+
+    const stock = Number(stockRow.stock || 0);
+    const stockMin = Number(stockRow.stock_min ?? info?.stock_min ?? 0);
+    const cost = Number(info?.cost || 0);
+    const avgDailyOut = Number(perf.qty_out || 0) / days;
+    const coverageDays = avgDailyOut > 0 ? stock / avgDailyOut : null;
+    const capital = stock * cost;
+    const rotationScore = stock > 0 ? Number(perf.qty_out || 0) / stock : Number(perf.qty_out || 0);
+
+    const isCritical = Boolean(stockRow.is_low_stock) || stock <= stockMin;
+    const isDead = Number(perf.qty_in || 0) === 0 && Number(perf.qty_out || 0) === 0;
+    const isOverstock =
+      (coverageDays !== null && coverageDays > 45) ||
+      (coverageDays === null && stock > Math.max(stockMin, 0) * 2 && stock > 0);
+    const isLowCoverage = coverageDays !== null && coverageDays <= 7;
+
+    if (coverageDays !== null && Number.isFinite(coverageDays)) {
+      avgCoverageAcc += coverageDays;
+      avgCoverageCount += 1;
+    }
+
+    if (isDead) {
+      capitalImmobilized += capital;
+      deadStockProducts.push({
+        product_id: stockRow.product_id,
+        sku: stockRow.sku || info?.sku || "",
+        name: stockRow.name || info?.name || "",
+        stock,
+        stock_min: stockMin,
+        capital_immobilized: capital,
+        last_movement_at: perf.last_movement_at,
+      });
+    }
+
+    if (isCritical) {
+      criticalProducts.push({
+        product_id: stockRow.product_id,
+        sku: stockRow.sku || info?.sku || "",
+        name: stockRow.name || info?.name || "",
+        stock,
+        stock_min: stockMin,
+        coverage_days: coverageDays,
+      });
+    }
+
+    if (isOverstock) {
+      overstockProducts.push({
+        product_id: stockRow.product_id,
+        sku: stockRow.sku || info?.sku || "",
+        name: stockRow.name || info?.name || "",
+        stock,
+        stock_min: stockMin,
+        coverage_days: coverageDays,
+        capital_immobilized: capital,
+      });
+    }
+
+    if (isLowCoverage) {
+      lowCoverageProducts.push({
+        product_id: stockRow.product_id,
+        sku: stockRow.sku || info?.sku || "",
+        name: stockRow.name || info?.name || "",
+        stock,
+        stock_min: stockMin,
+        coverage_days: coverageDays,
+      });
+    }
+
+    topRotationProducts.push({
+      product_id: stockRow.product_id,
+      sku: stockRow.sku || info?.sku || "",
+      name: stockRow.name || info?.name || "",
+      stock,
+      qty_out: Number(perf.qty_out || 0),
+      rotation_score: rotationScore,
+      coverage_days: coverageDays,
+    });
+
+    productRows.push({
+      product_id: stockRow.product_id,
+      sku: stockRow.sku || info?.sku || "",
+      name: stockRow.name || info?.name || "",
+      stock,
+      stock_min: stockMin,
+      qty_in: Number(perf.qty_in || 0),
+      qty_out: Number(perf.qty_out || 0),
+      value_in: Number(perf.value_in || 0),
+      value_out: Number(perf.value_out || 0),
+      profit_est: Number(perf.profit_est || 0),
+      margin_pct: Number(perf.margin_pct || 0),
+      coverage_days: coverageDays,
+      capital_immobilized: capital,
+      rotation_score: rotationScore,
+      status: isCritical ? "Crítico" : isDead ? "Sin movimiento" : isOverstock ? "Sobrestock" : "Saludable",
+    });
+
+    if (isCritical) {
+      criticalCount += 1;
+    } else if (isDead) {
+      deadCount += 1;
+    } else if (isOverstock) {
+      overstockCount += 1;
+    } else {
+      healthyCount += 1;
+    }
+  }
+
+  const topMarginProducts = Array.from(perfById.values())
+    .filter((x) => Number(x.qty_out || 0) > 0)
+    .sort((a, b) => (b.margin_pct - a.margin_pct) || (b.profit_est - a.profit_est))
+    .slice(0, 10);
+
+  criticalProducts.sort((a, b) => Number(a.stock || 0) - Number(b.stock || 0));
+  deadStockProducts.sort((a, b) => Number(b.capital_immobilized || 0) - Number(a.capital_immobilized || 0));
+  overstockProducts.sort((a, b) => Number(b.capital_immobilized || 0) - Number(a.capital_immobilized || 0));
+  lowCoverageProducts.sort((a, b) => Number(a.coverage_days || 999999) - Number(b.coverage_days || 999999));
+  topRotationProducts.sort((a, b) => Number(b.rotation_score || 0) - Number(a.rotation_score || 0));
+  productRows.sort((a, b) => Number(b.rotation_score || 0) - Number(a.rotation_score || 0));
+
+  res.json({
+    data: {
+      days,
+      capital_immobilized: capitalImmobilized,
+      avg_coverage_days: avgCoverageCount ? (avgCoverageAcc / avgCoverageCount) : 0,
+      critical_count: criticalProducts.length,
+      dead_count: deadStockProducts.length,
+      overstock_count: overstockProducts.length,
+      low_coverage_count: lowCoverageProducts.length,
+      status_buckets: {
+        healthy: healthyCount,
+        critical: criticalCount,
+        dead: deadCount,
+        overstock: overstockCount,
+      },
+      critical_products: criticalProducts.slice(0, 10),
+      dead_stock_products: deadStockProducts.slice(0, 10),
+      overstock_products: overstockProducts.slice(0, 10),
+      low_coverage_products: lowCoverageProducts.slice(0, 10),
+      top_rotation_products: topRotationProducts.slice(0, 10),
+      top_margin_products: topMarginProducts,
+      product_rows: productRows.slice(0, 50),
+    },
+  });
+});
 
 /* =========================
    TOP endpoints (dashboard pro)

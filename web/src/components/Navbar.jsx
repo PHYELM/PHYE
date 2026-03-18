@@ -8,7 +8,7 @@ import {
   TbClipboardText,
   TbBox,
   TbTruckDelivery,
-  TbMapPin,
+  TbCalendarMonth,
   TbCurrencyDollar,
   TbFileInvoice,
   TbUserCircle
@@ -23,7 +23,7 @@ const ICONS = {
   forms: <TbClipboardText />,
   inventory: <TbBox />,
   services: <TbTruckDelivery />,
-  gps: <TbMapPin />,
+  calendar: <TbCalendarMonth />,
   sales: <TbCurrencyDollar />,
   quotes: <TbFileInvoice />
 };
@@ -33,7 +33,6 @@ const [mobileOpen, setMobileOpen] = useState(false);
 const navigate = useNavigate();
 const location = useLocation();
 
-// ✅ Mapa de rutas reales (ajústalo a tus paths reales si cambian)
 const ROUTES = useMemo(() => ({
   home: "/",
   admin: "/admin",
@@ -42,7 +41,7 @@ const ROUTES = useMemo(() => ({
   quotes: "/quotes",
   services: "/services",
   sales: "/sales",
-  gps: "/gps"
+  calendar: "/calendar"
 }), []);
 
 // ✅ Deducir el tab activo desde la URL (fix F5 / refresh)
@@ -133,7 +132,7 @@ const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
       { key: "quotes", label: "Cotizaciones" },
       { key: "services", label: "Servicios" },
       { key: "sales", label: "Ventas" },
-      { key: "gps", label: "GPS" }
+      { key: "calendar", label: "Calendario" }
     ],
     []
   );

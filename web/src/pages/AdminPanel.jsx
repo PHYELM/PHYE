@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Swal from "sweetalert2";
 import { apiFetch } from "../api.js";
 import "./adminPanelPro.css";
@@ -441,9 +442,9 @@ const [levelPage, setLevelPage] = useState(1);
   const [lpLevelName, setLpLevelName] = useState("");
   const [lpAuthority, setLpAuthority] = useState(1);
 
-  const [lpDeptId, setLpDeptId] = useState("");
+const [lpDeptId, setLpDeptId] = useState("");
   const [lpModules, setLpModules] = useState(() => new Set(MODULES.map((m) => m.key)));
-
+  const [lpCanManageCalendar, setLpCanManageCalendar] = useState(false);
   // menus 3 puntitos
   const [deptMenuOpenId, setDeptMenuOpenId] = useState(null);
   const [levelMenuOpenId, setLevelMenuOpenId] = useState(null);
@@ -735,7 +736,7 @@ const pagedWorkers = useMemo(() => {
   /* =========================
     Levels + Policies (unificado)
   ========================= */
-  function openLevelPolicyModalCreate() {
+function openLevelPolicyModalCreate() {
     if (departments.length === 0) {
       Swal.fire({
         icon: "warning",
@@ -752,13 +753,14 @@ const pagedWorkers = useMemo(() => {
     setLpLevelId("");
     setLpLevelName("");
     setLpAuthority(1);
+    setLpCanManageCalendar(false);
 
     setLpDeptId(d0);
     setLpModules(new Set(MODULES.map((m) => m.key)));
     setLevelMenuOpenId(null);
   }
 
-  function openLevelPolicyModalEdit(levelObj) {
+function openLevelPolicyModalEdit(levelObj) {
     if (departments.length === 0) {
       Swal.fire({
         icon: "warning",
@@ -780,6 +782,7 @@ const pagedWorkers = useMemo(() => {
     setLpLevelId(levelObj.id);
     setLpLevelName(levelObj.name || "");
     setLpAuthority(Number(authority) || 1);
+    setLpCanManageCalendar(Boolean(levelObj.can_manage_calendar));
 
     setLpDeptId(d0);
     if (Array.isArray(saved) && saved.length > 0) setLpModules(new Set(saved));
@@ -787,7 +790,6 @@ const pagedWorkers = useMemo(() => {
 
     setLevelMenuOpenId(null);
   }
-
   function syncLpPolicy(nextDeptId, nextLevelId) {
     const key = `${nextDeptId}|${nextLevelId}`;
     const saved = policiesMap.get(key);
@@ -816,10 +818,10 @@ const pagedWorkers = useMemo(() => {
       let levelId = lpLevelId;
 
       // 1) crear o editar puesto
-      if (lpIsNew) {
+if (lpIsNew) {
         const res = await apiFetch("/api/admin/levels", {
           method: "POST",
-          body: JSON.stringify({ name, authority }),
+          body: JSON.stringify({ name, authority, can_manage_calendar: lpCanManageCalendar }),
         });
         levelId = res?.data?.id || res?.id || levelId;
 
@@ -833,11 +835,11 @@ const pagedWorkers = useMemo(() => {
         if (!levelId) {
           throw new Error("No se pudo obtener el id del puesto creado. Ajusta tu API para retornar {data:{id}}.");
         }
-      } else {
+} else {
         if (!levelId) throw new Error("Falta el id del puesto.");
         await apiFetch(`/api/admin/levels/${levelId}`, {
           method: "PUT",
-          body: JSON.stringify({ name, authority }),
+          body: JSON.stringify({ name, authority, can_manage_calendar: lpCanManageCalendar }),
         });
       }
 
@@ -1910,6 +1912,40 @@ onChange={(e) => setLpLevelName(titleCaseLive(e.target.value))}
   <option value={5}>Autoridad 5</option>
 </ProSelect>
             </div>  
+          </div>
+
+{/* Toggle: puede gestionar calendario */}
+          <div style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "12px 16px", borderRadius: 10,
+            border: lpCanManageCalendar ? "1px solid rgba(26,115,232,0.3)" : "1px solid rgba(0,0,0,0.08)",
+            background: lpCanManageCalendar ? "rgba(26,115,232,0.06)" : "#f8f9fa",
+            marginBottom: 12, cursor: "pointer", transition: "all 140ms",
+          }}
+            onClick={() => setLpCanManageCalendar((v) => !v)}
+          >
+            <div>
+              <div style={{ fontWeight: 600, fontSize: 14, color: "var(--ap-text, #202124)" }}>
+                📅 Puede crear/editar/eliminar eventos del calendario
+              </div>
+              <div style={{ fontSize: 12, color: "#5f6368", marginTop: 2 }}>
+                Si está desactivado, solo puede ver eventos. Dirección siempre puede gestionar.
+              </div>
+            </div>
+            {/* Toggle visual */}
+            <div style={{
+              width: 44, height: 24, borderRadius: 12, flexShrink: 0,
+              background: lpCanManageCalendar ? "#1a73e8" : "#dadce0",
+              position: "relative", transition: "background 200ms",
+            }}>
+              <div style={{
+                width: 18, height: 18, borderRadius: "50%", background: "#fff",
+                position: "absolute", top: 3,
+                left: lpCanManageCalendar ? 23 : 3,
+                transition: "left 200ms",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+              }} />
+            </div>
           </div>
 
           {/* ✅ Permisos más legibles + menos blanco */}

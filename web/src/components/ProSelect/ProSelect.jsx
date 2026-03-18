@@ -7,10 +7,15 @@ function getOptionsFromChildren(children) {
   React.Children.forEach(children, (ch) => {
     if (!React.isValidElement(ch)) return;
     if (String(ch.type).toLowerCase() !== "option") return;
+
     out.push({
       value: ch.props.value ?? "",
-      label: ch.props.children ?? "",
+      label:
+        typeof ch.props.children === "string" || typeof ch.props.children === "number"
+          ? ch.props.children
+          : ch.props.label ?? "",
       disabled: !!ch.props.disabled,
+      icon: ch.props.icon ?? null,
     });
   });
   return out;
@@ -25,9 +30,15 @@ export default function ProSelect({
   disabled,
   ariaLabel,
   placeholder = "Seleccionar...",
-  searchable = true, // ✅ type-to-search
+  searchable = true,
+  options: optionsProp,
+  renderValue,
+  renderOption,
 }) {
-  const options = useMemo(() => getOptionsFromChildren(children), [children]);
+  const options = useMemo(() => {
+    if (Array.isArray(optionsProp) && optionsProp.length) return optionsProp;
+    return getOptionsFromChildren(children);
+  }, [children, optionsProp]);
 
   const btnRef = useRef(null);
   const menuRef = useRef(null);
@@ -43,7 +54,8 @@ export default function ProSelect({
     return options.findIndex((o) => String(o.value) === String(value));
   }, [options, value]);
 
-  const selectedLabel = selectedIndex >= 0 ? options[selectedIndex]?.label : "";
+  const selectedOption = selectedIndex >= 0 ? options[selectedIndex] : null;
+  const selectedLabel = selectedOption?.label || "";
 
   const closeMenu = useCallback(() => {
     setOpen(false);
@@ -265,7 +277,11 @@ export default function ProSelect({
         disabled={disabled}
       >
         <span className={`proSelectValue ${selectedLabel ? "" : "isPlaceholder"}`}>
-          {selectedLabel || placeholder}
+          {selectedOption
+            ? renderValue
+              ? renderValue(selectedOption)
+              : selectedLabel
+            : placeholder}
         </span>
         <span className="proSelectArrow" aria-hidden="true">
           ▾
@@ -301,11 +317,17 @@ export default function ProSelect({
                       aria-selected={isSel ? "true" : "false"}
                       title={String(opt.label)}
                     >
-                      <span className="proSelectItemLabel">{opt.label}</span>
-                      {isSel ? (
-                        <span className="proSelectCheck">✓</span>
+                      {renderOption ? (
+                        renderOption(opt, { selected: isSel, active: isActive })
                       ) : (
-                        <span className="proSelectCheck" />
+                        <>
+                          <span className="proSelectItemLabel">{opt.label}</span>
+                          {isSel ? (
+                            <span className="proSelectCheck">✓</span>
+                          ) : (
+                            <span className="proSelectCheck" />
+                          )}
+                        </>
                       )}
                     </button>
                   );

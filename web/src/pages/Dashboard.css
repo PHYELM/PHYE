@@ -117,7 +117,7 @@ html, body, #root {
   grid-template-rows: repeat(4, minmax(0, 1fr));
   grid-template-areas:
     "inventory inventory services  services"
-    "gps       gps       quotes    quotes"
+    "calendar  calendar  quotes    quotes"
     "sales     sales     forms     forms"
     "admin     admin     admin     admin";
   align-content: stretch;
@@ -126,7 +126,7 @@ html, body, #root {
 /* áreas por key */
 .mTile--inventory{ grid-area: inventory; }
 .mTile--services{  grid-area: services; }
-.mTile--gps{       grid-area: gps; }
+.mTile--calendar{  grid-area: calendar; }
 .mTile--quotes{    grid-area: quotes; }
 .mTile--sales{     grid-area: sales; }
 .mTile--forms{     grid-area: forms; }
@@ -151,7 +151,7 @@ html, body, #root {
     grid-template-areas:
       "inventory inventory"
       "services  services"
-      "gps       quotes"
+      "calendar  quotes"
       "sales     forms"
       "admin     admin";
   }

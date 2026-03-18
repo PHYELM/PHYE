@@ -1,6 +1,6 @@
 export const API_BASE =
   process.env.REACT_APP_API_URL ||
-  (window.location.hostname === "localhost" ? "http://localhost:3001" : ""); // ✅ prod = mismo dominio
+  (window.location.hostname === "localhost" ? "http://localhost:3001" : "");
 
 export async function apiFetch(path, options = {}) {
   const isFormData =
@@ -18,7 +18,6 @@ export async function apiFetch(path, options = {}) {
     let p = String(path || "");
     if (!p.startsWith("/")) p = "/" + p;
 
-    // ✅ evita /api/api cuando el base ya trae /api
     if (base.endsWith("/api") && p.startsWith("/api/")) {
       p = p.replace(/^\/api/, "");
     }
@@ -51,4 +50,51 @@ export async function apiFetch(path, options = {}) {
   }
 
   return data;
+}
+
+export async function apiDownload(path, fallbackFileName = "archivo") {
+  const url = (() => {
+    if (/^https?:\/\//i.test(path)) return path;
+
+    const base = String(API_BASE || "").replace(/\/+$/, "");
+    let p = String(path || "");
+    if (!p.startsWith("/")) p = "/" + p;
+
+    if (base.endsWith("/api") && p.startsWith("/api/")) {
+      p = p.replace(/^\/api/, "");
+    }
+
+    return `${base}${p}`;
+  })();
+
+  console.log("⬇️ apiDownload ->", url);
+
+  const res = await fetch(url);
+
+  if (!res.ok) {
+    let message = `HTTP ${res.status}`;
+    try {
+      const data = await res.json();
+      message = data?.error || message;
+    } catch (_) {}
+    throw new Error(message);
+  }
+
+  const blob = await res.blob();
+
+  const disposition = res.headers.get("content-disposition") || "";
+  const fileNameMatch = disposition.match(/filename="?([^"]+)"?/i);
+  const fileName = fileNameMatch?.[1] || fallbackFileName;
+
+  const objectUrl = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = objectUrl;
+  anchor.download = fileName;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+
+  setTimeout(() => {
+    URL.revokeObjectURL(objectUrl);
+  }, 2000);
 }
