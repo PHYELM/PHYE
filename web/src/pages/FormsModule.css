@@ -925,10 +925,11 @@ select.forms-select{
 .forms-list--grid{
   flex: 1;
   min-height: 0;
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 18px;
   align-content: start;
+  align-items: flex-start;
 }
 
 .forms-list--grid > .forms-empty-pro{
@@ -2093,11 +2094,15 @@ select.forms-select{
 .form-card--dashboardButton{
   position:relative;
   border:1px solid #dfe7f0;
-  border-radius:28px;
+  border-radius:20px;
   background:#ffffff;
   box-shadow:0 12px 30px rgba(15,23,42,.06);
   overflow:visible;
-  min-height:310px;
+  min-height:0;
+  height:auto;
+  width:260px;
+  min-width:260px;
+  max-width:260px;
   padding:0;
   cursor:pointer;
   text-align:left;
@@ -2111,29 +2116,29 @@ select.forms-select{
 }
 
 .form-card__heroMini{
-  height:86px;
+  height:80px;
+  min-height:80px;
   width:100%;
-  border-radius:28px 28px 0 0;
+  border-radius:20px 20px 0 0;
+  flex-shrink:0;
 }
-
 .form-card__floatingIcon{
   position:absolute;
   top:10px;
   left:50%;
   transform:translateX(-50%);
-  width:94px;
-  height:94px;
+  width:60px;
+  height:60px;
   border-radius:999px;
   background:#0f172a;
   color:#ffffff;
   display:grid;
   place-items:center;
-  font-size:40px;
-  box-shadow:0 18px 34px rgba(15,23,42,.18);
-  border:6px solid #ffffff;
+  font-size:30px;
+  box-shadow:0 10px 22px rgba(15,23,42,.18);
+  border:4px solid #ffffff;
   z-index:3;
 }
-
 .form-card__menuWrap{
   position:absolute;
   top:14px;
@@ -2166,38 +2171,91 @@ select.forms-select{
 }
 .form-card__menu{
   position:absolute;
-  top:48px;
+  top:52px;
   right:0;
-  width:220px;
-  border:1px solid #dfe7f0;
+  width:210px;
+  border:1px solid rgba(15,23,42,0.08);
   border-radius:18px;
   background:#ffffff;
-  box-shadow:0 18px 40px rgba(15,23,42,.16);
+  box-shadow:
+    0 4px 6px rgba(15,23,42,0.04),
+    0 20px 48px rgba(15,23,42,0.18);
   overflow:hidden;
+  padding:6px;
+  display:flex;
+  flex-direction:column;
+  gap:2px;
 }
 
 .form-card__menuItem{
   width:100%;
-  min-height:46px;
-  padding:0 14px;
+  min-height:42px;
+  padding:0 10px;
   border:0;
-  background:#ffffff;
+  border-radius:12px;
+  background:transparent;
   color:#0f172a;
   display:flex;
   align-items:center;
   gap:10px;
-  font-size:14px;
-  font-weight:800;
+  font-size:13px;
+  font-weight:700;
   cursor:pointer;
   text-align:left;
+  transition:background 130ms ease;
 }
 
 .form-card__menuItem:hover{
-  background:#f8fbff;
+  background:#f1f5f9;
+}
+
+.form-card__menuItem--danger{
+  color:#dc2626;
+}
+
+.form-card__menuItem--danger:hover{
+  background:#fef2f2;
+}
+
+.form-card__menuIcon{
+  width:30px;
+  height:30px;
+  min-width:30px;
+  border-radius:9px;
+  display:grid;
+  place-items:center;
+  font-size:15px;
+  flex-shrink:0;
+}
+
+.form-card__menuIcon--edit{
+  background:#eff6ff;
+  color:#2563eb;
+}
+
+.form-card__menuIcon--dupe{
+  background:#f0fdf4;
+  color:#16a34a;
+}
+
+.form-card__menuIcon--del{
+  background:#fef2f2;
+  color:#dc2626;
+}
+
+.form-card__menuIcon--info{
+  background:#faf5ff;
+  color:#7c3aed;
+}
+
+.form-card__menuDivider{
+  height:1px;
+  background:#f1f5f9;
+  margin:2px 0;
 }
 
 .form-card__content{
-  padding:72px 18px 18px;
+  padding:42px 16px 18px;
   display:flex;
   flex-direction:column;
   align-items:center;
@@ -2208,15 +2266,18 @@ select.forms-select{
   margin:0;
   width:100%;
   max-width:320px;
-  font-size:21px;
-  line-height:1.12;
+  font-size:16px;
+  line-height:1.25;
   font-weight:900;
   color:#0f172a;
   text-align:center;
   white-space:normal;
   word-break:break-word;
   overflow-wrap:anywhere;
+  overflow:visible;
+  text-overflow:unset;
   text-wrap:pretty;
+  letter-spacing:-0.02em;
 }
 .form-card__dashboardMeta{
   display:flex;
@@ -3277,4 +3338,251 @@ body.forms-filePreview-open .frt-respondModal{
 .forms-exportIcon--excel:hover{
   background:#dcfce7;
   border-color:#bbf7d0;
+}
+/* =========================================================
+   FORMS CARDS - SCROLL HORIZONTAL COMPACTO EN MÓVIL
+========================================================= */
+@media (max-width: 720px){
+
+  /* Convierte el grid en fila deslizable */
+  .forms-list--grid{
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    gap: 12px !important;
+    padding-bottom: 10px !important;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    align-items: stretch;
+  }
+
+  .forms-list--grid::-webkit-scrollbar{
+    display: none;
+  }
+
+  /* Cada card: ancho fijo compacto */
+  .forms-list--grid > .form-card--dashboardButton{
+    flex: 0 0 160px !important;
+    min-width: 160px !important;
+    max-width: 160px !important;
+    min-height: 200px !important;
+    scroll-snap-align: start;
+    border-radius: 22px;
+  }
+
+  /* Hero mini más pequeño */
+  .forms-list--grid > .form-card--dashboardButton .form-card__heroMini{
+    height: 60px !important;
+    border-radius: 22px 22px 0 0 !important;
+  }
+
+  /* Ícono flotante más pequeño */
+  .forms-list--grid > .form-card--dashboardButton .form-card__floatingIcon{
+    width: 62px !important;
+    height: 62px !important;
+    font-size: 26px !important;
+    top: 4px !important;
+    border-width: 4px !important;
+  }
+
+  /* Contenido: solo icono + título + 3 puntos */
+  .forms-list--grid > .form-card--dashboardButton .form-card__content{
+    padding: 46px 10px 12px !important;
+    gap: 6px !important;
+  }
+
+  /* Título compacto */
+  .forms-list--grid > .form-card--dashboardButton .form-card__dashboardTitle{
+    font-size: 13px !important;
+    line-height: 1.2 !important;
+    max-width: 100% !important;
+  }
+
+  /* Oculta meta (campos, creador, chips) — solo título e ícono */
+  .forms-list--grid > .form-card--dashboardButton .form-card__dashboardMeta,
+  .forms-list--grid > .form-card--dashboardButton .form-card__chips--center{
+    display: none !important;
+  }
+
+  /* Botón 3 puntos reposicionado para card pequeña */
+  .forms-list--grid > .form-card--dashboardButton .form-card__menuWrap{
+    top: 8px !important;
+    right: 8px !important;
+  }
+
+  .forms-list--grid > .form-card--dashboardButton .form-card__menuBtn{
+    width: 34px !important;
+    height: 34px !important;
+    border-radius: 10px !important;
+  }
+
+  /* El empty state ocupa todo el ancho */
+  .forms-list--grid > .forms-empty-pro{
+    flex: 0 0 calc(100vw - 40px) !important;
+    min-width: calc(100vw - 40px) !important;
+  }
+}
+/* =========================================================
+   FORM BUILDER - RESPONSIVE MOBILE
+========================================================= */
+@media (max-width: 760px){
+
+  /* Builder workspace: evita desbordamiento horizontal */
+  .builder-jf-workspace{
+    overflow-x: hidden !important;
+    padding: 10px !important;
+  }
+
+  .builder-jf-stage{
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .builder-jf-page{
+    min-width: 100% !important;
+    width: 100% !important;
+    border-radius: 16px !important;
+  }
+
+  /* Canvas area */
+  .forms-canvas-wrap{
+    overflow-x: auto;
+    padding: 10px;
+  }
+
+  .forms-canvas-page{
+    min-width: 100% !important;
+    width: 100% !important;
+  }
+
+  /* Top card del builder: apila verticalmente */
+  .builder-jf-topcard{
+    padding: 14px !important;
+  }
+
+  .builder-jf-titleRow{
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .builder-jf-titleInput{
+    font-size: 24px !important;
+  }
+
+  .builder-jf-toolbarCompact{
+    grid-template-columns: 1fr !important;
+    gap: 10px;
+  }
+
+  /* Rail del botón + */
+  .builder-jf-addRail{
+    position: fixed;
+    bottom: 20px;
+    right: 16px;
+    top: auto;
+    z-index: 999;
+  }
+
+  .builder-jf-addBtn{
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    box-shadow: 0 8px 24px rgba(37,99,235,0.35);
+  }
+
+  .builder-jf-addMenu{
+    bottom: 66px;
+    top: auto;
+    right: 0;
+    width: min(280px, calc(100vw - 32px));
+  }
+
+  /* Config sidebar: pasa a abajo en mobile */
+  .forms-builder-clean{
+    grid-template-columns: 1fr !important;
+    gap: 14px;
+  }
+
+  .forms-builder-clean__config{
+    order: 2;
+  }
+
+  .forms-builder-clean__main{
+    order: 1;
+  }
+
+/* Shell del builder: altura auto, centrado perfecto */
+  .forms-shell {
+    height: auto !important;
+    min-height: unset !important;
+    overflow-x: hidden !important;
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    margin: 0 !important;
+  }
+
+  /* Centrado simétrico del builder */
+  .gf-builder-layout--pro {
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+    max-width: 100% !important;
+  }
+}
+
+/* =========================================================
+   FORM CARD - DEPT CIRCLES (nuevos)
+========================================================= */
+.form-card__deptCircles{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+  width: 100%;
+}
+.form-card__deptCircle{
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  max-width: 36px;
+  flex: 0 0 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(255,255,255,0.6);
+  box-shadow: 0 4px 10px rgba(15,23,42,0.12);
+  transition: transform 160ms ease;
+  overflow: hidden;
+}
+
+.form-card__deptCircle:hover{
+  transform: scale(1.12);
+}
+
+/* En mobile scroll horizontal de cards: oculta meta pero mantiene círculos */
+@media (max-width: 720px){
+  .forms-list--grid > .form-card--dashboardButton .form-card__deptCircles{
+    gap: 6px !important;
+  }
+
+  .forms-list--grid > .form-card--dashboardButton .form-card__deptCircle{
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    font-size: 14px !important;
+  }
 }

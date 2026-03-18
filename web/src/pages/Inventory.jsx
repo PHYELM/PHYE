@@ -644,15 +644,14 @@ const hasPiePair =
   pieB !== undefined &&
   (Number(pieA || 0) > 0 || Number(pieB || 0) > 0);
 
-  const renderEmpty = () => (
+const renderEmpty = () => (
     <div className="invCardBody">
-      <div style={{ minHeight: height, height }}>
-        <InventoryEmptyState
-          icon={<TbChartBar />}
-          title={emptyTitle}
-          subtitle={emptySubtitle}
-        />
-      </div>
+      <InventoryEmptyState
+        compact
+        icon={<TbChartBar />}
+        title={emptyTitle}
+        subtitle={emptySubtitle}
+      />
     </div>
   );
 

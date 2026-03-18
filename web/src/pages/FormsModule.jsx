@@ -1015,21 +1015,168 @@ const payload = {
     setOpenCardMenuId(null);
     navigate(`/forms/${targetFormId}`);
   }
-  function showFormInfo(form) {
-    const departments = (form.affected_departments || []).map((dep) => dep.name).join(", ") || "—";
+function showFormInfo(form) {
+    const createdAt = form.created_at
+      ? new Date(form.created_at).toLocaleString("es-MX", {
+          day: "2-digit", month: "short", year: "numeric",
+          hour: "2-digit", minute: "2-digit",
+        })
+      : "—";
+
+    const creator = form.creator;
+    const photoUrl = creator?.profile_photo_url || "";
+// mismo cálculo que la card: primer depto respondedor o color del form
+    const rawResponderDepts = (form.responder_departments || [])
+      .map((item) => item.department || item)
+      .filter(Boolean);
+    const formColor = rawResponderDepts[0]?.color || form.color || "#2563eb";
+
+    // color claro derivado del color del form para el hero
+    const heroGradient = `linear-gradient(135deg, ${formColor}22 0%, ${formColor}11 100%)`;
+    const heroBorder = `1px solid ${formColor}33`;
+    // SVG inline por key de icono (Tabler style)
+// Claves exactas de ICON_OPTIONS en forms.constants
+    const ICON_SVG = {
+      clipboard: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2h6a1 1 0 0 1 1 1v1H8V3a1 1 0 0 1 1-1z"/><path d="M4 5h16v16a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5z"/><path d="M9 12h6M9 16h6"/></svg>`,
+      file: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`,
+      shield: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>`,
+      truck: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11v14H5z"/><rect x="14" y="3" width="7" height="11" rx="1"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>`,
+      users: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+      calendar: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
+      check: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>`,
+      camera: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`,
+      package: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>`,
+      notes: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/><line x1="9" y1="9" x2="10" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>`,
+      // fallback
+      building: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="9" y1="22" x2="9" y2="12"/><line x1="15" y1="22" x2="15" y2="12"/><rect x="9" y="7" width="2" height="2"/><rect x="13" y="7" width="2" height="2"/></svg>`,
+    };
+
+    const getIconSvg = (key) => ICON_SVG[key] || ICON_SVG.building;
+
+    const avatarHtml = photoUrl
+      ? `<img src="${photoUrl}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid #e2e8f0;flex-shrink:0;" onerror="this.style.display='none'" />`
+      : `<div style="width:44px;height:44px;border-radius:50%;background:#e2e8f0;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#64748b;">${ICON_SVG.users}</div>`;
+
+    const rawResponders = form.responder_departments || [];
+    const responderDepts = rawResponders.map((item) => item.department || item).filter(Boolean);
+
+    const rawEditors = form.editor_rules || [];
+    const editorDeptsMap = new Map();
+    rawEditors.forEach((rule) => {
+      const dep = rule.department || null;
+      if (dep?.id) editorDeptsMap.set(dep.id, dep);
+    });
+    const editorDepts = [...editorDeptsMap.values()];
+
+    function deptRowHtml(dep) {
+      const bg = dep.color || "#334155";
+      const hex = bg.replace("#","");
+      let r=0,g=0,b=0;
+      if(hex.length===6){r=parseInt(hex.slice(0,2),16);g=parseInt(hex.slice(2,4),16);b=parseInt(hex.slice(4,6),16);}
+      const lum=(0.2126*r+0.7152*g+0.0722*b)/255;
+      const fg=lum>0.55?"#0f172a":"#ffffff";
+
+      return `
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:12px;background:#f8fafc;border:1px solid #e9eef5;">
+          <div style="
+            width:30px;height:30px;min-width:30px;
+            border-radius:50%;
+            background:${bg};
+            color:${fg};
+            display:flex;align-items:center;justify-content:center;
+            box-shadow:0 2px 6px rgba(0,0,0,0.14);
+            flex-shrink:0;
+          ">${getIconSvg(dep.icon)}</div>
+          <span style="font-size:13px;font-weight:700;color:#0f172a;">${dep.name || "—"}</span>
+        </div>`;
+    }
+
+    const responderHtml = responderDepts.length
+      ? responderDepts.map(deptRowHtml).join("")
+      : `<span style="font-size:13px;color:#94a3b8;padding:0 4px;">Sin departamentos asignados</span>`;
+
+    const editorHtml = editorDepts.length
+      ? editorDepts.map(deptRowHtml).join("")
+      : `<span style="font-size:13px;color:#94a3b8;padding:0 4px;">Sin editores asignados</span>`;
+
+    const formIconSvg = (() => {
+      const base = ICON_SVG[form.icon] || ICON_SVG.clipboard;
+      // reemplaza width/height 14 por 22 para el hero
+      return base.replace(/width="14" height="14"/g, 'width="22" height="22"');
+    })();
 
     Swal.fire({
-      title: form.title || "Formulario sin título",
+      title: "",
       html: `
-        <div style="text-align:left;display:grid;gap:10px;font-size:14px;line-height:1.5;">
-          <div><b>Descripción:</b> ${form.description || "Sin descripción"}</div>
-          <div><b>Campos:</b> ${form.total_fields || 0}</div>
-          <div><b>Creador:</b> ${form.creator?.full_name || form.creator?.username || "—"}</div>
-          <div><b>Departamentos:</b> ${departments}</div>
+        <div style="font-family:system-ui,sans-serif;text-align:center;display:flex;flex-direction:column;gap:0;">
+
+          <!-- HERO con color del form -->
+          <div style="
+            margin:-24px -24px 0 -24px;
+            padding:30px 24px 24px;
+            background:${heroGradient};
+            border-bottom:${heroBorder};
+            border-radius:14px 14px 0 0;
+            display:flex;flex-direction:column;align-items:center;gap:12px;
+          ">
+            <div style="
+              width:52px;height:52px;border-radius:16px;
+              background:${formColor};
+              color:#ffffff;
+              display:flex;align-items:center;justify-content:center;
+              box-shadow:0 8px 20px ${formColor}44;
+            ">${formIconSvg}</div>
+            <div>
+              <div style="font-size:20px;font-weight:900;color:#0f172a;line-height:1.2;">${form.title || "Formulario sin título"}</div>
+              <div style="font-size:12px;color:#64748b;margin-top:4px;font-weight:600;">${form.total_fields || 0} campos</div>
+            </div>
+            ${form.description
+              ? `<p style="margin:0;font-size:13px;color:#475569;line-height:1.5;font-weight:500;max-width:360px;">${form.description}</p>`
+              : ""}
+          </div>
+
+          <!-- CUERPO -->
+          <div style="padding:20px 4px 0;display:flex;flex-direction:column;gap:18px;text-align:left;">
+
+            <!-- CREADOR -->
+            <div>
+              <div style="font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;color:#94a3b8;margin-bottom:8px;text-align:center;">Creado por</div>
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:14px;background:#f8fafc;border:1px solid #e9eef5;">
+                ${avatarHtml}
+                <div style="min-width:0;flex:1;">
+                  <div style="font-size:14px;font-weight:800;color:#0f172a;">${creator?.full_name || creator?.username || "—"}</div>
+                  <div style="font-size:11px;color:#64748b;font-weight:600;margin-top:2px;display:flex;align-items:center;gap:4px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    ${createdAt}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- RESPONDENTES -->
+            <div>
+              <div style="font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;color:#94a3b8;margin-bottom:8px;text-align:center;">Departamentos respondentes</div>
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                ${responderHtml}
+              </div>
+            </div>
+
+            <!-- EDITORES -->
+            <div>
+              <div style="font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;color:#94a3b8;margin-bottom:8px;text-align:center;">Departamentos editores</div>
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                ${editorHtml}
+              </div>
+            </div>
+
+          </div>
         </div>
       `,
-      icon: "info",
+      showConfirmButton: true,
       confirmButtonText: "Cerrar",
+      confirmButtonColor: formColor,
+      width: 460,
+      padding: "24px",
     });
   }
 
@@ -1534,7 +1681,7 @@ const payload = {
             <div className="gf-builderPro__metaCard">
               <div className="gf-builderPro__metaRow">
                 <div className="gf-builderPro__controls">
-                  <div className="gf-builderPro__iconPickerWrap">
+<div className="gf-builderPro__iconPickerWrap">
                     <ProSelect
                       className="gf-builderPro__iconPicker"
                       value={builder.icon}
@@ -1571,22 +1718,6 @@ const payload = {
                         );
                       }}
                     />
-
-                    <label
-                      className="gf-builder__colorBtn gf-builder__colorBtn--inline gf-builder__colorPicker"
-                      style={{ "--gf-accent": builder.color || "#2563eb" }}
-                      title="Cambiar color del formulario"
-                    >
-                      <span className="gf-builder__colorDot" />
-                      <input
-                        className="gf-builder__colorNativeInput"
-                        type="color"
-                        value={builder.color}
-                        onChange={(e) =>
-                          setBuilder((prev) => ({ ...prev, color: e.target.value }))
-                        }
-                      />
-                    </label>
                   </div>
                 </div>
               </div>
@@ -1772,10 +1903,11 @@ const payload = {
 
           <div className="gf-builderPro__aside">
             <div className="gf-builderPro__actionCard">
-              <div className="gf-builderPro__actionButtons">
+<div className="gf-builderPro__actionButtons">
                 <button
-                  className="forms-btn forms-btn--ghost"
+                  className="forms-btn forms-btn--ghost gf-actionBtn"
                   type="button"
+                  title="Dashboard"
                   onClick={() => {
                     setViewMode("dashboard");
                     setSelectedForm(null);
@@ -1784,28 +1916,30 @@ const payload = {
                   }}
                 >
                   <TbLayoutGrid />
-                  Dashboard
+                  <span className="gf-actionBtn__label">Dashboard</span>
                 </button>
 
                 <button
-                  className="forms-btn forms-btn--ghost"
+                  className="forms-btn forms-btn--ghost gf-actionBtn"
                   type="button"
+                  title="Cancelar"
                   onClick={() => {
                     setViewMode("dashboard");
                     resetBuilder();
                   }}
                 >
                   <TbX />
-                  Cancelar
+                  <span className="gf-actionBtn__label">Cancelar</span>
                 </button>
 
                 <button
-                  className="forms-btn forms-btn--primary"
+                  className="forms-btn forms-btn--primary gf-actionBtn"
                   type="button"
+                  title="Guardar formulario"
                   onClick={saveBuilder}
                 >
                   <TbDeviceFloppy />
-                  Guardar formulario
+                  <span className="gf-actionBtn__label">Guardar formulario</span>
                 </button>
               </div>
             </div>

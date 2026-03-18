@@ -248,18 +248,50 @@ export default function Dashboard({ worker, onLogout }) {
           </section>
         )}
 
-        {tab !== "home" &&
+{tab !== "home" &&
           tab !== "admin" &&
           tab !== "inventory" &&
           tab !== "forms" &&
           tab !== "calendar" && (
-            <section className="module">
-              <div className="module-head">
-                <h2>{tab.toUpperCase()}</h2>
-                <p>MVP: este módulo lo conectamos en el siguiente paso.</p>
+            <div style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              height: "100%",
+              minHeight: "60vh",
+              gap: "24px",
+              textAlign: "center",
+            }}>
+              <img
+                src="/assets/ESPERA.gif"
+                alt="En desarrollo"
+                style={{
+                  width: "clamp(180px, 40vw, 320px)",
+                  height: "auto",
+                  borderRadius: "24px",
+                }}
+              />
+              <div>
+                <p style={{
+                  margin: 0,
+                  fontSize: "clamp(22px, 3vw, 36px)",
+                  fontWeight: 900,
+                  color: "rgba(10,12,14,0.85)",
+                  letterSpacing: "-0.04em",
+                }}>
+                  En desarrollo
+                </p>
+                <p style={{
+                  margin: "8px 0 0",
+                  fontSize: "clamp(13px, 1.2vw, 16px)",
+                  fontWeight: 700,
+                  color: "rgba(10,12,14,0.45)",
+                }}>
+                  Este módulo estará disponible próximamente
+                </p>
               </div>
-              <div className="placeholder">Listo para conectar: {tab}</div>
-            </section>
+            </div>
           )}
       </main>
     </div>

@@ -8,15 +8,12 @@
   }
 
   /* SINGLE ROW */
-  .nav-row{
+.nav-row{
     height: 72px;
     display: grid;
     grid-template-columns: auto 1fr auto;
     align-items: center;
-
-    /* 1) margen del logo (más aire a la izquierda) */
-    padding: 0 22px 0 28px;
-
+    padding: 0 22px;
     gap: 20px;
   }
 

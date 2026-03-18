@@ -5,10 +5,10 @@ html, body, #root {
   height: 100%;
   width: 100%;
   margin: 0;
-  overflow-x: hidden;
+  overflow-x: clip;
+  overflow-y: hidden;
   overscroll-behavior: none;
 }
-
 /* =========================================================
    1) App shell (viewport real)
 ========================================================= */
@@ -31,13 +31,12 @@ html, body, #root {
   height: 100%;
   width: 100%;
   overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: clip;
 
-  /* ✅ padding simétrico REAL (siempre hay margen en ambos lados) */
   padding-top: 10px;
   padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
-  padding-left: max(16px, calc(var(--padX) + env(safe-area-inset-left, 0px)));
-  padding-right: max(16px, calc(var(--padX) + env(safe-area-inset-right, 0px)));
+  padding-left: 16px;
+  padding-right: 16px;
 
   box-sizing: border-box;
 
@@ -141,8 +140,12 @@ html, body, #root {
     --g: 10px;
   }
 
-  .mosaic{
-    max-width: 560px; /* centra y evita pegarse */
+.mosaic{
+    max-width: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 10px;
+    box-sizing: border-box;
   }
 
   .mosaic--fit{
@@ -322,3 +325,37 @@ html, body, #root {
 .mTile.teal     { background: linear-gradient(135deg, rgba(6, 61, 75, 0.98), rgba(10, 95, 110, 0.96)); }
 .mTile.violet   { background: linear-gradient(135deg, rgba(38, 24, 74, 0.98), rgba(72, 40, 122, 0.96)); }
 .mTile.slate    { background: linear-gradient(135deg, rgba(24, 34, 46, 0.98), rgba(44, 60, 82, 0.96)); }
+/* Fuerza que el único scroll sea app-main, no el documento */
+@media (max-width: 760px) {
+  html, body {
+    width: 100%;
+    overflow: hidden;
+  }
+
+  #root, .app-shell, .app-main {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  #root {
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .app-shell {
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+    left: 0;
+    right: 0;
+  }
+
+  .app-main {
+    width: 100%;
+    max-width: 100%;
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+    box-sizing: border-box !important;
+  }
+}

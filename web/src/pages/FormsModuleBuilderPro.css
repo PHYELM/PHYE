@@ -2282,3 +2282,346 @@ body.gf-config-open .gf-field-config__panel--overlay * {
     min-height: 88px;
   }
 }
+/* =========================================================
+   BUILDER PRO — RESPONSIVE MOBILE
+========================================================= */
+
+/* Botones: ocultar label en mobile */
+@media (max-width: 760px) {
+  .gf-actionBtn__label {
+    display: none;
+  }
+
+.gf-actionBtn {
+    width: 48px !important;
+    min-width: 48px !important;
+    max-width: 48px !important;
+    min-height: 48px !important;
+    padding: 0 !important;
+    border-radius: 14px !important;
+    justify-content: center;
+    flex: 0 0 48px !important;
+  }
+
+  .gf-actionBtn svg {
+    width: 26px !important;
+    height: 26px !important;
+    font-size: 26px !important;
+    flex-shrink: 0;
+  }
+
+  /* Contenedor de botones: fila centrada */
+.gf-builderPro__actionCard {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 4px 0 !important;
+    border-radius: 0 !important;
+  }
+  .gf-builderPro__actionButtons {
+    flex-direction: row !important;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: nowrap;
+  }
+
+  /* Overflow global */
+.gf-builder-layout--pro,
+  .gf-builderPro,
+  .gf-builderPro__top,
+  .gf-builderPro__mainColumn,
+  .gf-builderPro__aside {
+    max-width: 100%;
+    overflow-x: hidden;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  /* Centrado simétrico del builder en mobile */
+  .gf-builder-layout--pro {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+  }
+
+.gf-builderPro {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+  }
+  /* Layout: flex columna centrada */
+  .gf-builderPro__top {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  /* ORDEN: 1 botones, 2 aside (config), 3 main (meta+preguntas) */
+  .gf-builderPro__aside {
+    order: 1 !important;
+    display: flex !important;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .gf-builderPro__mainColumn {
+    order: 2 !important;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* Aside stack: editores y respondentes lado a lado */
+  .gf-builderAsideStack {
+    order: 2 !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px;
+  }
+
+  /* Config cards compactas */
+  .gf-config__card {
+    border-radius: 18px;
+    padding: 12px;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .gf-config__title {
+    font-size: 0.88rem !important;
+  }
+
+  .gf-config__text {
+    font-size: 0.78rem !important;
+    margin-top: 4px;
+  }
+
+  /* Selects dentro de config más compactos */
+  .gf-builderPro .forms-select,
+  .gf-builderPro .forms-select--field {
+    min-height: 40px !important;
+    font-size: 0.82rem;
+  }
+
+  .gf-config__empty {
+    min-height: 60px;
+    font-size: 0.78rem;
+    padding: 10px 8px;
+  }
+
+  /* Meta card centrada */
+  .gf-builderPro__metaCard {
+    padding: 16px 14px 18px;
+    min-height: auto;
+    border-radius: 20px;
+    overflow: hidden;
+    text-align: center;
+  }
+
+  .gf-builderPro__metaRow {
+    margin-bottom: 12px;
+    justify-content: center;
+  }
+
+  .gf-builderPro__controls {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .gf-builderPro__iconPickerWrap {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .gf-builderPro__iconPicker {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    flex: 1;
+  }
+
+  .gf-builderPro__titleInput {
+    font-size: 1.4rem !important;
+    text-align: center;
+    padding: 4px 8px;
+    margin: 4px 0 8px;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .gf-builderPro__descInput {
+    width: 100% !important;
+    max-width: 100% !important;
+    font-size: 0.9rem;
+    text-align: center;
+    padding: 8px 4px 0;
+  }
+
+  /* Cards de preguntas */
+  .gf-question-card {
+    border-radius: 18px;
+    grid-template-columns: 32px minmax(0, 1fr);
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .gf-question-card__body {
+    padding: 12px 12px 10px;
+    min-width: 0;
+  }
+
+  .gf-question-card__top {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .gf-question-card__actions {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .gf-question-card__preview {
+    padding: 10px;
+    overflow: hidden;
+  }
+
+  /* Empty state */
+  .gf-builder__emptyCard {
+    min-height: 160px;
+    border-radius: 20px;
+    padding: 18px 14px;
+  }
+
+  /* Insert zones */
+  .gf-questionInsertZone {
+    height: 14px;
+  }
+
+  .gf-inlineInsert--floating .gf-inlineInsert__btn {
+    width: 46px;
+    height: 46px;
+    font-size: 1.1rem;
+  }
+
+  /* Menú insertar campo */
+  .gf-inlineInsertMenu {
+    width: calc(100vw - 24px) !important;
+    max-width: calc(100vw - 24px) !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    padding: 12px 10px;
+    border-radius: 18px;
+  }
+
+  .gf-inlineInsertMenu__grid--picker {
+    grid-template-columns: 1fr 1fr !important;
+    column-gap: 6px;
+    row-gap: 4px;
+  }
+
+  .gf-inlineInsertMenu__pickerItem {
+    min-height: 40px;
+    padding: 6px 8px;
+    gap: 6px;
+  }
+
+  .gf-inlineInsertMenu__pickerLabel {
+    font-size: 0.8rem;
+  }
+
+  /* Botón + fijo abajo */
+  .gf-inlineInsert--default {
+    position: fixed;
+    bottom: 18px;
+    right: 18px;
+    z-index: 999;
+    padding: 0;
+    width: auto;
+    height: auto;
+  }
+
+  .gf-inlineInsert--default::before {
+    display: none;
+  }
+
+  .gf-inlineInsert--default .gf-inlineInsert__btn {
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    background: #2563eb;
+    color: #fff;
+    border: 0;
+    box-shadow: 0 8px 24px rgba(37,99,235,0.4);
+    font-size: 1.4rem;
+  }
+
+  .gf-inlineInsert--default .gf-inlineInsertMenu {
+    top: auto !important;
+    bottom: calc(100% + 10px) !important;
+    left: auto !important;
+    right: 0 !important;
+    transform: none !important;
+    width: min(300px, calc(100vw - 28px)) !important;
+    max-width: min(300px, calc(100vw - 28px)) !important;
+  }
+
+  .gf-inlineInsert--default .gf-inlineInsertMenu__grid--picker {
+    grid-template-columns: 1fr !important;
+    row-gap: 4px;
+  }
+
+  /* Field config overlay */
+  .gf-field-config__overlay {
+    padding: 8px;
+  }
+
+  .gf-field-config__panel--overlay {
+    width: calc(100vw - 16px) !important;
+    max-width: calc(100vw - 16px) !important;
+    height: min(84vh, 700px) !important;
+    max-height: min(84vh, 700px) !important;
+    border-radius: 20px;
+    padding: 14px;
+  }
+  /* Orden dentro de mainColumn: meta primero, preguntas después */
+  .gf-builderPro__mainColumn {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .gf-builderPro__metaCard {
+    order: 1 !important;
+  }
+
+  .gf-builderPro__fieldsWrap {
+    order: 2 !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .gf-builderPro__titleInput {
+    font-size: 1.2rem !important;
+  }
+
+  /* En pantallas muy pequeñas: editores/respondentes en columna */
+  .gf-builderAsideStack {
+    grid-template-columns: 1fr !important;
+  }
+
+  .gf-question-card {
+    grid-template-columns: 1fr;
+  }
+
+  .gf-question-card__handle {
+    min-height: 32px;
+    border-right: 0;
+    border-bottom: 1px solid #e8eef7;
+  }
+
+  .gf-inlineInsertMenu__grid--picker {
+    grid-template-columns: 1fr !important;
+  }
+}
