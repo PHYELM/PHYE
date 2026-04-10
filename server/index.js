@@ -260,8 +260,6 @@ app.use("/api", (req, res) => {
 /* =========================
    Servir React (CRA build)
 ========================= */
-const fs = require("fs");
-
 const buildCandidates = [
   path.join(__dirname, "build"),
   path.join(__dirname, "..", "web", "build"),
