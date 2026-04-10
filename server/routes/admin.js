@@ -97,16 +97,15 @@ router.get("/levels", async (req, res) => {
 });
 
 router.post("/levels", async (req, res) => {
-  const { name, authority } = req.body || {};
+  const { name, authority, can_approve_quotes, can_manage_calendar } = req.body || {};
   if (!name) return res.status(400).json({ error: "name required" });
 
   const auth = Math.max(1, Math.min(5, Number(authority || 1)));
-  // mantenemos rank como espejo (por si alguna parte lo usa)
   const rank = auth;
 
   const { data, error } = await supabaseAdmin
     .from("worker_levels")
-    .insert({ name, authority: auth, rank })
+    .insert({ name, authority: auth, rank, can_approve_quotes: Boolean(can_approve_quotes), can_manage_calendar: Boolean(can_manage_calendar) })
     .select("*")
     .single();
 
@@ -116,16 +115,16 @@ router.post("/levels", async (req, res) => {
 // UPDATE level
 router.put("/levels/:id", async (req, res) => {
   const { id } = req.params;
-  const { name, authority } = req.body || {};
+  const { name, authority, can_approve_quotes, can_manage_calendar } = req.body || {};
   if (!id) return res.status(400).json({ error: "id required" });
   if (!name) return res.status(400).json({ error: "name required" });
 
   const auth = Math.max(1, Math.min(5, Number(authority || 1)));
-  const rank = auth; // espejo por compatibilidad
+  const rank = auth;
 
   const { data, error } = await supabaseAdmin
     .from("worker_levels")
-    .update({ name, authority: auth, rank })
+    .update({ name, authority: auth, rank, can_approve_quotes: Boolean(can_approve_quotes), can_manage_calendar: Boolean(can_manage_calendar) })
     .eq("id", id)
     .select("*")
     .single();

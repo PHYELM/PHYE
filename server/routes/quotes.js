@@ -1,39 +1,412 @@
-const router = require("express").Router();
-const { supabaseAdmin } = require("../supabaseAdmin");
+const express  = require('express');
+const router   = express.Router();
+const { supabaseAdmin: supabase } = require('../supabaseAdmin');
+const { generateQuotePDF, generateQuoteExcel, generateQuoteXML } = require('../utils/quotesExport');
 
-router.get("/", async (req, res) => {
-  const { data, error } = await supabaseAdmin.from("quotes").select("*").order("created_at", { ascending: false });
-  if (error) return res.status(500).json({ error: error.message });
-  res.json({ data });
+/* ── SSE broadcast ─────────────────────────────────────── */
+const sseClients = new Set();
+function broadcast(data = { event: 'change' }) {
+  const msg = `data: ${JSON.stringify(data)}\n\n`;
+  for (const res of [...sseClients]) {
+    try { res.write(msg); }
+    catch { sseClients.delete(res); }
+  }
+}
+
+/* ── GET /stream ──────────────────────────────────────── */
+router.get('/stream', (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
+  res.write('data: {"event":"connected"}\n\n');
+  sseClients.add(res);
+  const hb = setInterval(() => { try { res.write(':hb\n\n'); } catch { clearInterval(hb); } }, 25000);
+  req.on('close', () => { sseClients.delete(res); clearInterval(hb); });
 });
 
-router.post("/", async (req, res) => {
-  const { customer_id, notes, created_by, items = [], tax = 0 } = req.body || {};
-  if (!Array.isArray(items) || items.length === 0) return res.status(400).json({ error: "items required" });
-
-  const subtotal = items.reduce((a, it) => a + (Number(it.qty || 0) * Number(it.unit_price || 0)), 0);
-  const total = subtotal + Number(tax || 0);
-
-  const { data: quote, error: qErr } = await supabaseAdmin
-    .from("quotes")
-    .insert({ customer_id, notes, created_by, subtotal, tax, total })
-    .select("*")
+/* ── helpers ──────────────────────────────────────────── */
+function round2(n) { return Math.round(n * 100) / 100; }
+function calcTotals(items = [], taxRate = 16, extraDiscount = 0) {
+  const sub  = items.reduce((s, it) => {
+    const line = (Number(it.quantity) || 0) * (Number(it.unit_price) || 0);
+    return s + line - line * ((Number(it.discount_pct) || 0) / 100);
+  }, 0);
+  const after = Math.max(0, sub - (Number(extraDiscount) || 0));
+  const tax   = after * ((Number(taxRate) || 0) / 100);
+  return { subtotal: round2(sub), tax_amount: round2(tax), total: round2(after + tax) };
+}
+async function canApproveQuotes(workerId) {
+  if (!workerId) return false;
+  const { data } = await supabase
+    .from('workers')
+    .select('department:departments!workers_department_id_fkey(name), level:worker_levels!workers_level_id_fkey(can_approve_quotes,authority)')
+    .eq('id', workerId)
     .single();
+  if (!data) return false;
+  const isDireccion = String(data.department?.name || '').toUpperCase() === 'DIRECCION';
+  return isDireccion || Boolean(data.level?.can_approve_quotes) || Number(data.level?.authority) >= 5;
+}
 
-  if (qErr) return res.status(500).json({ error: qErr.message });
-
-  const qItems = items.map(it => ({
-    quote_id: quote.id,
-    description: it.description,
-    qty: it.qty ?? 1,
-    unit_price: it.unit_price ?? 0,
-    amount: (Number(it.qty || 0) * Number(it.unit_price || 0))
-  }));
-
-  const { error: iErr } = await supabaseAdmin.from("quote_items").insert(qItems);
-  if (iErr) return res.status(500).json({ error: iErr.message });
-
-  res.json({ data: quote });
+/* ════════════════════════════════════════════════════════
+   CLIENTS
+════════════════════════════════════════════════════════ */
+router.get('/clients', async (req, res) => {
+  try {
+    const { q } = req.query;
+    let query = supabase.from('clients').select('*').order('name');
+    if (q) query = query.ilike('name', `%${q}%`);
+    const { data, error } = await query;
+    if (error) throw error;
+    res.json({ data });
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+router.post('/clients', async (req, res) => {
+  try {
+    const { worker_id, ...payload } = req.body;
+    const { data, error } = await supabase.from('clients')
+      .insert({ ...payload, created_by: worker_id }).select().single();
+    if (error) throw error;
+    res.json({ data });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.put('/clients/:id', async (req, res) => {
+  try {
+    const { worker_id, ...payload } = req.body;
+    const { data, error } = await supabase.from('clients')
+      .update(payload).eq('id', req.params.id).select().single();
+    if (error) throw error;
+    res.json({ data });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.delete('/clients/:id', async (req, res) => {
+  try {
+    const { error } = await supabase.from('clients').delete().eq('id', req.params.id);
+    if (error) throw error;
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+/* ════════════════════════════════════════════════════════
+   PUBLIC (sin auth) — IMPORTANTE: antes de /:id
+════════════════════════════════════════════════════════ */
+router.get('/public/:token', async (req, res) => {
+  try {
+const { data: quote, error } = await supabase
+      .from('quotes')
+      .select(`
+        id, folio, title, status, subtotal, tax_rate, tax_amount,
+        discount_amount, total, currency, valid_until, created_at,
+        terms, notes, public_token, client_snapshot,
+        client:clients(name, email, phone, company, rfc)
+      `)
+      .eq('public_token', req.params.token)
+      .single();
+    if (error || !quote) return res.status(404).json({ error: 'Cotización no encontrada' });
+
+    const { data: items } = await supabase
+      .from('quote_items').select('*').eq('quote_id', quote.id).order('sort_order');
+
+    const { id, ...pub } = quote;
+    res.json({ data: { ...pub, items: items || [] } });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.get('/public/:token/export/pdf', async (req, res) => {
+  try {
+    const { data: quote, error } = await supabase
+      .from('quotes')
+      .select(`*, client:clients(name, email, phone, company, rfc, address)`)
+      .eq('public_token', req.params.token).single();
+    if (error || !quote) return res.status(404).json({ error: 'No encontrada' });
+
+    const { data: items } = await supabase
+      .from('quote_items').select('*').eq('quote_id', quote.id).order('sort_order');
+
+    const pdfBuf = await generateQuotePDF({ ...quote, items: items || [] });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${quote.folio || 'cotizacion'}.pdf"`);
+    res.send(pdfBuf);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+/* ════════════════════════════════════════════════════════
+   QUOTES LIST & CRUD
+════════════════════════════════════════════════════════ */
+router.get('/', async (req, res) => {
+  try {
+    const { status, q } = req.query;
+    let query = supabase
+      .from('quotes')
+      .select(`
+        id, folio, title, status, subtotal, tax_rate, tax_amount,
+        discount_amount, total, currency, valid_until, created_at,
+        public_token, client_snapshot, created_by,
+        client:clients(id, name, email, phone, company)
+      `)
+      .order('created_at', { ascending: false });
+    if (status && status !== 'all') query = query.eq('status', status);
+    if (q) query = query.or(`title.ilike.%${q}%,folio.ilike.%${q}%`);
+    const { data, error } = await query;
+    if (error) throw error;
+
+    // Batch-fetch creators
+    const creatorIds = [...new Set((data || []).map(r => r.created_by).filter(Boolean))];
+    let creatorsMap = {};
+    if (creatorIds.length) {
+      const { data: workers } = await supabase
+        .from('workers')
+        .select(`
+          id, full_name, profile_photo_url,
+          department:departments!workers_department_id_fkey(id, name, color),
+          level:worker_levels!workers_level_id_fkey(name)
+        `)
+        .in('id', creatorIds);
+      (workers || []).forEach(w => { creatorsMap[w.id] = w; });
+    }
+
+    const enriched = (data || []).map(r => ({
+      ...r,
+      creator: creatorsMap[r.created_by] || null,
+    }));
+
+    res.json({ data: enriched });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.get('/:id', async (req, res) => {
+  try {
+const { data: quote, error } = await supabase
+      .from('quotes')
+      .select(`
+        *,
+        client:clients(id, name, email, phone, address, company, rfc)
+      `)
+      .eq('id', req.params.id).single();
+    if (error) throw error;
+    const { data: items, error: ie } = await supabase
+      .from('quote_items').select('*').eq('quote_id', req.params.id).order('sort_order');
+    if (ie) throw ie;
+    res.json({ data: { ...quote, items: items || [] } });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.post('/', async (req, res) => {
+  try {
+    const { worker_id, items = [], ...payload } = req.body;
+    const totals = calcTotals(items, payload.tax_rate, payload.discount_amount);
+    let clientSnapshot = {};
+    if (payload.client_id) {
+      const { data: c } = await supabase.from('clients').select('*').eq('id', payload.client_id).single();
+      if (c) clientSnapshot = c;
+    }
+const { data: quote, error } = await supabase.from('quotes')
+      .insert({ ...payload, ...totals, client_snapshot: clientSnapshot, created_by: worker_id, status: 'pending' })
+      .select().single();
+    if (error) throw error;
+const rows = items.filter(it => String(it.description || '').trim()).map((it, idx) => ({
+      quote_id: quote.id, description: it.description, unit: it.unit || 'pieza',
+      quantity: Number(it.quantity) || 1, unit_price: Number(it.unit_price) || 0,
+      discount_pct: Number(it.discount_pct) || 0, amount: Number(it.amount) || 0, sort_order: idx,
+      product_id: it.product_id || null,
+    }));
+    if (rows.length) await supabase.from('quote_items').insert(rows);
+    broadcast();
+    res.json({ data: quote });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.put('/:id', async (req, res) => {
+  try {
+    const { worker_id, items, ...payload } = req.body;
+    const totals = calcTotals(items || [], payload.tax_rate, payload.discount_amount);
+    const { data: quote, error } = await supabase.from('quotes')
+      .update({ ...payload, ...totals }).eq('id', req.params.id).select().single();
+    if (error) throw error;
+    if (items !== undefined) {
+      await supabase.from('quote_items').delete().eq('quote_id', req.params.id);
+const rows = (items || []).filter(it => String(it.description || '').trim()).map((it, idx) => ({
+        quote_id: req.params.id, description: it.description, unit: it.unit || 'pieza',
+        quantity: Number(it.quantity) || 1, unit_price: Number(it.unit_price) || 0,
+        discount_pct: Number(it.discount_pct) || 0, amount: Number(it.amount) || 0, sort_order: idx,
+        product_id: it.product_id || null,
+      }));
+      if (rows.length) await supabase.from('quote_items').insert(rows);
+    }
+    broadcast();
+    res.json({ data: quote });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.delete('/:id', async (req, res) => {
+  try {
+    const { error } = await supabase.from('quotes').delete().eq('id', req.params.id);
+    if (error) throw error;
+    broadcast();
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+/* ── Status transitions ──────────────────────────────── */
+
+// pending → approved
+router.post('/:id/approve', async (req, res) => {
+  try {
+    const { worker_id } = req.body;
+    if (!await canApproveQuotes(worker_id))
+      return res.status(403).json({ error: 'No tienes permiso para aprobar cotizaciones' });
+    const { data, error } = await supabase.from('quotes')
+      .update({ status: 'approved', approved_by: worker_id, approved_at: new Date().toISOString() })
+      .eq('id', req.params.id).select().single();
+    if (error) throw error;
+    broadcast();
+    res.json({ data });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// pending/approved → rejected
+router.post('/:id/reject', async (req, res) => {
+  try {
+    const { worker_id, reason } = req.body;
+    if (!await canApproveQuotes(worker_id))
+      return res.status(403).json({ error: 'No tienes permiso para rechazar cotizaciones' });
+    const { data, error } = await supabase.from('quotes')
+      .update({
+        status: 'rejected', rejected_by: worker_id,
+        rejected_at: new Date().toISOString(), rejection_reason: reason || '',
+      })
+      .eq('id', req.params.id).select().single();
+    if (error) throw error;
+    broadcast();
+    res.json({ data });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// rejected → pending
+router.post('/:id/reopen', async (req, res) => {
+  try {
+    const { data, error } = await supabase.from('quotes')
+      .update({ status: 'pending', rejected_at: null, rejected_by: null, rejection_reason: null })
+      .eq('id', req.params.id).select().single();
+    if (error) throw error;
+    broadcast();
+    res.json({ data });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// approved → paid + descuenta inventario
+router.post('/:id/pay', async (req, res) => {
+  try {
+    const { worker_id } = req.body;
+    if (!await canApproveQuotes(worker_id))
+      return res.status(403).json({ error: 'No tienes permiso para marcar como pagada' });
+
+    const { data: quote, error: qe } = await supabase.from('quotes')
+      .update({ status: 'paid', approved_at: new Date().toISOString() })
+      .eq('id', req.params.id).select().single();
+    if (qe) throw qe;
+
+    // Descontar inventario — solo items con product_id
+    const { data: items } = await supabase.from('quote_items')
+      .select('product_id, quantity')
+      .eq('quote_id', req.params.id)
+      .not('product_id', 'is', null);
+
+    if (items && items.length > 0) {
+      // Crear movimiento de salida
+      const { data: movement, error: me } = await supabase.from('inventory_movements')
+        .insert({ type: 'OUT', reason: `Cotización pagada: ${quote.folio}`, created_by: worker_id })
+        .select().single();
+
+      if (!me && movement) {
+        const rows = items.map(it => ({
+          movement_id: movement.id,
+          product_id:  it.product_id,
+          qty:         Number(it.quantity) || 1,
+          unit_cost:   0,
+        }));
+        await supabase.from('inventory_movement_items').insert(rows);
+      }
+    }
+
+    broadcast();
+    res.json({ data: quote });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// approved/paid → cancelled
+router.post('/:id/cancel', async (req, res) => {
+  try {
+    const { worker_id } = req.body;
+    if (!await canApproveQuotes(worker_id))
+      return res.status(403).json({ error: 'No tienes permiso para cancelar cotizaciones' });
+    const { data, error } = await supabase.from('quotes')
+      .update({ status: 'cancelled' })
+      .eq('id', req.params.id).select().single();
+    if (error) throw error;
+    broadcast();
+    res.json({ data });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+/* ── Exports ─────────────────────────────────────────── */
+async function loadFullQuote(id) {
+  const { data: quote, error } = await supabase
+    .from('quotes')
+    .select(`*, client:clients(name, email, phone, address, company, rfc)`)
+    .eq('id', id).single();
+  if (error) throw error;
+  const { data: items } = await supabase
+    .from('quote_items').select('*').eq('quote_id', id).order('sort_order');
+  let approver = null;
+  if (quote?.approved_by) {
+    const { data: w } = await supabase
+      .from('workers').select('full_name').eq('id', quote.approved_by).single();
+    approver = w || null;
+  }
+  return { ...quote, approver, items: items || [] };
+}
+
+router.get('/:id/export/pdf', async (req, res) => {
+  try {
+    const quote = await loadFullQuote(req.params.id);
+    const buf   = await generateQuotePDF(quote);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${quote.folio || 'cotizacion'}.pdf"`);
+    res.send(buf);
+  } catch (e) {
+    console.error('❌ PDF EXPORT ERROR:', e);
+    res.status(500).json({ error: e.message, stack: e.stack });
+  }
+});
+
+router.get('/:id/export/excel', async (req, res) => {
+  try {
+    const quote = await loadFullQuote(req.params.id);
+    const buf   = await generateQuoteExcel(quote);
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${quote.folio || 'cotizacion'}.xlsx"`);
+    res.send(buf);
+  } catch (e) {
+    console.error('❌ EXCEL EXPORT ERROR:', e);
+    res.status(500).json({ error: e.message, stack: e.stack });
+  }
+});
+
+router.get('/:id/export/xml', async (req, res) => {
+  try {
+    const quote = await loadFullQuote(req.params.id);
+    const xml   = generateQuoteXML(quote);
+    res.setHeader('Content-Type', 'application/xml');
+    res.setHeader('Content-Disposition', `attachment; filename="${quote.folio || 'cotizacion'}.xml"`);
+    res.send(xml);
+  } catch (e) {
+    console.error('❌ XML EXPORT ERROR:', e);
+    res.status(500).json({ error: e.message, stack: e.stack });
+  }
+});
 module.exports = router;

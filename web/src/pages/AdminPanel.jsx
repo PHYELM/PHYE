@@ -445,6 +445,7 @@ const [levelPage, setLevelPage] = useState(1);
 const [lpDeptId, setLpDeptId] = useState("");
   const [lpModules, setLpModules] = useState(() => new Set(MODULES.map((m) => m.key)));
   const [lpCanManageCalendar, setLpCanManageCalendar] = useState(false);
+  const [lpCanApproveQuotes,  setLpCanApproveQuotes]  = useState(false);
   // menus 3 puntitos
   const [deptMenuOpenId, setDeptMenuOpenId] = useState(null);
   const [levelMenuOpenId, setLevelMenuOpenId] = useState(null);
@@ -753,7 +754,8 @@ function openLevelPolicyModalCreate() {
     setLpLevelId("");
     setLpLevelName("");
     setLpAuthority(1);
-    setLpCanManageCalendar(false);
+setLpCanManageCalendar(false);
+    setLpCanApproveQuotes(false);
 
     setLpDeptId(d0);
     setLpModules(new Set(MODULES.map((m) => m.key)));
@@ -782,7 +784,8 @@ function openLevelPolicyModalEdit(levelObj) {
     setLpLevelId(levelObj.id);
     setLpLevelName(levelObj.name || "");
     setLpAuthority(Number(authority) || 1);
-    setLpCanManageCalendar(Boolean(levelObj.can_manage_calendar));
+setLpCanManageCalendar(Boolean(levelObj.can_manage_calendar));
+    setLpCanApproveQuotes(Boolean(levelObj.can_approve_quotes));
 
     setLpDeptId(d0);
     if (Array.isArray(saved) && saved.length > 0) setLpModules(new Set(saved));
@@ -821,7 +824,7 @@ function openLevelPolicyModalEdit(levelObj) {
 if (lpIsNew) {
         const res = await apiFetch("/api/admin/levels", {
           method: "POST",
-          body: JSON.stringify({ name, authority, can_manage_calendar: lpCanManageCalendar }),
+          body: JSON.stringify({ name, authority, can_manage_calendar: lpCanManageCalendar, can_approve_quotes: lpCanApproveQuotes }),
         });
         levelId = res?.data?.id || res?.id || levelId;
 
@@ -1924,6 +1927,65 @@ onChange={(e) => setLpLevelName(titleCaseLive(e.target.value))}
           }}
             onClick={() => setLpCanManageCalendar((v) => !v)}
           >
+            <div>
+              <div style={{ fontWeight: 600, fontSize: 14, color: "var(--ap-text, #202124)" }}>
+                📅 Puede crear/editar/eliminar eventos del calendario
+              </div>
+              <div style={{ fontSize: 12, color: "#5f6368", marginTop: 2 }}>
+                Si está desactivado, solo puede ver eventos. Dirección siempre puede gestionar.
+              </div>
+            </div>
+            <div style={{
+              width: 44, height: 24, borderRadius: 12, flexShrink: 0,
+              background: lpCanManageCalendar ? "#1a73e8" : "#dadce0",
+              position: "relative", transition: "background 200ms",
+            }}>
+              <div style={{
+                width: 18, height: 18, borderRadius: "50%", background: "#fff",
+                position: "absolute", top: 3,
+                left: lpCanManageCalendar ? 23 : 3,
+                transition: "left 200ms",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+              }} />
+            </div>
+          </div>
+
+          {/* Toggle: puede aprobar cotizaciones */}
+          <div style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "12px 16px", borderRadius: 10,
+            border: lpCanApproveQuotes ? "1px solid rgba(22,163,74,0.3)" : "1px solid rgba(0,0,0,0.08)",
+            background: lpCanApproveQuotes ? "rgba(22,163,74,0.06)" : "#f8f9fa",
+            marginBottom: 12, cursor: "pointer", transition: "all 140ms",
+          }}
+            onClick={() => setLpCanApproveQuotes((v) => !v)}
+          >
+            <div>
+              <div style={{ fontWeight: 600, fontSize: 14, color: "var(--ap-text, #202124)" }}>
+                💰 Puede aprobar y rechazar cotizaciones
+              </div>
+              <div style={{ fontSize: 12, color: "#5f6368", marginTop: 2 }}>
+                Si está desactivado, solo puede ver y crear. Dirección siempre puede aprobar.
+              </div>
+            </div>
+            <div style={{
+              width: 44, height: 24, borderRadius: 12, flexShrink: 0,
+              background: lpCanApproveQuotes ? "#16a34a" : "#dadce0",
+              position: "relative", transition: "background 200ms",
+            }}>
+              <div style={{
+                width: 18, height: 18, borderRadius: "50%", background: "#fff",
+                position: "absolute", top: 3,
+                left: lpCanApproveQuotes ? 23 : 3,
+                transition: "left 200ms",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+              }} />
+            </div>
+          </div>
+
+          {/* ✅ Permisos más legibles + menos blanco */}
+          <div className="apPermGridPro">
+            
             <div>
               <div style={{ fontWeight: 600, fontSize: 14, color: "var(--ap-text, #202124)" }}>
                 📅 Puede crear/editar/eliminar eventos del calendario

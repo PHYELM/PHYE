@@ -7,6 +7,7 @@ import AdminPanel from "./AdminPanel.jsx";
 import Inventory from "./Inventory.jsx";
 import FormsModule from "./FormsModule.jsx";
 import CalendarModule from "./CalendarModule.jsx";
+import QuotesModule from "./QuotesModule.jsx";
 import { setTitle } from "../utils/setTitle";
 import {
   TbBox,
@@ -241,10 +242,17 @@ export default function Dashboard({ worker, onLogout }) {
           </section>
         )}
 
-        {tab === "calendar" && (
+{tab === "calendar" && (
           <section className="module">
             <div className="module-head"></div>
             <CalendarModule currentWorker={worker} />
+          </section>
+        )}
+
+        {tab === "quotes" && (
+          <section className="module">
+            <div className="module-head"></div>
+            <QuotesModule currentWorker={worker} />
           </section>
         )}
 
@@ -252,7 +260,8 @@ export default function Dashboard({ worker, onLogout }) {
           tab !== "admin" &&
           tab !== "inventory" &&
           tab !== "forms" &&
-          tab !== "calendar" && (
+          tab !== "calendar" &&
+          tab !== "quotes" && (
             <div style={{
               display: "flex",
               flexDirection: "column",

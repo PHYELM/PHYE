@@ -1,6 +1,7 @@
 require("dotenv").config();
 
 const path = require("path");
+const fs = require("fs");
 const express = require("express");
 const cors = require("cors");
 
@@ -205,7 +206,7 @@ const { data, error } = await supabaseAdmin
     department_id,
     level_id,
     department:departments!workers_department_id_fkey(name),
-    level:worker_levels!workers_level_id_fkey(name)
+    level:worker_levels!workers_level_id_fkey(name, authority, can_approve_quotes)
   `
   )
   // ✅ case-insensitive exact match
@@ -223,7 +224,7 @@ const { data, error } = await supabaseAdmin
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
-    return res.json({
+return res.json({
       worker: {
         id: data.id,
         username: data.username,
@@ -233,6 +234,8 @@ const { data, error } = await supabaseAdmin
         level_id: data.level_id,
         department_name: data.department?.name || "",
         level_name: data.level?.name || "",
+        authority: data.level?.authority || 1,
+        can_approve_quotes: Boolean(data.level?.can_approve_quotes),
       },
     });
   } catch (e) {
@@ -257,16 +260,52 @@ app.use("/api", (req, res) => {
 /* =========================
    Servir React (CRA build)
 ========================= */
-const webBuild = path.join(__dirname, "..", "web", "build");
+const fs = require("fs");
+
+const buildCandidates = [
+  path.join(__dirname, "build"),
+  path.join(__dirname, "..", "web", "build"),
+];
+
+const webBuild =
+  buildCandidates.find((candidate) =>
+    fs.existsSync(path.join(candidate, "index.html"))
+  ) || buildCandidates[0];
+
+console.log("🌐 React build candidates:", buildCandidates);
+console.log("🌐 React build selected:", webBuild);
+console.log(
+  "🌐 index.html exists:",
+  fs.existsSync(path.join(webBuild, "index.html"))
+);
+
 app.use(express.static(webBuild));
 
 // Catch-all SPA (NO tocar /api)
 app.get(/^\/(?!api).*/, (req, res) => {
-  res.sendFile(path.join(webBuild, "index.html"));
+  const indexFile = path.join(webBuild, "index.html");
+
+  if (!fs.existsSync(indexFile)) {
+    console.error("❌ index.html not found at:", indexFile);
+    return res.status(500).json({
+      error: "React build not found",
+      expected_paths: buildCandidates,
+      selected_build: webBuild,
+      server_file: __filename,
+    });
+  }
+
+  return res.sendFile(indexFile);
 });
 
 /* =========================
    Start
 ========================= */
 const port = Number(process.env.PORT || 3001);
-app.listen(port, "0.0.0.0", () => console.log("Server running on port", port));
+
+app.listen(port, "0.0.0.0", () => {
+  console.log("Server running on port", port);
+  console.log("NODE_ENV =", process.env.NODE_ENV);
+  console.log("Server file =", __filename);
+  console.log("Serving static from =", webBuild);
+});
