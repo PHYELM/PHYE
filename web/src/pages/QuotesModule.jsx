@@ -22,11 +22,14 @@ const TABS = [
 ];
 
 const SEMAPHORE = {
-  pending:   { color: '#b45309', bg: '#fffbeb', border: '#fbbf24', dot: '#f59e0b', label: 'En espera' },
-  approved:  { color: '#1d4ed8', bg: '#eff6ff', border: '#93c5fd', dot: '#3b82f6', label: 'Aprobada'  },
-  rejected:  { color: '#b91c1c', bg: '#fef2f2', border: '#f87171', dot: '#ef4444', label: 'Rechazada' },
-  paid:      { color: '#15803d', bg: '#dcfce7', border: '#4ade80', dot: '#22c55e', label: 'Pagada'    },
-  cancelled: { color: '#6b7280', bg: '#f9fafb', border: '#d1d5db', dot: '#9ca3af', label: 'Cancelada' },
+  draft:     { color: '#475569', bg: '#f8fafc', border: '#cbd5e1', dot: '#94a3b8', label: 'Borrador'   },
+  pending:   { color: '#b45309', bg: '#fffbeb', border: '#fbbf24', dot: '#f59e0b', label: 'En espera'  },
+  sent:      { color: '#7c3aed', bg: '#f5f3ff', border: '#c4b5fd', dot: '#8b5cf6', label: 'Enviada'    },
+  approved:  { color: '#1d4ed8', bg: '#eff6ff', border: '#93c5fd', dot: '#3b82f6', label: 'Aprobada'   },
+  rejected:  { color: '#b91c1c', bg: '#fef2f2', border: '#f87171', dot: '#ef4444', label: 'Rechazada'  },
+  paid:      { color: '#15803d', bg: '#dcfce7', border: '#4ade80', dot: '#22c55e', label: 'Pagada'     },
+  cancelled: { color: '#6b7280', bg: '#f9fafb', border: '#d1d5db', dot: '#9ca3af', label: 'Cancelada'  },
+  expired:   { color: '#b91c1c', bg: '#fff1f2', border: '#fda4af', dot: '#e11d48', label: 'Expirada'   },
 };
 
 /* ══════════════════════════════════════════════════════
@@ -108,7 +111,13 @@ function QuoteInlineStatus({ quote, canApprove, onReload, worker }) {
 
   const expired       = isExpired(quote.valid_until) && !['approved','rejected'].includes(quote.status);
   const displayStatus = expired ? 'expired' : quote.status;
-  const sc            = SEMAPHORE[displayStatus] || SEMAPHORE.draft;
+  const sc            = SEMAPHORE[displayStatus] || {
+    color: '#475569',
+    bg: '#f8fafc',
+    border: '#cbd5e1',
+    dot: '#94a3b8',
+    label: displayStatus || 'Sin estado',
+  };
 
 const transitions = useMemo(() => {
     const t = [];
