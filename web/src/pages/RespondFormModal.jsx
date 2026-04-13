@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { TbFileText, TbX } from "react-icons/tb";
 import Swal from "sweetalert2";
 
@@ -12,17 +12,7 @@ export default function RespondFormModal({
 }) {
   const [closing, setClosing] = useState(false);
 
-  function closeWithAnimation() {
-    if (!onRequestClose) return;
-
-    setClosing(true);
-    setTimeout(() => {
-      onRequestClose();
-      setClosing(false);
-    }, 240);
-  }
-
-  async function confirmCloseRespondModal() {
+  const confirmCloseRespondModal = useCallback(async () => {
     if (!onRequestClose) return;
 
     if (skipCloseConfirm) {
@@ -43,7 +33,7 @@ export default function RespondFormModal({
     if (result.isConfirmed) {
       onRequestClose();
     }
-  }
+  }, [onRequestClose, skipCloseConfirm]);
 
   useEffect(() => {
     if (!open) return;
@@ -62,7 +52,7 @@ export default function RespondFormModal({
       document.removeEventListener("keydown", handleEsc);
       document.body.classList.remove("frt-body-lock");
     };
-  }, [open, skipCloseConfirm]);
+  }, [open, confirmCloseRespondModal]);
 
   if (!open) return null;
 
@@ -70,14 +60,10 @@ export default function RespondFormModal({
     <div
       className={`frt-respondBack ${closing ? "frt-respondBack--closing" : ""}`}
       onMouseDown={(e) => {
-        if (e.target === e.currentTarget) {
-          confirmCloseRespondModal();
-        }
+        if (e.target === e.currentTarget) confirmCloseRespondModal();
       }}
       onClick={(e) => {
-        if (e.target === e.currentTarget) {
-          confirmCloseRespondModal();
-        }
+        if (e.target === e.currentTarget) confirmCloseRespondModal();
       }}
     >
       <div

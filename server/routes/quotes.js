@@ -2,6 +2,8 @@ const express  = require('express');
 const router   = express.Router();
 const { supabaseAdmin: supabase } = require('../supabaseAdmin');
 const { generateQuotePDF, generateQuoteExcel, generateQuoteXML } = require('../utils/quotesExport');
+const { branchFilter } = require('../middleware/branchFilter');
+const { createNotifications } = require('./notifications');
 
 /* ── SSE broadcast ─────────────────────────────────────── */
 const sseClients = new Set();
@@ -91,11 +93,11 @@ router.delete('/clients/:id', async (req, res) => {
 });
 
 /* ════════════════════════════════════════════════════════
-   PUBLIC (sin auth) — IMPORTANTE: antes de /:id
+   PUBLIC (sin auth)
 ════════════════════════════════════════════════════════ */
 router.get('/public/:token', async (req, res) => {
   try {
-const { data: quote, error } = await supabase
+    const { data: quote, error } = await supabase
       .from('quotes')
       .select(`
         id, folio, title, status, subtotal, tax_rate, tax_amount,
@@ -127,7 +129,6 @@ router.get('/public/:token/export/pdf', async (req, res) => {
       .from('quote_items').select('*').eq('quote_id', quote.id).order('sort_order');
 
     const pdfBuf = await generateQuotePDF({ ...quote, items: items || [] });
-
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${quote.folio || 'cotizacion'}.pdf"`);
     res.send(pdfBuf);
@@ -137,7 +138,9 @@ router.get('/public/:token/export/pdf', async (req, res) => {
 /* ════════════════════════════════════════════════════════
    QUOTES LIST & CRUD
 ════════════════════════════════════════════════════════ */
-router.get('/', async (req, res) => {
+
+// ✅ GET con filtro de base
+router.get('/', branchFilter, async (req, res) => {
   try {
     const { status, q } = req.query;
     let query = supabase
@@ -149,12 +152,15 @@ router.get('/', async (req, res) => {
         client:clients(id, name, email, phone, company)
       `)
       .order('created_at', { ascending: false });
+
+    // ✅ Dirección ve todo; otros solo su base
+    if (req.branchId) query = query.eq('branch_id', req.branchId);
+
     if (status && status !== 'all') query = query.eq('status', status);
     if (q) query = query.or(`title.ilike.%${q}%,folio.ilike.%${q}%`);
     const { data, error } = await query;
     if (error) throw error;
 
-    // Batch-fetch creators
     const creatorIds = [...new Set((data || []).map(r => r.created_by).filter(Boolean))];
     let creatorsMap = {};
     if (creatorIds.length) {
@@ -180,12 +186,9 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
-const { data: quote, error } = await supabase
+    const { data: quote, error } = await supabase
       .from('quotes')
-      .select(`
-        *,
-        client:clients(id, name, email, phone, address, company, rfc)
-      `)
+      .select(`*, client:clients(id, name, email, phone, address, company, rfc)`)
       .eq('id', req.params.id).single();
     if (error) throw error;
     const { data: items, error: ie } = await supabase
@@ -195,7 +198,8 @@ const { data: quote, error } = await supabase
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.post('/', async (req, res) => {
+// ✅ POST con branch_id
+router.post('/', branchFilter, async (req, res) => {
   try {
     const { worker_id, items = [], ...payload } = req.body;
     const totals = calcTotals(items, payload.tax_rate, payload.discount_amount);
@@ -204,11 +208,18 @@ router.post('/', async (req, res) => {
       const { data: c } = await supabase.from('clients').select('*').eq('id', payload.client_id).single();
       if (c) clientSnapshot = c;
     }
-const { data: quote, error } = await supabase.from('quotes')
-      .insert({ ...payload, ...totals, client_snapshot: clientSnapshot, created_by: worker_id, status: 'pending' })
+    const { data: quote, error } = await supabase.from('quotes')
+      .insert({
+        ...payload, ...totals,
+        client_snapshot: clientSnapshot,
+        created_by: worker_id,
+        status: 'pending',
+        // ✅ hereda base del worker
+        branch_id: req.branchId || null,
+      })
       .select().single();
     if (error) throw error;
-const rows = items.filter(it => String(it.description || '').trim()).map((it, idx) => ({
+    const rows = items.filter(it => String(it.description || '').trim()).map((it, idx) => ({
       quote_id: quote.id, description: it.description, unit: it.unit || 'pieza',
       quantity: Number(it.quantity) || 1, unit_price: Number(it.unit_price) || 0,
       discount_pct: Number(it.discount_pct) || 0, amount: Number(it.amount) || 0, sort_order: idx,
@@ -229,7 +240,7 @@ router.put('/:id', async (req, res) => {
     if (error) throw error;
     if (items !== undefined) {
       await supabase.from('quote_items').delete().eq('quote_id', req.params.id);
-const rows = (items || []).filter(it => String(it.description || '').trim()).map((it, idx) => ({
+      const rows = (items || []).filter(it => String(it.description || '').trim()).map((it, idx) => ({
         quote_id: req.params.id, description: it.description, unit: it.unit || 'pieza',
         quantity: Number(it.quantity) || 1, unit_price: Number(it.unit_price) || 0,
         discount_pct: Number(it.discount_pct) || 0, amount: Number(it.amount) || 0, sort_order: idx,
@@ -253,27 +264,55 @@ router.delete('/:id', async (req, res) => {
 
 /* ── Status transitions ──────────────────────────────── */
 
-// pending → approved
+// ✅ pending → approved con notificación al creador
 router.post('/:id/approve', async (req, res) => {
   try {
     const { worker_id } = req.body;
     if (!await canApproveQuotes(worker_id))
       return res.status(403).json({ error: 'No tienes permiso para aprobar cotizaciones' });
+
+    // Obtener la cotización antes de actualizar
+    const { data: prev } = await supabase
+      .from('quotes').select('id, folio, title, created_by, branch_id').eq('id', req.params.id).single();
+
     const { data, error } = await supabase.from('quotes')
       .update({ status: 'approved', approved_by: worker_id, approved_at: new Date().toISOString() })
       .eq('id', req.params.id).select().single();
     if (error) throw error;
     broadcast();
+
+    // ✅ Notificar al creador de la cotización
+    if (prev?.created_by && prev.created_by !== worker_id) {
+      const { data: actor } = await supabase
+        .from('workers').select('id, full_name, profile_photo_url').eq('id', worker_id).maybeSingle();
+      await createNotifications([{
+        recipient_id: prev.created_by,
+        actor_id: worker_id,
+        actor_name: actor?.full_name || 'Director',
+        actor_photo: actor?.profile_photo_url || null,
+        type: 'quote_approved',
+        title: 'Cotización aprobada',
+        message: `Tu cotización "${prev.folio || prev.title}" fue aprobada`,
+        entity_type: 'quote',
+        entity_id: prev.id,
+        branch_id: prev.branch_id || null,
+      }]);
+    }
+
     res.json({ data });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// pending/approved → rejected
+// ✅ pending/approved → rejected con notificación al creador
 router.post('/:id/reject', async (req, res) => {
   try {
     const { worker_id, reason } = req.body;
     if (!await canApproveQuotes(worker_id))
       return res.status(403).json({ error: 'No tienes permiso para rechazar cotizaciones' });
+
+    const { data: prev } = await supabase
+      .from('quotes').select('id, folio, title, created_by, branch_id').eq('id', req.params.id).single();
+
     const { data, error } = await supabase.from('quotes')
       .update({
         status: 'rejected', rejected_by: worker_id,
@@ -282,6 +321,25 @@ router.post('/:id/reject', async (req, res) => {
       .eq('id', req.params.id).select().single();
     if (error) throw error;
     broadcast();
+
+    // ✅ Notificar al creador
+    if (prev?.created_by && prev.created_by !== worker_id) {
+      const { data: actor } = await supabase
+        .from('workers').select('id, full_name, profile_photo_url').eq('id', worker_id).maybeSingle();
+      await createNotifications([{
+        recipient_id: prev.created_by,
+        actor_id: worker_id,
+        actor_name: actor?.full_name || 'Director',
+        actor_photo: actor?.profile_photo_url || null,
+        type: 'quote_rejected',
+        title: 'Cotización rechazada',
+        message: `Tu cotización "${prev.folio || prev.title}" fue rechazada${reason ? ': ' + reason : ''}`,
+        entity_type: 'quote',
+        entity_id: prev.id,
+        branch_id: prev.branch_id || null,
+      }]);
+    }
+
     res.json({ data });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -310,14 +368,12 @@ router.post('/:id/pay', async (req, res) => {
       .eq('id', req.params.id).select().single();
     if (qe) throw qe;
 
-    // Descontar inventario — solo items con product_id
     const { data: items } = await supabase.from('quote_items')
       .select('product_id, quantity')
       .eq('quote_id', req.params.id)
       .not('product_id', 'is', null);
 
     if (items && items.length > 0) {
-      // Crear movimiento de salida
       const { data: movement, error: me } = await supabase.from('inventory_movements')
         .insert({ type: 'OUT', reason: `Cotización pagada: ${quote.folio}`, created_by: worker_id })
         .select().single();
@@ -378,10 +434,7 @@ router.get('/:id/export/pdf', async (req, res) => {
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${quote.folio || 'cotizacion'}.pdf"`);
     res.send(buf);
-  } catch (e) {
-    console.error('❌ PDF EXPORT ERROR:', e);
-    res.status(500).json({ error: e.message, stack: e.stack });
-  }
+  } catch (e) { res.status(500).json({ error: e.message, stack: e.stack }); }
 });
 
 router.get('/:id/export/excel', async (req, res) => {
@@ -391,10 +444,7 @@ router.get('/:id/export/excel', async (req, res) => {
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', `attachment; filename="${quote.folio || 'cotizacion'}.xlsx"`);
     res.send(buf);
-  } catch (e) {
-    console.error('❌ EXCEL EXPORT ERROR:', e);
-    res.status(500).json({ error: e.message, stack: e.stack });
-  }
+  } catch (e) { res.status(500).json({ error: e.message, stack: e.stack }); }
 });
 
 router.get('/:id/export/xml', async (req, res) => {
@@ -404,9 +454,7 @@ router.get('/:id/export/xml', async (req, res) => {
     res.setHeader('Content-Type', 'application/xml');
     res.setHeader('Content-Disposition', `attachment; filename="${quote.folio || 'cotizacion'}.xml"`);
     res.send(xml);
-  } catch (e) {
-    console.error('❌ XML EXPORT ERROR:', e);
-    res.status(500).json({ error: e.message, stack: e.stack });
-  }
+  } catch (e) { res.status(500).json({ error: e.message, stack: e.stack }); }
 });
+
 module.exports = router;

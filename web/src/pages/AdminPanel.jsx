@@ -195,6 +195,44 @@ const MODULES = [
   { key: "calendar", label: "Calendario" },
 ];
 
+// ✅ Permisos granulares: qué acciones aplican a cada módulo
+const MODULES_FULL = [
+  { key: "home",          label: "Inicio",            actions: ["can_view"] },
+  { key: "admin",         label: "Admin",             actions: ["can_view", "can_create", "can_edit", "can_delete"] },
+  { key: "forms",         label: "Formularios",       actions: ["can_view", "can_create", "can_edit", "can_delete", "can_export"] },
+  { key: "inventory",     label: "Inventario",        actions: ["can_view", "can_create", "can_edit", "can_delete", "can_export"] },
+  { key: "quotes",        label: "Cotizaciones",      actions: ["can_view", "can_create", "can_edit", "can_approve", "can_delete", "can_export"] },
+  { key: "operations",    label: "Operaciones",       actions: ["can_view", "can_create", "can_edit", "can_delete"] },
+  { key: "invoices",      label: "Facturación",       actions: ["can_view", "can_create", "can_edit", "can_delete", "can_export"] },
+  { key: "serviceSheets", label: "Hoja de Servicios", actions: ["can_view", "can_create", "can_edit", "can_delete"] },
+  { key: "weeklyReports", label: "Bitácora Semanal",  actions: ["can_view", "can_create", "can_edit", "can_delete", "can_export"] },
+  { key: "calendar",      label: "Calendario",        actions: ["can_view", "can_create", "can_edit", "can_delete"] },
+];
+
+const ACTION_LABELS = {
+  can_view:    "Ver",
+  can_create:  "Crear",
+  can_edit:    "Editar",
+  can_approve: "Aprobar",
+  can_delete:  "Eliminar",
+  can_export:  "Exportar",
+};
+
+function defaultPermissions() {
+  const obj = {};
+  MODULES_FULL.forEach((m) => {
+    obj[m.key] = {
+      can_view:    true,
+      can_create:  false,
+      can_edit:    false,
+      can_approve: false,
+      can_delete:  false,
+      can_export:  false,
+    };
+  });
+  return obj;
+}
+
 const DEPT_ICONS = [
   { key: "briefcase", label: "Administración", Icon: TbBriefcase },
   { key: "truck", label: "Logística", Icon: TbTruckDelivery },
@@ -425,7 +463,7 @@ const [levelPage, setLevelPage] = useState(1);
   const [fullName, setFullName] = useState("");
   const [username, setUsername] = useState(""); // ✅ ahora será "Nombre Apellido"
   const [passwordPlain, setPasswordPlain] = useState("");
-const [selDept, setSelDept] = useState("");
+  const [selDept, setSelDept] = useState("");
   const [selLevel, setSelLevel] = useState("");
   const [selBranch, setSelBranch] = useState("");
 
@@ -448,8 +486,24 @@ const [selDept, setSelDept] = useState("");
 
 const [lpDeptId, setLpDeptId] = useState("");
   const [lpModules, setLpModules] = useState(() => new Set(MODULES.map((m) => m.key)));
-  const [lpCanManageCalendar, setLpCanManageCalendar] = useState(false);
+const [lpCanManageCalendar, setLpCanManageCalendar] = useState(false);
   const [lpCanApproveQuotes,  setLpCanApproveQuotes]  = useState(false);
+
+  // ✅ Permisos granulares del PUESTO
+  const [lpPermissions, setLpPermissions] = useState(defaultPermissions);
+
+  // ✅ Modal de Bases
+  const [branchModalOpen, setBranchModalOpen] = useState(false);
+  const [branchEditOpen, setBranchEditOpen] = useState(false);
+  const [branchEditingId, setBranchEditingId] = useState(null);
+  const [branchName, setBranchName] = useState("");
+  const [branchColor, setBranchColor] = useState("#1a3b6b");
+  const branchMenuBtnRefs = useRef({});
+  const [branchMenuOpenId, setBranchMenuOpenId] = useState(null);
+
+  // paginación bases
+  const BRANCH_PAGE_SIZE = 6;
+  const [branchPage, setBranchPage] = useState(1);
   // menus 3 puntitos
   const [deptMenuOpenId, setDeptMenuOpenId] = useState(null);
   const [levelMenuOpenId, setLevelMenuOpenId] = useState(null);
@@ -605,7 +659,7 @@ function closeUserModal() {
     setSelBranch("");
   }
 
-  function openCreateUser() {
+function openCreateUser() {
     setEditMode(false);
     setEditingId(null);
     setFirstName("");
@@ -622,8 +676,7 @@ function closeUserModal() {
 
     setUserModalOpen(true);
   }
-
-  function openEditUser(w) {
+function openEditUser(w) {
     setEditMode(true);
     setEditingId(w.id);
 
@@ -639,7 +692,82 @@ function closeUserModal() {
     setSelDept(w.department_id || "");
     setSelLevel(w.level_id || "");
     setSelBranch(w.branch_id || "");
+
     setUserModalOpen(true);
+  }
+
+/* =========================
+    Branches (create/edit/delete)
+  ========================= */
+  function openBranchModal() {
+    setBranchName("");
+    setBranchColor("#1a3b6b");
+    setBranchModalOpen(true);
+  }
+
+  async function addBranch() {
+    const name = titleCaseWords(branchName);
+    if (!name) {
+      Swal.fire({ icon: "error", title: "Falta nombre", text: "Escribe el nombre de la base." });
+      return;
+    }
+    try {
+      await apiFetch("/api/branches", {
+        method: "POST",
+        body: JSON.stringify({ name, color: branchColor }),
+      });
+      setBranchModalOpen(false);
+      await loadAll();
+      Swal.fire({ icon: "success", title: "Base creada", timer: 1200, showConfirmButton: false });
+    } catch (e) {
+      Swal.fire({ icon: "error", title: "Error", text: e.message });
+    }
+  }
+
+  function openEditBranch(b) {
+    setBranchEditingId(b.id);
+    setBranchName(b.name || "");
+    setBranchColor(b.color || "#1a3b6b");
+    setBranchEditOpen(true);
+    setBranchMenuOpenId(null);
+  }
+
+  async function saveEditBranch() {
+    const name = titleCaseWords(branchName);
+    if (!branchEditingId || !name) return;
+    try {
+      await apiFetch(`/api/branches/${branchEditingId}`, {
+        method: "PUT",
+        body: JSON.stringify({ name, color: branchColor }),
+      });
+      setBranchEditOpen(false);
+      setBranchEditingId(null);
+      await loadAll();
+      Swal.fire({ icon: "success", title: "Base actualizada", timer: 1200, showConfirmButton: false });
+    } catch (e) {
+      Swal.fire({ icon: "error", title: "Error", text: e.message });
+    }
+  }
+
+  async function deleteBranch(b) {
+    setBranchMenuOpenId(null);
+    const go = await Swal.fire({
+      icon: "warning",
+      title: "Eliminar base",
+      html: `<b>${b.name}</b><br/>Esto no se puede deshacer.`,
+      showCancelButton: true,
+      confirmButtonText: "Eliminar",
+      cancelButtonText: "Cancelar",
+      confirmButtonColor: "#d33",
+    });
+    if (!go.isConfirmed) return;
+    try {
+      await apiFetch(`/api/branches/${b.id}`, { method: "DELETE" });
+      await loadAll();
+      Swal.fire({ icon: "success", title: "Eliminada", timer: 1100, showConfirmButton: false });
+    } catch (e) {
+      Swal.fire({ icon: "error", title: "Error", text: e.message });
+    }
   }
 
   /* =========================
@@ -762,15 +890,15 @@ function openLevelPolicyModalCreate() {
     setLpLevelId("");
     setLpLevelName("");
     setLpAuthority(1);
-setLpCanManageCalendar(false);
+    setLpCanManageCalendar(false);
     setLpCanApproveQuotes(false);
-
     setLpDeptId(d0);
     setLpModules(new Set(MODULES.map((m) => m.key)));
+    setLpPermissions(defaultPermissions());
     setLevelMenuOpenId(null);
   }
 
-function openLevelPolicyModalEdit(levelObj) {
+async function openLevelPolicyModalEdit(levelObj) {
     if (departments.length === 0) {
       Swal.fire({
         icon: "warning",
@@ -792,12 +920,25 @@ function openLevelPolicyModalEdit(levelObj) {
     setLpLevelId(levelObj.id);
     setLpLevelName(levelObj.name || "");
     setLpAuthority(Number(authority) || 1);
-setLpCanManageCalendar(Boolean(levelObj.can_manage_calendar));
+    setLpCanManageCalendar(Boolean(levelObj.can_manage_calendar));
     setLpCanApproveQuotes(Boolean(levelObj.can_approve_quotes));
 
     setLpDeptId(d0);
     if (Array.isArray(saved) && saved.length > 0) setLpModules(new Set(saved));
     else setLpModules(new Set(MODULES.map((m) => m.key)));
+
+    // ✅ Cargar permisos granulares del puesto
+    try {
+      const permsResp = await apiFetch(`/api/admin/levels/${levelObj.id}/permissions`);
+      const existingPerms = permsResp?.data || {};
+      const base = defaultPermissions();
+      Object.keys(existingPerms).forEach((key) => {
+        if (base[key]) base[key] = { ...base[key], ...existingPerms[key] };
+      });
+      setLpPermissions(base);
+    } catch {
+      setLpPermissions(defaultPermissions());
+    }
 
     setLevelMenuOpenId(null);
   }
@@ -850,11 +991,15 @@ if (lpIsNew) {
         if (!levelId) throw new Error("Falta el id del puesto.");
         await apiFetch(`/api/admin/levels/${levelId}`, {
           method: "PUT",
-          body: JSON.stringify({ name, authority, can_manage_calendar: lpCanManageCalendar }),
+          body: JSON.stringify({
+            name,
+            authority,
+            can_manage_calendar: lpCanManageCalendar,
+            can_approve_quotes: lpCanApproveQuotes,
+          }),
         });
       }
-
-      // 2) guardar policy depto+puesto
+// 2) guardar policy depto+puesto (módulos habilitados)
       await apiFetch("/api/admin/access-policies", {
         method: "POST",
         body: JSON.stringify({
@@ -862,6 +1007,22 @@ if (lpIsNew) {
           level_id: levelId,
           allowed_modules: mods,
         }),
+      });
+
+      // ✅ 3) guardar permisos granulares del puesto
+      const permissionsArray = MODULES_FULL.map((m) => ({
+        module_key:  m.key,
+        can_view:    Boolean(lpPermissions[m.key]?.can_view),
+        can_create:  Boolean(lpPermissions[m.key]?.can_create),
+        can_edit:    Boolean(lpPermissions[m.key]?.can_edit),
+        can_approve: Boolean(lpPermissions[m.key]?.can_approve),
+        can_delete:  Boolean(lpPermissions[m.key]?.can_delete),
+        can_export:  Boolean(lpPermissions[m.key]?.can_export),
+      }));
+
+      await apiFetch(`/api/admin/levels/${levelId}/permissions`, {
+        method: "PUT",
+        body: JSON.stringify({ permissions: permissionsArray }),
       });
 
       setLpOpen(false);
@@ -961,7 +1122,7 @@ const payload = {
       active: true,
     };
 
-    try {
+try {
       if (!editMode) {
         await apiFetch("/api/admin/workers", {
           method: "POST",
@@ -1196,7 +1357,13 @@ await Swal.fire({
             <div className="apCardTitle">
               <TbCrown /> Puestos
             </div>
-            <div className="apHint">Autoridad: 1 (básico) → 5 (máximo)</div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div className="apHint">Autoridad: 1 (básico) → 5 (máximo)</div>
+              <button className="apBtn apBtnPrimary" onClick={openLevelPolicyModalCreate} type="button">
+                <TbPlus /> Crear
+              </button>
+            </div>
           </div>
 
           {/* ✅ unificado: crear/editar puesto + permisos en 1 solo modal */}
@@ -1307,7 +1474,57 @@ await Swal.fire({
 </div>
 </div>
         </section>
-      </div>
+</div>
+
+      {/* ✅ BASES / SUCURSALES */}
+      <section className="apCard apCardFull" style={{ marginTop: 16 }}>
+        <div className="apCardTop">
+          <div className="apCardTitle">
+            <TbMapPin /> Bases / Sucursales
+          </div>
+          <button className="apBtn apBtnPrimary" onClick={openBranchModal} type="button">
+            <TbPlus /> Nueva base
+          </button>
+        </div>
+
+        <div className="apDeptGrid">
+          {branches.map((b) => {
+            const bg = b.color || "#1a3b6b";
+            const light = isLightColor(bg);
+            const fg = light ? "rgba(10,12,14,0.92)" : "rgba(255,255,255,0.96)";
+            return (
+              <div className="apDeptTile" key={b.id} style={{ background: bg, color: fg }}>
+                <button
+                  className="apDeptTileKebab"
+                  type="button"
+                  ref={(el) => (branchMenuBtnRefs.current[b.id] = el)}
+                  onClick={() => setBranchMenuOpenId((prev) => (prev === b.id ? null : b.id))}
+                  style={{ color: fg }}
+                >
+                  <TbDotsVertical />
+                </button>
+                <div className="apDeptTileIcon" style={{ color: fg }}>
+                  <TbMapPin style={{ fontSize: 44 }} />
+                </div>
+                <div className="apDeptTileName" style={{ color: fg }}>{b.name}</div>
+                <MiniMenu
+                  open={branchMenuOpenId === b.id}
+                  onClose={() => setBranchMenuOpenId(null)}
+                  anchorRef={{ current: branchMenuBtnRefs.current[b.id] }}
+                >
+                  <button className="apMiniItem" type="button" onClick={() => openEditBranch(b)}>
+                    <TbEdit />
+                  </button>
+                  <button className="apMiniItem apMiniDanger" type="button" onClick={() => deleteBranch(b)}>
+                    <TbTrash />
+                  </button>
+                </MiniMenu>
+              </div>
+            );
+          })}
+          {branches.length === 0 && <div className="apMuted">Sin bases registradas</div>}
+        </div>
+      </section>
 
       {/* Usuarios */}
       <section className="apCard apCardFull">
@@ -1671,6 +1888,35 @@ onChange={(e) => setLastName(titleCaseLive(e.target.value))}
             </div>
           </div>
 
+{/* ✅ AVISO: permisos heredados del puesto */}
+          <div className="apField apSpan2">
+            <label style={{ fontWeight: 700, fontSize: 13, marginBottom: 8, display: "block" }}>
+              <TbShieldLock style={{ marginRight: 4 }} />
+              Permisos del usuario
+            </label>
+
+            <div
+              style={{
+                border: "1px solid rgba(0,0,0,0.08)",
+                background: "#f8f9fa",
+                borderRadius: 14,
+                padding: "14px 16px",
+                color: "#374151",
+                fontSize: 13,
+                lineHeight: 1.5,
+              }}
+            >
+              Este usuario <b>no tendrá permisos propios</b>.  
+              Todos sus accesos, acciones y autorizaciones se heredan del <b>puesto</b> seleccionado.
+              <br /><br />
+              Si quieres cambiar lo que puede hacer, edítalo desde <b>Puestos</b>.
+            </div>
+
+            <div className="apSmallHint">
+              Dirección siempre conserva acceso total.
+            </div>
+          </div>
+
           <div className="apModalActions apSpan2">
             <button className="apBtn apBtnGhost" onClick={closeUserModal} type="button">
               <TbX /> Cancelar
@@ -1808,132 +2054,82 @@ onChange={(e) => setDepName(titleCaseLive(e.target.value))}
       {/* MODAL UNIFICADO: PUESTO + PERMISOS */}
       <Modal open={lpOpen} title="Puesto + Permisos (Departamento + Puesto)" onClose={() => setLpOpen(false)}>
         <div className="apLPWrap">
-          <div className="apLPTop">
-<div className="apField">
-  <label>Departamento (para permisos)</label>
-  <ProSelect
-    value={lpDeptId}
-    onChange={(e) => {
-      const nextDept = e.target.value;
-      setLpDeptId(nextDept);
+<div className="apLPTop">
+  <div className="apField">
+    <label>Departamento (para política de módulos)</label>
+    <ProSelect
+      value={lpDeptId}
+      onChange={(e) => {
+        const nextDept = e.target.value;
+        setLpDeptId(nextDept);
 
-      // si estamos editando (y ya hay un level seleccionado), cargamos policy
-      const effectiveLevel = lpIsNew ? lpLevelId : (lpLevelId || levels[0]?.id);
-      if (effectiveLevel) syncLpPolicy(nextDept, effectiveLevel);
-    }}
-    ariaLabel="Departamento permisos"
-  >
-    {departments.map((d) => (
-      <option key={d.id} value={d.id}>
-        {d.name}
-      </option>
-    ))}
-  </ProSelect>
+        const effectiveLevel = lpLevelId || "";
+        if (effectiveLevel) syncLpPolicy(nextDept, effectiveLevel);
+      }}
+      ariaLabel="Departamento permisos"
+    >
+      {departments.map((d) => (
+        <option key={d.id} value={d.id}>
+          {d.name}
+        </option>
+      ))}
+    </ProSelect>
+    <div className="apSmallHint">
+      Aquí defines qué módulos puede usar este puesto dentro de ese departamento.
+    </div>
+  </div>
+
+  {!lpIsNew && (
+    <div className="apField">
+      <label>Puesto existente</label>
+      <ProSelect
+        value={lpLevelId}
+        onChange={(e) => {
+          const v = e.target.value;
+          setLpLevelId(v);
+          const obj = levelsMap.get(v);
+          setLpLevelName(obj?.name || "");
+          setLpAuthority(Number(obj?.authority ?? obj?.rank ?? 1) || 1);
+          setLpCanManageCalendar(Boolean(obj?.can_manage_calendar));
+          setLpCanApproveQuotes(Boolean(obj?.can_approve_quotes));
+          syncLpPolicy(lpDeptId, v);
+        }}
+        ariaLabel="Puesto existente"
+      >
+        {levels.map((l) => (
+          <option key={l.id} value={l.id}>
+            {l.name}
+          </option>
+        ))}
+      </ProSelect>
+    </div>
+  )}
+
+  <div className="apField">
+    <label>Nombre del puesto</label>
+    <input
+      className="apInput"
+      value={lpLevelName}
+      onChange={(e) => setLpLevelName(titleCaseLive(e.target.value))}
+      placeholder="Ej: Gerente General"
+    />
+  </div>
+
+  <div className="apField">
+    <label>Autoridad</label>
+    <ProSelect
+      value={lpAuthority}
+      onChange={(e) => setLpAuthority(Number(e.target.value))}
+      ariaLabel="Autoridad"
+    >
+      <option value={1}>Autoridad 1</option>
+      <option value={2}>Autoridad 2</option>
+      <option value={3}>Autoridad 3</option>
+      <option value={4}>Autoridad 4</option>
+      <option value={5}>Autoridad 5</option>
+    </ProSelect>
+  </div>
 </div>
-
-<div className="apField">
-  <label>Puesto (para permisos)</label>
-  <ProSelect
-    value={lpLevelId || ""}
-    onChange={(e) => {
-      const nextLevel = e.target.value;
-      setLpLevelId(nextLevel);
-
-      const obj = levelsMap.get(nextLevel);
-      setLpLevelName(obj?.name || "");
-      setLpAuthority(Number(obj?.authority ?? obj?.rank ?? 1) || 1);
-
-      syncLpPolicy(lpDeptId, nextLevel);
-    }}
-    ariaLabel="Puesto permisos"
-    disabled={lpIsNew && !lpLevelId && levels.length === 0}
-  >
-    <option value="">Selecciona un puesto</option>
-    {levels.map((l) => (
-      <option key={l.id} value={l.id}>
-        {l.name}
-      </option>
-    ))}
-  </ProSelect>
-
-  <div className="apSmallHint">Estos selects controlan permisos por combinación Depto+Puesto.</div>
-</div>
-
-<div className="apField">
-  <label>Departamento</label>
-  <ProSelect value={selDept} onChange={(e) => setSelDept(e.target.value)} ariaLabel="Departamento">
-    <option value="">Sin depto</option>
-    {departments.map((d) => (
-      <option key={d.id} value={d.id}>
-        {d.name}
-      </option>
-    ))}
-  </ProSelect>
-</div>
-
-<div className="apField">
-  <label>Puesto</label>
-  <ProSelect value={selLevel} onChange={(e) => setSelLevel(e.target.value)} ariaLabel="Puesto">
-    <option value="">Sin puesto</option>
-    {levels.map((l) => (
-      <option key={l.id} value={l.id}>
-        {l.name}
-      </option>
-    ))}
-  </ProSelect>
-
-  <div className="apSmallHint">Selecciona el puesto del usuario.</div>
-</div>
-
-            {!lpIsNew && (
-              <div className="apField">
-                <label>Puesto existente</label>
-<ProSelect
-  value={lpLevelId}
-  onChange={(e) => {
-    const v = e.target.value;
-    setLpLevelId(v);
-    const obj = levelsMap.get(v);
-    setLpLevelName(obj?.name || "");
-    setLpAuthority(Number(obj?.authority ?? obj?.rank ?? 1) || 1);
-    syncLpPolicy(lpDeptId, v);
-  }}
-  ariaLabel="Puesto existente"
->
-  {levels.map((l) => (
-    <option key={l.id} value={l.id}>
-      {l.name}
-    </option>
-  ))}
-</ProSelect>
-              </div>
-            )}
-
-            <div className="apField">
-              <label>Nombre del puesto</label>
-<input
-  className="apInput"
-  value={lpLevelName}
-onChange={(e) => setLpLevelName(titleCaseLive(e.target.value))}
-  placeholder="Ej: Director General"
-/>
-            </div>
-
-            <div className="apField">
-              <label>Autoridad</label>
-<ProSelect
-  value={lpAuthority}
-  onChange={(e) => setLpAuthority(Number(e.target.value))}
-  ariaLabel="Autoridad"
->
-  <option value={1}>Autoridad 1</option>
-  <option value={2}>Autoridad 2</option>
-  <option value={3}>Autoridad 3</option>
-  <option value={4}>Autoridad 4</option>
-  <option value={5}>Autoridad 5</option>
-</ProSelect>
-            </div>  
-          </div>
 
 {/* Toggle: puede gestionar calendario */}
           <div style={{
@@ -2001,31 +2197,30 @@ onChange={(e) => setLpLevelName(titleCaseLive(e.target.value))}
             </div>
           </div>
 
-          {/* ✅ Permisos más legibles + menos blanco */}
+          {/* ✅ Módulos habilitados para este puesto */}
           <div className="apPermGridPro">
-            
-            <div>
-              <div style={{ fontWeight: 600, fontSize: 14, color: "var(--ap-text, #202124)" }}>
-                📅 Puede crear/editar/eliminar eventos del calendario
-              </div>
-              <div style={{ fontSize: 12, color: "#5f6368", marginTop: 2 }}>
-                Si está desactivado, solo puede ver eventos. Dirección siempre puede gestionar.
-              </div>
-            </div>
-            {/* Toggle visual */}
-            <div style={{
-              width: 44, height: 24, borderRadius: 12, flexShrink: 0,
-              background: lpCanManageCalendar ? "#1a73e8" : "#dadce0",
-              position: "relative", transition: "background 200ms",
-            }}>
-              <div style={{
-                width: 18, height: 18, borderRadius: "50%", background: "#fff",
-                position: "absolute", top: 3,
-                left: lpCanManageCalendar ? 23 : 3,
-                transition: "left 200ms",
-                boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
-              }} />
-            </div>
+            {MODULES.map((m) => {
+              const on = lpModules.has(m.key);
+              return (
+                <button
+                  key={m.key}
+                  type="button"
+                  className={`apPermItemPro ${on ? "on" : "off"}`}
+                  onClick={() => {
+                    setLpModules((prev) => {
+                      const next = new Set(prev);
+                      if (next.has(m.key)) next.delete(m.key);
+                      else next.add(m.key);
+                      return next;
+                    });
+                  }}
+                >
+                  <span className={`apPermDot ${on ? "on" : "off"}`} />
+                  <span className="apPermLabelPro">{m.label}</span>
+                  <span className="apPermKeyPro">{m.key}</span>
+                </button>
+              );
+            })}
           </div>
 
           {/* ✅ Permisos más legibles + menos blanco */}
@@ -2052,6 +2247,79 @@ onChange={(e) => setLpLevelName(titleCaseLive(e.target.value))}
                 </button>
               );
             })}
+          </div>
+
+{/* ✅ Matriz de permisos granulares del PUESTO */}
+          <div style={{ marginTop: 16, marginBottom: 12 }}>
+            <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 8 }}>
+              <TbShieldLock style={{ marginRight: 4 }} />
+              Permisos granulares del puesto
+            </div>
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                <thead>
+                  <tr style={{ background: "#f1f3f4" }}>
+                    <th style={{ padding: "6px 10px", textAlign: "left", fontWeight: 700, color: "#444" }}>Módulo</th>
+                    {["can_view","can_create","can_edit","can_approve","can_delete","can_export"].map((a) => (
+                      <th key={a} style={{ padding: "6px 8px", textAlign: "center", fontWeight: 700, color: "#444", whiteSpace: "nowrap" }}>
+                        {ACTION_LABELS[a]}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {MODULES_FULL.map((m, idx) => (
+                    <tr key={m.key} style={{ background: idx % 2 === 0 ? "#fff" : "#f8f9fa", borderBottom: "1px solid #eee" }}>
+                      <td style={{ padding: "6px 10px", fontWeight: 600, color: "#202124" }}>{m.label}</td>
+                      {["can_view","can_create","can_edit","can_approve","can_delete","can_export"].map((action) => {
+                        const applicable = m.actions.includes(action);
+                        const checked = applicable && Boolean(lpPermissions[m.key]?.[action]);
+                        return (
+                          <td key={action} style={{ textAlign: "center", padding: "6px 8px" }}>
+                            {applicable ? (
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                onChange={(e) =>
+                                  setLpPermissions((prev) => ({
+                                    ...prev,
+                                    [m.key]: { ...prev[m.key], [action]: e.target.checked },
+                                  }))
+                                }
+                                style={{ width: 16, height: 16, cursor: "pointer", accentColor: "#1a73e8" }}
+                              />
+                            ) : (
+                              <span style={{ color: "#ccc" }}>—</span>
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+              <button type="button" className="apBtn apBtnGhost" style={{ fontSize: 11 }}
+                onClick={() => { const n = defaultPermissions(); setLpPermissions(n); }}>
+                Solo lectura
+              </button>
+              <button type="button" className="apBtn apBtnGhost" style={{ fontSize: 11 }}
+                onClick={() => {
+                  const n = {}; MODULES_FULL.forEach((m) => { n[m.key] = { can_view:true, can_create:true, can_edit:true, can_approve:false, can_delete:false, can_export:true }; });
+                  setLpPermissions(n);
+                }}>
+                Operativo
+              </button>
+              <button type="button" className="apBtn apBtnPrimary" style={{ fontSize: 11 }}
+                onClick={() => {
+                  const n = {}; MODULES_FULL.forEach((m) => { n[m.key] = { can_view:true, can_create:true, can_edit:true, can_approve:true, can_delete:true, can_export:true }; });
+                  setLpPermissions(n);
+                }}>
+                Acceso total
+              </button>
+            </div>
+            <div className="apSmallHint">Todos los usuarios con este puesto heredan estos permisos. Dirección siempre tiene acceso total.</div>
           </div>
 
           <div className="apPermActionsCenter">

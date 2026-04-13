@@ -1,6 +1,8 @@
 const router = require("express").Router();
 const multer = require("multer");
 const { supabaseAdmin } = require("../supabaseAdmin");
+const { branchFilter } = require("../middleware/branchFilter");
+const { createNotifications } = require("./notifications");
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -214,7 +216,7 @@ router.get("/meta", async (req, res) => {
   }
 });
 
-router.get("/events", async (req, res) => {
+router.get("/events", branchFilter, async (req, res) => {
   try {
     const workerId = safeString(req.query.workerId);
     const from = toIso(req.query.from) || new Date().toISOString();
@@ -226,7 +228,7 @@ router.get("/events", async (req, res) => {
 
     const viewer = await getWorkerMeta(workerId);
 
-    const { data, error } = await supabaseAdmin
+    let eventsQuery = supabaseAdmin
       .from("calendar_events")
       .select(`
         id,
@@ -240,6 +242,7 @@ router.get("/events", async (req, res) => {
         color,
         created_by,
         creator_department_id,
+        branch_id,
         created_at,
         updated_at,
         creator:workers!calendar_events_created_by_fkey(
@@ -254,6 +257,13 @@ router.get("/events", async (req, res) => {
       .lte("starts_at", to)
       .gte("ends_at", from)
       .order("starts_at", { ascending: true });
+
+    // ✅ Filtro de base: Dirección ve todo; otros solo su base o eventos sin base
+    if (req.branchId) {
+      eventsQuery = eventsQuery.or(`branch_id.eq.${req.branchId},branch_id.is.null`);
+    }
+
+    const { data, error } = await eventsQuery;
 
     if (error) throw new Error(error.message);
 
@@ -336,7 +346,7 @@ router.get("/events/:id", async (req, res) => {
   }
 });
 
-router.post("/events", upload.array("files", 5), async (req, res) => {
+router.post("/events", branchFilter, upload.array("files", 5), async (req, res) => {
   try {
     const title = safeString(req.body.title);
     const description = safeString(req.body.description);
@@ -356,9 +366,7 @@ router.post("/events", upload.array("files", 5), async (req, res) => {
     const creator = await getWorkerMeta(workerId);
     if (!creator) return res.status(404).json({ error: "Trabajador no encontrado" });
 
-    const eventColor =
-      creator.department?.color ||
-      "#2563eb";
+    const eventColor = creator.department?.color || "#2563eb";
 
     const { data: created, error: createError } = await supabaseAdmin
       .from("calendar_events")
@@ -373,6 +381,8 @@ router.post("/events", upload.array("files", 5), async (req, res) => {
         color: eventColor,
         created_by: creator.id,
         creator_department_id: creator.department_id || null,
+        // ✅ hereda la base del worker que crea
+        branch_id: req.branchId || null,
       })
       .select("*")
       .single();

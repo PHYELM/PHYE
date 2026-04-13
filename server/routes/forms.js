@@ -5,6 +5,7 @@ const {
   generatePdfBuffer,
   generateAnswersGridExcelBuffer,
 } = require("../utils/formsExport");
+const { branchFilter } = require("../middleware/branchFilter");
 
 const answerStreams = new Map();
 
@@ -911,7 +912,7 @@ router.get("/:id/answers/stream", async (req, res) => {
     return res.status(500).json({ error: e.message });
   }
 });
-router.get("/:id/answers", async (req, res) => {
+router.get("/:id/answers", branchFilter, async (req, res) => {
   try {
     const formId = req.params.id;
     const workerId = req.query.worker_id;
@@ -959,6 +960,11 @@ router.get("/:id/answers", async (req, res) => {
 
     if (!access.isDirectionUser && !access.canEditAnswers) {
       query = query.eq("worker_id", worker.id);
+    }
+
+    // ✅ Filtro de base: Dirección ve todas; otros solo las de su base
+    if (!req.isDirector && req.branchId) {
+      query = query.eq("branch_id", req.branchId);
     }
 
     const { data, error } = await query;
@@ -1156,7 +1162,7 @@ router.get("/:id/answers/export-grid", async (req, res) => {
   }
 });
 
-router.post("/:id/answers", async (req, res) => {
+router.post("/:id/answers", branchFilter, async (req, res) => {
   try {
     const formId = req.params.id;
     const { worker_id, answers, status } = req.body || {};
@@ -1189,6 +1195,8 @@ router.post("/:id/answers", async (req, res) => {
         answers,
         status: status || "SUBMITTED",
         last_edited: new Date().toISOString(),
+        // ✅ hereda la base del worker que responde
+        branch_id: req.branchId || null,
       })
       .select("*")
       .single();

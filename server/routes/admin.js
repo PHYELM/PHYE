@@ -4,20 +4,20 @@ const { supabaseAdmin } = require("../supabaseAdmin");
 // ✅ DEBUG: confirma que ESTE archivo se está cargando
 console.log("✅ ADMIN ROUTES LOADED:", __filename);
 
-async function replaceWorkerPermissions(workerId, permissions) {
+async function replaceLevelPermissions(levelId, permissions) {
   const safePermissions = Array.isArray(permissions) ? permissions : [];
 
   const { error: deleteError } = await supabaseAdmin
-    .from("user_module_permissions")
+    .from("level_module_permissions")
     .delete()
-    .eq("worker_id", workerId);
+    .eq("level_id", levelId);
 
   if (deleteError) throw new Error(deleteError.message);
 
   const rows = safePermissions
     .filter((item) => item && item.module_key)
     .map((item) => ({
-      worker_id: workerId,
+      level_id: levelId,
       module_key: String(item.module_key).trim(),
       can_view: Boolean(item.can_view),
       can_create: Boolean(item.can_create),
@@ -31,7 +31,7 @@ async function replaceWorkerPermissions(workerId, permissions) {
   if (!rows.length) return;
 
   const { error: insertError } = await supabaseAdmin
-    .from("user_module_permissions")
+    .from("level_module_permissions")
     .insert(rows);
 
   if (insertError) throw new Error(insertError.message);
@@ -196,24 +196,15 @@ router.get("/workers", async (req, res) => {
       branch_id,
       profile_photo_url,
       created_at,
-      branch:branches!workers_branch_id_fkey(id, name, color),
-      permissions:user_module_permissions(
-        id,
-        module_key,
-        can_view,
-        can_create,
-        can_edit,
-        can_approve,
-        can_delete,
-        can_export
-      )
+      department:departments!workers_department_id_fkey(id, name, color, icon),
+      level:worker_levels!workers_level_id_fkey(id, name, authority, rank, can_approve_quotes, can_manage_calendar),
+      branch:branches!workers_branch_id_fkey(id, name, color)
     `)
     .order("created_at", { ascending: false });
 
   if (error) return res.status(500).json({ error: error.message });
   res.json({ data: data || [] });
 });
-
 router.post("/workers", async (req, res) => {
   const { username, password_plain, full_name, department_id, level_id, branch_id, active } = req.body || {};
   if (!username || !password_plain) return res.status(400).json({ error: "username and password_plain required" });
@@ -315,6 +306,123 @@ router.post("/access-policies", async (req, res) => {
   if (error) return res.status(500).json({ error: error.message });
   res.json({ data });
 });
+// =====================
+// Permisos efectivos del usuario (heredados del puesto)
+// =====================
+
+router.get("/workers/:id/permissions", async (req, res) => {
+  const { id } = req.params;
+  if (!id) return res.status(400).json({ error: "id required" });
+
+  const { data: worker, error: workerError } = await supabaseAdmin
+    .from("workers")
+    .select("id, level_id")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (workerError) return res.status(500).json({ error: workerError.message });
+  if (!worker) return res.status(404).json({ error: "worker not found" });
+
+  const { data, error } = await supabaseAdmin
+    .from("level_module_permissions")
+    .select("module_key, can_view, can_create, can_edit, can_approve, can_delete, can_export")
+    .eq("level_id", worker.level_id);
+
+  if (error) return res.status(500).json({ error: error.message });
+
+  const map = {};
+  (data || []).forEach((row) => {
+    map[row.module_key] = {
+      can_view: row.can_view,
+      can_create: row.can_create,
+      can_edit: row.can_edit,
+      can_approve: row.can_approve,
+      can_delete: row.can_delete,
+      can_export: row.can_export,
+    };
+  });
+
+  return res.json({
+    data: {
+      worker_id: worker.id,
+      level_id: worker.level_id,
+      inherited_from_level: true,
+      permissions: map,
+    },
+  });
+});
+
+// =====================
+// Permisos granulares por PUESTO
+// =====================
+router.get("/levels/:id/permissions", async (req, res) => {
+  const { id } = req.params;
+  if (!id) return res.status(400).json({ error: "id required" });
+
+  const { data, error } = await supabaseAdmin
+    .from("level_module_permissions")
+    .select("module_key, can_view, can_create, can_edit, can_approve, can_delete, can_export")
+    .eq("level_id", id);
+
+  if (error) return res.status(500).json({ error: error.message });
+
+  const map = {};
+  (data || []).forEach((row) => {
+    map[row.module_key] = {
+      can_view:    row.can_view,
+      can_create:  row.can_create,
+      can_edit:    row.can_edit,
+      can_approve: row.can_approve,
+      can_delete:  row.can_delete,
+      can_export:  row.can_export,
+    };
+  });
+
+  return res.json({ data: map });
+});
+
+router.put("/levels/:id/permissions", async (req, res) => {
+  const { id } = req.params;
+  const { permissions } = req.body || {};
+  if (!id) return res.status(400).json({ error: "id required" });
+
+  try {
+    await replaceLevelPermissions(id, Array.isArray(permissions) ? permissions : []);
+    return res.json({ ok: true });
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
+  }
+});
+
+// También incluir permisos al traer los levels
+router.get("/levels/with-permissions", async (req, res) => {
+  const { data: levels, error: levelsError } = await supabaseAdmin
+    .from("worker_levels")
+    .select("*")
+    .order("authority", { ascending: true });
+
+  if (levelsError) return res.status(500).json({ error: levelsError.message });
+
+  const { data: perms, error: permsError } = await supabaseAdmin
+    .from("level_module_permissions")
+    .select("*");
+
+  if (permsError) return res.status(500).json({ error: permsError.message });
+
+  const permsByLevel = {};
+  (perms || []).forEach((p) => {
+    if (!permsByLevel[p.level_id]) permsByLevel[p.level_id] = {};
+    permsByLevel[p.level_id][p.module_key] = p;
+  });
+
+  const enriched = (levels || []).map((l) => ({
+    ...l,
+    module_permissions: permsByLevel[l.id] || {},
+  }));
+
+  return res.json({ data: enriched });
+});
+
 // ✅ DEBUG: lista rutas registradas en este router (para confirmar que existe access-policies)
 router.get("/__routes", (req, res) => {
   const routes = [];

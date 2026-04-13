@@ -15,7 +15,7 @@ import {
   TbClipboardList,
   TbReportAnalytics
 } from "react-icons/tb";
-import { apiFetch } from "../api.js";
+import { apiFetch, API_BASE } from "../api.js";
 import "./Navbar.css";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -347,7 +347,7 @@ useEffect(() => {
 
 // === Notificaciones REALES ===
   const [notifications, setNotifications] = useState([]);
-  const [notifLoading, setNotifLoading] = useState(false);
+
 
   const fetchNotifications = useCallback(async () => {
     if (!worker?.id) return;
@@ -369,12 +369,56 @@ useEffect(() => {
     }
   }, [worker?.id]);
 
-  // Cargar al montar + polling cada 30 seg
+// ✅ Cargar al montar + SSE tiempo real (con fallback a polling si SSE falla)
   useEffect(() => {
+    if (!worker?.id) return;
+
+    // carga inicial
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 30_000);
-    return () => clearInterval(interval);
-  }, [fetchNotifications]);
+
+    // construye URL del stream igual que apiFetch (evita /api/api doble)
+    const sseUrl = (() => {
+      const base = String(API_BASE || "").replace(/\/+$/, "");
+      let p = `/api/notifications/stream?recipient_id=${worker.id}`;
+      if (base.endsWith("/api") && p.startsWith("/api/")) {
+        p = p.replace(/^\/api/, "");
+      }
+      return `${base}${p}`;
+    })();
+
+    let es;
+    let fallback;
+
+    try {
+      es = new EventSource(sseUrl);
+
+      es.onmessage = (ev) => {
+        try {
+          const msg = JSON.parse(ev.data || "{}");
+          // solo recarga cuando hay una notif nueva real
+          if (msg.type === "new_notification") {
+            fetchNotifications();
+          }
+        } catch {}
+      };
+
+      es.onerror = () => {
+        try { es?.close?.(); } catch {}
+        // si SSE falla, cae a polling cada 30 seg
+        if (!fallback) {
+          fallback = setInterval(fetchNotifications, 30_000);
+        }
+      };
+    } catch {
+      // navegador sin soporte EventSource → polling
+      fallback = setInterval(fetchNotifications, 30_000);
+    }
+
+    return () => {
+      try { es?.close?.(); } catch {}
+      if (fallback) clearInterval(fallback);
+    };
+  }, [worker?.id, fetchNotifications]);
 
   const formatNotifTime = (d) => {
     try {

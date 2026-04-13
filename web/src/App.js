@@ -7,7 +7,7 @@ import QuotePublicPreview from "./pages/QuotePublicPreview";
 
 export default function App() {
   const [worker, setWorker] = useState(null);
-  const location = useLocation();
+
 
   useEffect(() => {
     if ("scrollRestoration" in window.history) {

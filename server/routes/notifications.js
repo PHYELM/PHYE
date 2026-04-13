@@ -2,6 +2,61 @@ const router = require("express").Router();
 const { supabaseAdmin } = require("../supabaseAdmin");
 const { branchFilter } = require("../middleware/branchFilter");
 
+/* ══════════════════════════════════════════════
+   SSE — conexiones activas por worker
+   notifClients: Map<workerId, Set<res>>
+══════════════════════════════════════════════ */
+const notifClients = new Map();
+
+function addNotifClient(workerId, res) {
+  if (!notifClients.has(workerId)) notifClients.set(workerId, new Set());
+  notifClients.get(workerId).add(res);
+}
+
+function removeNotifClient(workerId, res) {
+  const set = notifClients.get(workerId);
+  if (!set) return;
+  set.delete(res);
+  if (!set.size) notifClients.delete(workerId);
+}
+
+function pushToWorker(workerId, payload) {
+  const set = notifClients.get(String(workerId || ""));
+  if (!set || !set.size) return;
+  const msg = `data: ${JSON.stringify(payload)}\n\n`;
+  for (const res of [...set]) {
+    try { res.write(msg); }
+    catch { set.delete(res); }
+  }
+}
+
+// ✅ GET /stream — el frontend se conecta aquí para recibir notifs en tiempo real
+router.get("/stream", (req, res) => {
+  const { recipient_id } = req.query;
+  if (!recipient_id) return res.status(400).json({ error: "recipient_id required" });
+
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache, no-transform");
+  res.setHeader("Connection", "keep-alive");
+  res.flushHeaders?.();
+
+  // ping inicial para confirmar conexión
+  res.write(`data: ${JSON.stringify({ type: "connected", at: new Date().toISOString() })}\n\n`);
+
+  addNotifClient(recipient_id, res);
+
+  const hb = setInterval(() => {
+    try { res.write(": heartbeat\n\n"); }
+    catch { clearInterval(hb); }
+  }, 25000);
+
+  req.on("close", () => {
+    clearInterval(hb);
+    removeNotifClient(recipient_id, res);
+    res.end();
+  });
+});
+
 // Helper que otros routers importan para crear notificaciones
 async function createNotifications(items) {
   if (!Array.isArray(items) || items.length === 0) return;
@@ -29,6 +84,18 @@ async function createNotifications(items) {
 
   try {
     await supabaseAdmin.from("notifications").insert(clean);
+
+    // ✅ Push SSE a cada destinatario conectado en tiempo real
+    for (const notif of clean) {
+      pushToWorker(notif.recipient_id, {
+        type: "new_notification",
+        notif_type: notif.type,
+        title: notif.title,
+        message: notif.message,
+        actor_name: notif.actor_name,
+        at: new Date().toISOString(),
+      });
+    }
   } catch (e) {
     console.error("createNotifications error:", e.message);
   }

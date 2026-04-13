@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Swal from "sweetalert2";
 import { apiFetch, apiDownload } from "../api";
@@ -170,7 +170,7 @@ export default function FormsModule({ currentWorker }) {
     }
   }
 
-  async function loadAnswers(targetFormId) {
+  const loadAnswers = useCallback(async (targetFormId) => {
     if (!targetFormId || !worker?.id) return;
 
     try {
@@ -179,7 +179,7 @@ export default function FormsModule({ currentWorker }) {
     } catch (e) {
       Swal.fire("Error", e.message || "No se pudieron cargar las respuestas", "error");
     }
-  }
+  }, [worker?.id]);
 
   function hydrateAnswerState(form, answerRow = null) {
     const base = {};
@@ -318,7 +318,7 @@ export default function FormsModule({ currentWorker }) {
     return () => {
       eventSource.close();
     };
-  }, [selectedForm?.id, worker?.id, viewMode]);
+  }, [selectedForm?.id, worker?.id, viewMode, loadAnswers]);
 
   const selectedField = useMemo(
     () => builder.fields.find((f) => f.id === selectedFieldId) || null,
