@@ -6,9 +6,15 @@ export async function apiFetch(path, options = {}) {
   const isFormData =
     typeof FormData !== "undefined" && options?.body instanceof FormData;
 
+const worker = (() => {
+    try { return JSON.parse(localStorage.getItem("worker") || "{}"); }
+    catch { return {}; }
+  })();
+
   const headers = {
     ...(isFormData ? {} : { "Content-Type": "application/json" }),
     ...(options.headers || {}),
+    ...(worker?.id ? { "X-Worker-Id": worker.id } : {}),
   };
 
   const url = (() => {

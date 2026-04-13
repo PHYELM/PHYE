@@ -4,6 +4,39 @@ const { supabaseAdmin } = require("../supabaseAdmin");
 // ✅ DEBUG: confirma que ESTE archivo se está cargando
 console.log("✅ ADMIN ROUTES LOADED:", __filename);
 
+async function replaceWorkerPermissions(workerId, permissions) {
+  const safePermissions = Array.isArray(permissions) ? permissions : [];
+
+  const { error: deleteError } = await supabaseAdmin
+    .from("user_module_permissions")
+    .delete()
+    .eq("worker_id", workerId);
+
+  if (deleteError) throw new Error(deleteError.message);
+
+  const rows = safePermissions
+    .filter((item) => item && item.module_key)
+    .map((item) => ({
+      worker_id: workerId,
+      module_key: String(item.module_key).trim(),
+      can_view: Boolean(item.can_view),
+      can_create: Boolean(item.can_create),
+      can_edit: Boolean(item.can_edit),
+      can_approve: Boolean(item.can_approve),
+      can_delete: Boolean(item.can_delete),
+      can_export: Boolean(item.can_export),
+      updated_at: new Date().toISOString(),
+    }));
+
+  if (!rows.length) return;
+
+  const { error: insertError } = await supabaseAdmin
+    .from("user_module_permissions")
+    .insert(rows);
+
+  if (insertError) throw new Error(insertError.message);
+}
+
 // ✅ DEBUG: confirma que el PUT/DELETE realmente entra al router admin
 router.use((req, res, next) => {
   if (req.url.startsWith("/departments/")) {
@@ -152,15 +185,37 @@ router.delete("/levels/:id", async (req, res) => {
 router.get("/workers", async (req, res) => {
   const { data, error } = await supabaseAdmin
     .from("workers")
-    .select("id, username, password_plain, full_name, active, department_id, level_id, profile_photo_url, created_at")
+    .select(`
+      id,
+      username,
+      password_plain,
+      full_name,
+      active,
+      department_id,
+      level_id,
+      branch_id,
+      profile_photo_url,
+      created_at,
+      branch:branches!workers_branch_id_fkey(id, name, color),
+      permissions:user_module_permissions(
+        id,
+        module_key,
+        can_view,
+        can_create,
+        can_edit,
+        can_approve,
+        can_delete,
+        can_export
+      )
+    `)
     .order("created_at", { ascending: false });
 
   if (error) return res.status(500).json({ error: error.message });
-  res.json({ data });
+  res.json({ data: data || [] });
 });
 
 router.post("/workers", async (req, res) => {
-  const { username, password_plain, full_name, department_id, level_id, active } = req.body || {};
+  const { username, password_plain, full_name, department_id, level_id, branch_id, active } = req.body || {};
   if (!username || !password_plain) return res.status(400).json({ error: "username and password_plain required" });
 
   const { data, error } = await supabaseAdmin
@@ -171,9 +226,10 @@ router.post("/workers", async (req, res) => {
       full_name: full_name || null,
       department_id: department_id || null,
       level_id: level_id || null,
+      branch_id: branch_id || null,
       active: active ?? true,
     })
-    .select("id, username, password_plain, full_name, active, department_id, level_id, created_at")
+    .select("id, username, password_plain, full_name, active, department_id, level_id, branch_id, created_at")
     .single();
 
   if (error) return res.status(500).json({ error: error.message });
@@ -182,9 +238,13 @@ router.post("/workers", async (req, res) => {
 
 router.put("/workers/:id", async (req, res) => {
   const { id } = req.params;
-  const { username, password_plain, full_name, department_id, level_id, active } = req.body || {};
+  const { username, password_plain, full_name, department_id, level_id, branch_id, active } = req.body || {};
   if (!id) return res.status(400).json({ error: "id required" });
   if (!username || !password_plain) return res.status(400).json({ error: "username and password_plain required" });
+
+  // Invalida cache de base si cambió
+  const { invalidateBranchCache } = require("../middleware/branchFilter");
+  invalidateBranchCache(id);
 
   const { data, error } = await supabaseAdmin
     .from("workers")
@@ -194,16 +254,16 @@ router.put("/workers/:id", async (req, res) => {
       full_name: full_name || null,
       department_id: department_id || null,
       level_id: level_id || null,
+      branch_id: branch_id || null,
       active: active ?? true,
     })
     .eq("id", id)
-    .select("id, username, password_plain, full_name, active, department_id, level_id, created_at")
+    .select("id, username, password_plain, full_name, active, department_id, level_id, branch_id, created_at")
     .single();
 
   if (error) return res.status(500).json({ error: error.message });
   res.json({ data });
 });
-
 router.delete("/workers/:id", async (req, res) => {
   const { id } = req.params;
   if (!id) return res.status(400).json({ error: "id required" });

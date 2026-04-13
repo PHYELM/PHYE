@@ -113,23 +113,25 @@ html, body, #root {
 /* ====== DESORDEN EXACTO (IMG 2) EN DESKTOP ====== */
 .mosaic--fit{
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  grid-template-rows: repeat(4, minmax(0, 1fr));
+  grid-template-rows: repeat(5, minmax(0, 1fr));
   grid-template-areas:
-    "inventory inventory services  services"
-    "calendar  calendar  quotes    quotes"
-    "sales     sales     forms     forms"
-    "admin     admin     admin     admin";
+    "inventory      inventory      operations     operations"
+    "calendar       calendar       quotes         quotes"
+    "invoices       invoices       forms          forms"
+    "serviceSheets  serviceSheets  weeklyReports  weeklyReports"
+    "admin          admin          admin          admin";
   align-content: stretch;
 }
-
 /* áreas por key */
 .mTile--inventory{ grid-area: inventory; }
-.mTile--services{  grid-area: services; }
-.mTile--calendar{  grid-area: calendar; }
-.mTile--quotes{    grid-area: quotes; }
-.mTile--sales{     grid-area: sales; }
-.mTile--forms{     grid-area: forms; }
-.mTile--admin{     grid-area: admin; }
+.mTile--operations{ grid-area: operations; }
+.mTile--calendar{ grid-area: calendar; }
+.mTile--quotes{ grid-area: quotes; }
+.mTile--invoices{ grid-area: invoices; }
+.mTile--forms{ grid-area: forms; }
+.mTile--serviceSheets{ grid-area: serviceSheets; }
+.mTile--weeklyReports{ grid-area: weeklyReports; }
+.mTile--admin{ grid-area: admin; }
 
 /* ====== MOBILE: EXACTO como IMG 2 (2 cols + spans) ====== */
 @media (max-width: 760px){
@@ -148,15 +150,17 @@ html, body, #root {
     box-sizing: border-box;
   }
 
-  .mosaic--fit{
+.mosaic--fit{
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-rows: repeat(5, minmax(0, 1fr));
+    grid-template-rows: repeat(6, minmax(0, 1fr));
     grid-template-areas:
-      "inventory inventory"
-      "services  services"
-      "calendar  quotes"
-      "sales     forms"
-      "admin     admin";
+      "inventory      inventory"
+      "operations     operations"
+      "calendar       quotes"
+      "invoices       forms"
+      "serviceSheets  serviceSheets"
+      "weeklyReports  weeklyReports"
+      "admin          admin";
   }
 }
 

@@ -8,6 +8,7 @@ import QuotePublicPreview from "./pages/QuotePublicPreview";
 export default function App() {
   const [worker, setWorker] = useState(null);
   const location = useLocation();
+
   useEffect(() => {
     if ("scrollRestoration" in window.history) {
       window.history.scrollRestoration = "manual";
@@ -46,10 +47,12 @@ export default function App() {
       <Route path="/forms/:formId" element={dashboardElement} />
       <Route path="/inventory" element={dashboardElement} />
       <Route path="/quotes" element={dashboardElement} />
-      <Route path="/services" element={dashboardElement} />
-      <Route path="/sales" element={dashboardElement} />
+      <Route path="/operations" element={dashboardElement} />
+      <Route path="/invoices" element={dashboardElement} />
+      <Route path="/service-sheets" element={dashboardElement} />
+      <Route path="/weekly-reports" element={dashboardElement} />
       <Route path="/calendar" element={dashboardElement} />
-<Route path="/cotizacion/:token" element={<QuotePublicPreview />} />
+      <Route path="/cotizacion/:token" element={<QuotePublicPreview />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

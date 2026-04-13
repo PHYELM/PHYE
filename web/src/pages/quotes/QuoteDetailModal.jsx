@@ -3,6 +3,7 @@ import {
   TbX, TbSend, TbCheck, TbBan, TbEdit,
   TbPhone, TbMail, TbBuilding, TbArrowBack,
   TbFileTypePdf, TbFileTypeXls, TbCode,
+  TbRouteSquare, TbCurrencyDollar
 } from 'react-icons/tb';
 import { apiFetch } from '../../api';
 import { formatCurrency, formatDate } from './quotes.helpers';
@@ -38,22 +39,23 @@ export default function QuoteDetailModal({ quote, worker, onClose, onUpdated, on
     }
   }
 
-async function exportQuote(format) {
+  async function exportQuote(format) {
     const ext = format === 'excel' ? 'xlsx' : format;
     const mimeMap = {
-      pdf:   'application/pdf',
+      pdf: 'application/pdf',
       excel: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      xml:   'application/xml',
+      xml: 'application/xml',
     };
+
     try {
-      const resp = await fetch(`http://localhost:3001/api/quotes/${quote.id}/export/${format}`, {
+      const resp = await fetch(`/api/quotes/${quote.id}/export/${format}`, {
         method: 'GET',
       });
       if (!resp.ok) throw new Error(`Error ${resp.status}`);
       const blob = await resp.blob();
-      const url  = URL.createObjectURL(new Blob([blob], { type: mimeMap[format] }));
-      const a    = document.createElement('a');
-      a.href     = url;
+      const url = URL.createObjectURL(new Blob([blob], { type: mimeMap[format] }));
+      const a = document.createElement('a');
+      a.href = url;
       a.download = `${quote.folio || 'cotizacion'}.${ext}`;
       document.body.appendChild(a);
       a.click();
@@ -61,6 +63,62 @@ async function exportQuote(format) {
       URL.revokeObjectURL(url);
     } catch (e) {
       alert('Error al exportar: ' + (e.message || 'Error desconocido'));
+    }
+  }
+
+  async function createServiceSheetFromQuote() {
+    try {
+      await apiFetch('/api/service-sheets', {
+        method: 'POST',
+        body: JSON.stringify({
+          client_id: quote.client_id || null,
+          client_name: client.name || '',
+          city: client.city || '',
+          location: client.address || '',
+          quantity: 1,
+          unit_price: Number(quote.total || 0),
+          total_price: Number(quote.total || 0),
+          delivery_date: quote.valid_until || null,
+          service_type: 'Servicio desde cotización',
+          status: 'pending',
+          notes: `Generado desde cotización ${quote.folio || ''}`,
+          created_by: worker.id,
+          quote_id: quote.id,
+        }),
+      });
+
+      alert('Hoja de servicio creada correctamente');
+    } catch (e) {
+      alert(e.message || 'Error al crear hoja de servicio');
+    }
+  }
+
+  async function createInvoiceFromQuote() {
+    try {
+      const subtotal = Number(quote.subtotal || 0);
+      const tax = Number(quote.tax_amount || 0);
+      const total = Number(quote.total || 0);
+
+      await apiFetch('/api/invoices', {
+        method: 'POST',
+        body: JSON.stringify({
+          client_id: quote.client_id || null,
+          client_name: client.name || '',
+          quote_id: quote.id,
+          service_location: client.address || '',
+          delivery_date: quote.valid_until || null,
+          subtotal,
+          tax,
+          total,
+          status: 'draft',
+          notes: `Factura generada desde cotización ${quote.folio || ''}`,
+          created_by: worker.id,
+        }),
+      });
+
+      alert('Factura creada correctamente');
+    } catch (e) {
+      alert(e.message || 'Error al crear factura');
     }
   }
 
@@ -93,6 +151,22 @@ async function exportQuote(format) {
                 <TbEdit size={14} /> Editar
               </button>
             )}
+
+            <button
+              className="qt-btn"
+              type="button"
+              onClick={createServiceSheetFromQuote}
+            >
+              <TbRouteSquare size={14} /> Crear hoja
+            </button>
+
+            <button
+              className="qt-btn qt-btn--primary"
+              type="button"
+              onClick={createInvoiceFromQuote}
+            >
+              <TbCurrencyDollar size={14} /> Facturar
+            </button>
             <button className="qt-modal__close" type="button" onClick={onClose}><TbX /></button>
           </div>
         </div>

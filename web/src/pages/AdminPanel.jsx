@@ -189,8 +189,10 @@ const MODULES = [
   { key: "inventory", label: "Inventario" },
   { key: "quotes", label: "Cotizaciones" },
   { key: "services", label: "Servicios" },
-  { key: "sales", label: "Ventas / POS" },
-  { key: "gps", label: "GPS" },
+  { key: "invoices", label: "Facturación" },
+  { key: "serviceSheets", label: "Hoja de Servicios" },
+  { key: "weeklyReports", label: "Bitácora Semanal" },
+  { key: "calendar", label: "Calendario" },
 ];
 
 const DEPT_ICONS = [
@@ -377,10 +379,11 @@ function MiniMenu({ open, onClose, anchorRef, children }) {
   AdminPanel
 ========================= */
 export default function AdminPanel({ currentWorker }) {
-  const [departments, setDepartments] = useState([]);
+const [departments, setDepartments] = useState([]);
   const [levels, setLevels] = useState([]);
   const [workers, setWorkers] = useState([]);
   const [policies, setPolicies] = useState([]);
+  const [branches, setBranches] = useState([]);
   // ✅ Modal "Ver detalles" (móvil + pro)
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [detailsWorker, setDetailsWorker] = useState(null);
@@ -422,8 +425,9 @@ const [levelPage, setLevelPage] = useState(1);
   const [fullName, setFullName] = useState("");
   const [username, setUsername] = useState(""); // ✅ ahora será "Nombre Apellido"
   const [passwordPlain, setPasswordPlain] = useState("");
-  const [selDept, setSelDept] = useState("");
+const [selDept, setSelDept] = useState("");
   const [selLevel, setSelLevel] = useState("");
+  const [selBranch, setSelBranch] = useState("");
 
   // modal depto (create)
   const [deptModalOpen, setDeptModalOpen] = useState(false);
@@ -453,18 +457,20 @@ const [lpDeptId, setLpDeptId] = useState("");
   const deptMenuBtnRefs = useRef({});
   const lvlMenuBtnRefs = useRef({});
 
-  async function loadAll() {
-    const [d, l, w, p] = await Promise.all([
+async function loadAll() {
+    const [d, l, w, p, b] = await Promise.all([
       apiFetch("/api/admin/departments"),
       apiFetch("/api/admin/levels"),
       apiFetch("/api/admin/workers"),
       apiFetch("/api/admin/access-policies"),
+      apiFetch("/api/branches"),
     ]);
 
     setDepartments(d.data || []);
     setLevels(l.data || []);
     setWorkers(w.data || []);
     setPolicies(p.data || []);
+    setBranches(b.data || []);
   }
 
   useEffect(() => {
@@ -581,7 +587,7 @@ const pagedWorkers = useMemo(() => {
   /* =========================
     Users modal open/close
   ========================= */
-  function closeUserModal() {
+function closeUserModal() {
     setUserModalOpen(false);
     setEditMode(false);
     setEditingId(null);
@@ -592,11 +598,11 @@ const pagedWorkers = useMemo(() => {
     setUsername("");
     setPasswordPlain("");
 
-    // mantener defaults
     if (currentWorker?.department_id) setSelDept(currentWorker.department_id);
     else setSelDept("");
     if (currentWorker?.level_id) setSelLevel(currentWorker.level_id);
     else setSelLevel("");
+    setSelBranch("");
   }
 
   function openCreateUser() {
@@ -612,6 +618,7 @@ const pagedWorkers = useMemo(() => {
     else setSelDept("");
     if (currentWorker?.level_id) setSelLevel(currentWorker.level_id);
     else setSelLevel("");
+    setSelBranch(currentWorker?.branch_id || "");
 
     setUserModalOpen(true);
   }
@@ -627,10 +634,11 @@ const pagedWorkers = useMemo(() => {
     setFirstName(f);
     setLastName(l);
     setFullName(w.full_name || "");
-    setUsername(w.username || ""); // puede tener el viejo formato “director”
+    setUsername(w.username || "");
     setPasswordPlain(w.password_plain || "");
     setSelDept(w.department_id || "");
     setSelLevel(w.level_id || "");
+    setSelBranch(w.branch_id || "");
     setUserModalOpen(true);
   }
 
@@ -943,12 +951,13 @@ if (lpIsNew) {
       return;
     }
 
-    const payload = {
+const payload = {
       username: finalUsername,
       password_plain: enforcedPassword,
       full_name: `${f} ${l}`.trim(),
       department_id: selDept || null,
       level_id: selLevel || null,
+      branch_id: selBranch || null,
       active: true,
     };
 
@@ -1632,25 +1641,34 @@ onChange={(e) => setLastName(titleCaseLive(e.target.value))}
             <div className="apSmallHint">2 letras nombre + 2 letras apellido + 4 números.</div>
           </div>
 
-          <div className="apField">
+<div className="apField">
             <label>Departamento</label>
-<ProSelect value={selDept} onChange={(e) => setSelDept(e.target.value)} ariaLabel="Departamento">
-  <option value="">Sin depto</option>
-  {departments.map((d) => (
-    <option key={d.id} value={d.id}>
-      {d.name}
-    </option>
-  ))}
-</ProSelect>
+            <ProSelect value={selDept} onChange={(e) => setSelDept(e.target.value)} ariaLabel="Departamento">
+              <option value="">Sin depto</option>
+              {departments.map((d) => (
+                <option key={d.id} value={d.id}>{d.name}</option>
+              ))}
+            </ProSelect>
 
-<ProSelect value={selLevel} onChange={(e) => setSelLevel(e.target.value)} ariaLabel="Puesto">
-  <option value="">Sin puesto</option>
-  {levels.map((l) => (
-    <option key={l.id} value={l.id}>
-      {l.name}
-    </option>
-  ))}
-</ProSelect>
+            <ProSelect value={selLevel} onChange={(e) => setSelLevel(e.target.value)} ariaLabel="Puesto">
+              <option value="">Sin puesto</option>
+              {levels.map((l) => (
+                <option key={l.id} value={l.id}>{l.name}</option>
+              ))}
+            </ProSelect>
+          </div>
+
+          <div className="apField">
+            <label>Sucursal / Base</label>
+            <ProSelect value={selBranch} onChange={(e) => setSelBranch(e.target.value)} ariaLabel="Sucursal">
+              <option value="">Sin base asignada (Dirección)</option>
+              {branches.map((b) => (
+                <option key={b.id} value={b.id}>{b.name}</option>
+              ))}
+            </ProSelect>
+            <div className="apSmallHint">
+              Dirección puede ver todas las bases. Usuarios sin base asignada también.
+            </div>
           </div>
 
           <div className="apModalActions apSpan2">

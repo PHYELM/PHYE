@@ -1,0 +1,137 @@
+.opsWrap { display:flex; flex-direction:column; gap:18px; width:100%; }
+.opsTopbar { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+.opsTitle { margin:0; display:flex; align-items:center; gap:10px; font-size:clamp(22px,2vw,30px); font-weight:1000; color:#0f172a; letter-spacing:-0.04em; }
+.opsSub { margin:6px 0 0; color:#64748b; font-size:13px; font-weight:700; }
+.opsTopActions { display:flex; gap:10px; flex-wrap:wrap; }
+
+.opsBtn { height:42px; border-radius:14px; border:0; padding:0 14px; display:inline-flex; align-items:center; justify-content:center; gap:8px; font-weight:900; cursor:pointer; transition:160ms ease; font-size:14px; }
+.opsBtn:hover { transform:translateY(-1px); }
+.opsBtnPrimary { background:#0f172a; color:#fff; }
+.opsBtnGhost { background:#fff; color:#0f172a; border:1px solid rgba(15,23,42,0.08); }
+.opsBtnDanger { background:#dc2626; color:#fff; }
+
+.opsIconBtn { width:38px; height:38px; border-radius:12px; border:1px solid rgba(15,23,42,0.08); background:#fff; color:#0f172a; display:grid; place-items:center; cursor:pointer; transition:160ms ease; font-size:16px; }
+.opsIconBtn:hover { transform:translateY(-1px); background:#f8fafc; }
+.opsIconBtnDanger { color:#b91c1c; }
+
+.opsKpis { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:12px; }
+.opsKpiCard { background:rgba(255,255,255,0.92); border:1px solid rgba(15,23,42,0.08); border-radius:18px; padding:16px; box-shadow:0 10px 30px rgba(15,23,42,0.06); }
+.opsKpiCard--active { border-left:3px solid #f97316; }
+.opsKpiCard--ok { border-left:3px solid #16a34a; }
+.opsKpiCard--warn { border-left:3px solid #dc2626; }
+.opsKpiLabel { font-size:12px; font-weight:900; color:#64748b; text-transform:uppercase; letter-spacing:.06em; }
+.opsKpiValue { margin-top:8px; font-size:26px; font-weight:1000; color:#0f172a; }
+
+.opsStatusTabs { display:flex; gap:6px; flex-wrap:wrap; }
+.opsStatusTab { height:34px; padding:0 12px; border-radius:10px; border:1px solid #e2e8f0; background:#fff; font-size:12px; font-weight:900; color:#64748b; cursor:pointer; transition:160ms; white-space:nowrap; }
+.opsStatusTab:hover { border-color:#cbd5e1; color:#0f172a; }
+.opsStatusTab.active { background:#0f172a; color:#fff; border-color:#0f172a; }
+
+.opsFilters { display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+.opsSearch { flex:1; min-width:260px; height:44px; border-radius:14px; background:#fff; border:1px solid rgba(15,23,42,0.08); display:flex; align-items:center; gap:10px; padding:0 14px; }
+.opsSearch svg { color:#94a3b8; font-size:18px; flex-shrink:0; }
+.opsSearch input { flex:1; min-width:0; border:0; outline:0; background:transparent; color:#0f172a; font-size:14px; font-weight:700; }
+
+.opsCard { background:rgba(255,255,255,0.92); border:1px solid rgba(15,23,42,0.08); border-radius:20px; box-shadow:0 14px 40px rgba(15,23,42,0.06); overflow:hidden; }
+.opsTableWrap { width:100%; overflow:auto; }
+.opsTable { width:100%; border-collapse:collapse; min-width:900px; }
+.opsTable thead th { background:#f8fafc; color:#475569; font-size:12px; text-transform:uppercase; letter-spacing:.06em; font-weight:1000; text-align:left; padding:14px 16px; border-bottom:1px solid #e2e8f0; white-space:nowrap; }
+.opsTable tbody td { padding:12px 16px; border-bottom:1px solid #eef2f7; vertical-align:middle; color:#0f172a; font-size:14px; font-weight:700; }
+.opsTable tbody tr:hover { background:#f8fafc; }
+.opsEmpty { text-align:center; padding:34px !important; color:#94a3b8 !important; font-weight:900; }
+.opsThRight,.opsTdRight { text-align:right; }
+.opsActions { display:flex; justify-content:flex-end; gap:8px; }
+
+.opsPrimaryCell { display:flex; align-items:center; gap:12px; }
+.opsPrimaryIcon { width:40px; height:40px; border-radius:12px; background:#eff6ff; color:#2563eb; display:grid; place-items:center; font-size:20px; flex-shrink:0; }
+.opsPrimaryTitle { font-size:14px; font-weight:1000; color:#0f172a; }
+.opsPrimarySub { margin-top:4px; font-size:12px; color:#94a3b8; font-weight:800; }
+
+.opsMetaStack { display:flex; flex-direction:column; gap:4px; font-size:13px; font-weight:700; color:#475569; }
+.opsMetaStack span { display:flex; align-items:center; gap:4px; }
+
+.opsRoute { display:flex; align-items:center; gap:6px; font-size:13px; font-weight:700; color:#334155; }
+.opsRouteArrow { color:#94a3b8; flex-shrink:0; }
+
+.opsBadge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:20px; font-size:12px; font-weight:900; white-space:nowrap; }
+
+/* Modal */
+.opsModalBack { position:fixed; inset:0; z-index:9999; background:rgba(15,23,42,0.46); backdrop-filter:blur(3px); display:grid; place-items:center; padding:20px; }
+.opsModal { width:min(760px,100%); background:#fff; border-radius:22px; box-shadow:0 30px 100px rgba(15,23,42,0.24); overflow:hidden; max-height:90vh; display:flex; flex-direction:column; }
+.opsModalTop { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:16px 18px; border-bottom:1px solid #e2e8f0; }
+.opsModalTitle { font-size:18px; font-weight:1000; color:#0f172a; }
+.opsModalBody { padding:18px; overflow-y:auto; flex:1; }
+.opsModalActions { display:flex; justify-content:flex-end; gap:10px; padding:16px 18px; border-top:1px solid #e2e8f0; }
+
+.opsGrid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+.opsField { display:flex; flex-direction:column; gap:8px; }
+.opsField label { font-size:12px; color:#64748b; font-weight:1000; text-transform:uppercase; letter-spacing:.05em; }
+.opsField--span2 { grid-column:span 2; }
+.opsInput { width:100%; border:1px solid #dbe2ea; border-radius:14px; background:#fff; color:#0f172a; font-size:14px; font-weight:700; outline:0; box-sizing:border-box; height:46px; padding:0 14px; }
+.opsInput:disabled { opacity:.6; cursor:not-allowed; }
+select.opsInput { cursor:pointer; }
+.opsTextarea { width:100%; border:1px solid #dbe2ea; border-radius:14px; background:#fff; color:#0f172a; font-size:14px; font-weight:700; outline:0; box-sizing:border-box; min-height:100px; padding:12px 14px; resize:vertical; }
+.opsTextareaSm { min-height:70px; }
+
+/* Drawer */
+.opsDrawerBack { position:fixed; inset:0; z-index:9999; background:rgba(15,23,42,0.4); backdrop-filter:blur(2px); display:flex; justify-content:flex-end; }
+.opsDrawer { width:min(520px,100vw); height:100vh; background:#fff; box-shadow:-20px 0 60px rgba(15,23,42,0.18); display:flex; flex-direction:column; overflow:hidden; }
+.opsDrawerTop { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:20px 18px 14px; border-bottom:1px solid #e2e8f0; }
+.opsDrawerTitle { font-size:16px; font-weight:1000; color:#0f172a; margin-bottom:6px; }
+.opsDrawerSub { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.opsDrawerMeta { display:flex; align-items:center; gap:4px; font-size:13px; font-weight:700; color:#64748b; }
+
+.opsInfoRow { display:flex; flex-wrap:wrap; gap:12px; padding:12px 18px; background:#f8fafc; border-bottom:1px solid #e2e8f0; }
+.opsInfoItem { display:flex; align-items:center; gap:6px; font-size:13px; font-weight:700; color:#334155; }
+.opsInfoItem svg { color:#94a3b8; flex-shrink:0; }
+
+.opsDetailTabs { display:flex; border-bottom:1px solid #e2e8f0; }
+.opsDetailTab { flex:1; height:44px; border:0; background:transparent; font-size:13px; font-weight:900; color:#64748b; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:160ms; border-bottom:2px solid transparent; }
+.opsDetailTab:hover { color:#0f172a; background:#f8fafc; }
+.opsDetailTab.active { color:#0f172a; border-bottom-color:#0f172a; }
+.opsTabBadge { width:18px; height:18px; border-radius:50%; background:#e2e8f0; color:#334155; font-size:10px; font-weight:900; display:grid; place-items:center; }
+.opsTabBadgeRed { background:#fef2f2; color:#dc2626; }
+
+.opsDrawerBody { flex:1; overflow-y:auto; padding:16px 18px; display:flex; flex-direction:column; gap:12px; }
+.opsDetailEmpty { text-align:center; padding:24px; color:#94a3b8; font-weight:700; font-style:italic; }
+
+.opsTimeline { display:flex; flex-direction:column; }
+.opsTimelineItem { display:flex; gap:14px; position:relative; padding-bottom:18px; }
+.opsTimelineItem:last-child { padding-bottom:0; }
+.opsTimelineItem::before { content:""; position:absolute; left:10px; top:24px; bottom:0; width:2px; background:#e2e8f0; }
+.opsTimelineItem:last-child::before { display:none; }
+.opsTimelineDot { width:22px; height:22px; border-radius:50%; background:#0f172a; flex-shrink:0; margin-top:2px; border:3px solid #fff; box-shadow:0 0 0 2px #0f172a; }
+.opsTimelineContent { flex:1; }
+.opsTimelineLabel { font-size:13px; font-weight:1000; color:#0f172a; }
+.opsTimelineDesc { font-size:13px; font-weight:700; color:#475569; margin-top:2px; }
+.opsTimelineTime { font-size:11px; font-weight:800; color:#94a3b8; margin-top:4px; }
+
+.opsIncidentsList { display:flex; flex-direction:column; gap:10px; }
+.opsIncidentCard { background:#fff; border:1px solid #e2e8f0; border-radius:14px; padding:12px 14px; }
+.opsIncidentCard.resolved { opacity:.55; }
+.opsIncidentHeader { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:6px; }
+.opsIncidentType { font-size:13px; font-weight:1000; color:#0f172a; flex:1; }
+.opsIncidentDesc { font-size:13px; font-weight:700; color:#475569; }
+.opsIncidentTime { font-size:11px; font-weight:800; color:#94a3b8; margin-top:4px; }
+.opsResolvedTag { font-size:11px; font-weight:900; color:#16a34a; background:#f0fdf4; padding:2px 8px; border-radius:20px; }
+.opsResolveBtn { font-size:11px; font-weight:900; color:#2563eb; background:#eff6ff; padding:3px 10px; border-radius:20px; border:0; cursor:pointer; }
+.opsResolveBtn:hover { background:#dbeafe; }
+
+.opsAddBtn { width:100%; justify-content:center; }
+.opsAddForm { background:#f8fafc; border-radius:14px; padding:14px; display:flex; flex-direction:column; gap:10px; border:1px solid #e2e8f0; }
+.opsAddFormActions { display:flex; gap:8px; justify-content:flex-end; }
+
+.opsDrawerObs { padding:12px 18px; border-top:1px solid #e2e8f0; display:flex; align-items:flex-start; gap:8px; font-size:13px; font-weight:700; color:#475569; }
+.opsDrawerObs svg { flex-shrink:0; color:#94a3b8; margin-top:2px; }
+
+@media (max-width:980px) { .opsKpis { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+@media (max-width:760px) {
+  .opsTopbar { flex-direction:column; align-items:stretch; }
+  .opsTopActions { width:100%; }
+  .opsBtn { flex:1; }
+  .opsKpis { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .opsGrid { grid-template-columns:1fr; }
+  .opsField--span2 { grid-column:auto; }
+  .opsDrawer { width:100vw; }
+  .opsStatusTabs { overflow-x:auto; flex-wrap:nowrap; padding-bottom:4px; }
+}

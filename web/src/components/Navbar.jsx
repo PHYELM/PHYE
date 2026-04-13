@@ -7,11 +7,13 @@ import {
   TbUsers,
   TbClipboardText,
   TbBox,
-  TbTruckDelivery,
+  TbTruck,
   TbCalendarMonth,
-  TbCurrencyDollar,
   TbFileInvoice,
-  TbUserCircle
+  TbUserCircle,
+  TbReceipt2,
+  TbClipboardList,
+  TbReportAnalytics
 } from "react-icons/tb";
 import { apiFetch } from "../api.js";
 import "./Navbar.css";
@@ -22,10 +24,12 @@ const ICONS = {
   admin: <TbUsers />,
   forms: <TbClipboardText />,
   inventory: <TbBox />,
-  services: <TbTruckDelivery />,
+  operations: <TbTruck />,
   calendar: <TbCalendarMonth />,
-  sales: <TbCurrencyDollar />,
-  quotes: <TbFileInvoice />
+  quotes: <TbFileInvoice />,
+  invoices: <TbReceipt2 />,
+  serviceSheets: <TbClipboardList />,
+  weeklyReports: <TbReportAnalytics />
 };
 
 export default function Navbar({ worker, active, onChange, onLogout }) {
@@ -39,8 +43,10 @@ const ROUTES = useMemo(() => ({
   forms: "/forms",
   inventory: "/inventory",
   quotes: "/quotes",
-  services: "/services",
-  sales: "/sales",
+  operations: "/operations",
+  invoices: "/invoices",
+  serviceSheets: "/service-sheets",
+  weeklyReports: "/weekly-reports",
   calendar: "/calendar"
 }), []);
 
@@ -123,20 +129,21 @@ const [rawFileType, setRawFileType] = useState("image/jpeg");
 const [crop, setCrop] = useState({ x: 0, y: 0 });
 const [zoom, setZoom] = useState(1);
 const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
-  const items = useMemo(
+const items = useMemo(
     () => [
       { key: "home", label: "Inicio" },
       { key: "admin", label: "Admin" },
       { key: "forms", label: "Formularios" },
       { key: "inventory", label: "Inventario" },
       { key: "quotes", label: "Cotizaciones" },
-      { key: "services", label: "Servicios" },
-      { key: "sales", label: "Ventas" },
+      { key: "operations", label: "Operaciones" },
+      { key: "invoices", label: "Facturación" },
+      { key: "serviceSheets", label: "Hoja de Servicios" },
+      { key: "weeklyReports", label: "Bitácora Semanal" },
       { key: "calendar", label: "Calendario" }
     ],
     []
   );
-
 const handleGo = (key) => {
   const path = ROUTES[key] || "/";
   if (location.pathname !== path) navigate(path); // ✅ Navbar navega SIEMPRE
@@ -338,60 +345,79 @@ useEffect(() => {
     "—"
   );
 
-  // === Notificaciones (dummy por ahora) ===
-// Luego lo conectamos a Supabase (tabla notifications) sin tocar el UI.
-const [notifications, setNotifications] = useState([
-  {
-    id: "n1",
-    avatar: avatarUrl || "",
-    user: fullName,
-    dept: department,
-    action: "hizo un cambio en Cotizaciones",
-    date: new Date(Date.now() - 60 * 60 * 1000),
-    read: false
-  },
-  {
-    id: "n2",
-    avatar: avatarUrl || "",
-    user: fullName,
-    dept: department,
-    action: "creó un nuevo formulario",
-    date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-    read: false
-  }
-]);
-// ✅ Si el avatar cambia (login / fetch / update), actualiza los items dummy
-useEffect(() => {
-  if (!avatarUrl) return;
-  setNotifications((prev) =>
-    prev.map((n) => ({ ...n, avatar: avatarUrl }))
-  );
-}, [avatarUrl]);
-const formatNotifTime = (d) => {
-  try {
-    return new Intl.DateTimeFormat("es-MX", {
-      dateStyle: "medium",
-      timeStyle: "short"
-    }).format(d);
-  } catch {
-    return String(d);
-  }
-};
+// === Notificaciones REALES ===
+  const [notifications, setNotifications] = useState([]);
+  const [notifLoading, setNotifLoading] = useState(false);
 
-// (dummy) badge si hay notifs
-const unreadCount = notifications.filter(n => !n.read).length;
-const hasNotif = unreadCount > 0;
-const handleMarkAllSeen = () => {
-  setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-};
-const filteredNotifications =
-  notifTab === "unread" ? notifications.filter((n) => !n.read) : notifications;
+  const fetchNotifications = useCallback(async () => {
+    if (!worker?.id) return;
+    try {
+      const resp = await apiFetch(`/api/notifications?recipient_id=${worker.id}&limit=40`);
+      setNotifications(
+        (resp?.data || []).map((n) => ({
+          ...n,
+          date: new Date(n.created_at),
+          // compatibilidad con UI existente
+          avatar: n.actor_photo || "",
+          user: n.actor_name || "Sistema",
+          dept: "",
+          action: n.message,
+        }))
+      );
+    } catch (e) {
+      console.warn("fetchNotifications error:", e?.message);
+    }
+  }, [worker?.id]);
 
-const handleMarkOneSeen = (id) => {
-  setNotifications((prev) =>
-    prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-  );
-};
+  // Cargar al montar + polling cada 30 seg
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 30_000);
+    return () => clearInterval(interval);
+  }, [fetchNotifications]);
+
+  const formatNotifTime = (d) => {
+    try {
+      return new Intl.DateTimeFormat("es-MX", {
+        dateStyle: "medium",
+        timeStyle: "short",
+      }).format(d instanceof Date ? d : new Date(d));
+    } catch {
+      return String(d);
+    }
+  };
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
+  const hasNotif = unreadCount > 0;
+
+  const handleMarkAllSeen = async () => {
+    if (!worker?.id) return;
+    // Optimista
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    try {
+      await apiFetch("/api/notifications/read-all", {
+        method: "PUT",
+        body: JSON.stringify({ recipient_id: worker.id }),
+      });
+    } catch (e) {
+      console.warn("markAllRead error:", e?.message);
+    }
+  };
+
+  const handleMarkOneSeen = async (id) => {
+    // Optimista
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+    );
+    try {
+      await apiFetch(`/api/notifications/${id}/read`, { method: "PUT" });
+    } catch (e) {
+      console.warn("markOneRead error:", e?.message);
+    }
+  };
+
+  const filteredNotifications =
+    notifTab === "unread" ? notifications.filter((n) => !n.read) : notifications;
 function loadImage(src) {
   return new Promise((resolve, reject) => {
     const img = new Image();

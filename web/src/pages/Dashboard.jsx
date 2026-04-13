@@ -2,19 +2,24 @@ import React, { useEffect, useMemo, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar.jsx";
 import "./Dashboard.css";
-
 import AdminPanel from "./AdminPanel.jsx";
 import Inventory from "./Inventory.jsx";
 import FormsModule from "./FormsModule.jsx";
 import CalendarModule from "./CalendarModule.jsx";
 import QuotesModule from "./QuotesModule.jsx";
+import InvoicesModule from "./InvoicesModule.jsx";
+import ServiceSheetsModule from "./ServiceSheetsModule.jsx";
+import WeeklyReportsModule from "./WeeklyReportsModule.jsx";
+import OperationsModule from "./OperationsModule.jsx";
 import { setTitle } from "../utils/setTitle";
 import {
   TbBox,
-  TbTruckDelivery,
+  TbTruck,
   TbCalendarMonth,
   TbFileInvoice,
-  TbCurrencyDollar,
+  TbReceipt2,
+  TbRouteSquare,
+  TbReportAnalytics,
   TbClipboardText,
   TbUsers
 } from "react-icons/tb";
@@ -30,8 +35,10 @@ export default function Dashboard({ worker, onLogout }) {
       forms: "/forms",
       inventory: "/inventory",
       quotes: "/quotes",
-      services: "/services",
-      sales: "/sales",
+      operations: "/operations",
+      invoices: "/invoices",
+      serviceSheets: "/service-sheets",
+      weeklyReports: "/weekly-reports",
       calendar: "/calendar"
     }),
     []
@@ -87,8 +94,10 @@ export default function Dashboard({ worker, onLogout }) {
       forms: "Formularios",
       inventory: "Inventario",
       quotes: "Cotizaciones",
-      services: "Servicios",
-      sales: "Ventas / POS",
+      operations: "Operaciones",
+      invoices: "Facturación",
+      serviceSheets: "Hoja de Servicios",
+      weeklyReports: "Bitácora Semanal",
       calendar: "Calendario"
     }),
     []
@@ -133,12 +142,12 @@ export default function Dashboard({ worker, onLogout }) {
         icon: <TbBox />
       },
       {
-        key: "services",
-        title: "Servicios",
-        desc: "Programados · Tipos · Estados",
+        key: "operations",
+        title: "Operaciones",
+        desc: "Unidades · Rutas · Estados · Incidencias",
         tone: "steel",
         size: "span2",
-        icon: <TbTruckDelivery />
+        icon: <TbTruck />
       },
       {
         key: "calendar",
@@ -157,12 +166,12 @@ export default function Dashboard({ worker, onLogout }) {
         icon: <TbFileInvoice />
       },
       {
-        key: "sales",
-        title: "Ventas / POS",
-        desc: "Tickets · Métodos · Metas",
+        key: "invoices",
+        title: "Facturación",
+        desc: "PDF · Excel · XML · Cobro",
         tone: "teal",
         size: "span1",
-        icon: <TbCurrencyDollar />
+        icon: <TbReceipt2 />
       },
       {
         key: "forms",
@@ -171,6 +180,22 @@ export default function Dashboard({ worker, onLogout }) {
         tone: "violet",
         size: "span1",
         icon: <TbClipboardText />
+      },
+      {
+        key: "serviceSheets",
+        title: "Hoja de Servicios",
+        desc: "Rutas · Ubicación · Cantidad · Precio",
+        tone: "steel",
+        size: "span2",
+        icon: <TbRouteSquare />
+      },
+      {
+        key: "weeklyReports",
+        title: "Bitácora Semanal",
+        desc: "Seguimiento · Resumen · Reporte",
+        tone: "navy",
+        size: "span2",
+        icon: <TbReportAnalytics />
       },
       {
         key: "admin",
@@ -205,15 +230,11 @@ export default function Dashboard({ worker, onLogout }) {
                     <span className="mTile-ico mTile-ico--big" aria-hidden>
                       {m.icon}
                     </span>
-
                     <div className="mTile-text">
                       <div className="mTile-title mTile-title--big">{m.title}</div>
                       <div className="mTile-desc mTile-desc--big">{m.desc}</div>
                     </div>
-
-                    <span className="mTile-go mTile-go--big" aria-hidden>
-                      ›
-                    </span>
+                    <span className="mTile-go mTile-go--big" aria-hidden>›</span>
                   </div>
                 </button>
               ))}
@@ -242,7 +263,7 @@ export default function Dashboard({ worker, onLogout }) {
           </section>
         )}
 
-{tab === "calendar" && (
+        {tab === "calendar" && (
           <section className="module">
             <div className="module-head"></div>
             <CalendarModule currentWorker={worker} />
@@ -256,47 +277,56 @@ export default function Dashboard({ worker, onLogout }) {
           </section>
         )}
 
-{tab !== "home" &&
+        {tab === "invoices" && (
+          <section className="module">
+            <div className="module-head"></div>
+            <InvoicesModule currentWorker={worker} />
+          </section>
+        )}
+
+        {tab === "serviceSheets" && (
+          <section className="module">
+            <div className="module-head"></div>
+            <ServiceSheetsModule currentWorker={worker} />
+          </section>
+        )}
+
+        {tab === "weeklyReports" && (
+          <section className="module">
+            <div className="module-head"></div>
+            <WeeklyReportsModule currentWorker={worker} />
+          </section>
+        )}
+
+        {tab === "operations" && (
+          <section className="module">
+            <div className="module-head"></div>
+            <OperationsModule currentWorker={worker} />
+          </section>
+        )}
+
+        {tab !== "home" &&
           tab !== "admin" &&
           tab !== "inventory" &&
           tab !== "forms" &&
           tab !== "calendar" &&
-          tab !== "quotes" && (
+          tab !== "quotes" &&
+          tab !== "invoices" &&
+          tab !== "serviceSheets" &&
+          tab !== "weeklyReports" &&
+          tab !== "operations" && (
             <div style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              height: "100%",
-              minHeight: "60vh",
-              gap: "24px",
-              textAlign: "center",
+              display: "flex", flexDirection: "column", alignItems: "center",
+              justifyContent: "center", height: "100%", minHeight: "60vh",
+              gap: "24px", textAlign: "center",
             }}>
-              <img
-                src="/assets/ESPERA.gif"
-                alt="En desarrollo"
-                style={{
-                  width: "clamp(180px, 40vw, 320px)",
-                  height: "auto",
-                  borderRadius: "24px",
-                }}
-              />
+              <img src="/assets/ESPERA.gif" alt="En desarrollo"
+                style={{ width: "clamp(180px, 40vw, 320px)", height: "auto", borderRadius: "24px" }} />
               <div>
-                <p style={{
-                  margin: 0,
-                  fontSize: "clamp(22px, 3vw, 36px)",
-                  fontWeight: 900,
-                  color: "rgba(10,12,14,0.85)",
-                  letterSpacing: "-0.04em",
-                }}>
+                <p style={{ margin: 0, fontSize: "clamp(22px, 3vw, 36px)", fontWeight: 900, color: "rgba(10,12,14,0.85)", letterSpacing: "-0.04em" }}>
                   En desarrollo
                 </p>
-                <p style={{
-                  margin: "8px 0 0",
-                  fontSize: "clamp(13px, 1.2vw, 16px)",
-                  fontWeight: 700,
-                  color: "rgba(10,12,14,0.45)",
-                }}>
+                <p style={{ margin: "8px 0 0", fontSize: "clamp(13px, 1.2vw, 16px)", fontWeight: 700, color: "rgba(10,12,14,0.45)" }}>
                   Este módulo estará disponible próximamente
                 </p>
               </div>
