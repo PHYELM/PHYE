@@ -115,7 +115,7 @@ password: password.replace(/\s+/g, "").trim().toUpperCase()
           <div className="brand-center">
             <img
               className="brand-logo"
-              src={`${process.env.PUBLIC_URL}/assets/ECOVISA_TEXT.png`}
+              src={`${process.env.PUBLIC_URL}/assets/PHYETEXT.png`}
               alt="ECOVISA"
               draggable="false"
               

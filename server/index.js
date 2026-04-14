@@ -95,7 +95,16 @@ const salesRoutes          = require("./routes/sales");
   /* =========================
     Health
   ========================= */
-  app.get("/api/health", (req, res) => res.json({ ok: true }));
+  app.get("/api/health", (req, res) =>
+    res.json({
+      ok: true,
+      debug: "SERVER-INDEX-V2",
+      server_file: __filename,
+      admin_router_file: require.resolve("./routes/admin"),
+      cwd: process.cwd(),
+      ts: Date.now(),
+    })
+  );
 
   /* =========================
     API Routes

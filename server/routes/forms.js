@@ -7,6 +7,8 @@ const {
 } = require("../utils/formsExport");
 const { branchFilter } = require("../middleware/branchFilter");
 
+console.log("✅ FORMS ROUTES LOADED:", __filename);
+
 const answerStreams = new Map();
 
 function streamKey(formId) {
@@ -64,7 +66,7 @@ async function getWorkerContext(workerId) {
       level_id,
       profile_photo_url,
       department:departments!workers_department_id_fkey(id,name,color,icon),
-      level:worker_levels!workers_level_id_fkey(id,name,authority,rank)
+      level:worker_levels!workers_level_id_fkey(id,name,authority,can_manage_calendar,can_approve_quotes)
     `)
     .eq("id", workerId)
     .maybeSingle();
@@ -72,7 +74,6 @@ async function getWorkerContext(workerId) {
   if (error) throw new Error(error.message);
   return data || null;
 }
-
 function isDirection(worker) {
   return String(worker?.department?.name || "").trim().toUpperCase() === "DIRECCION";
 }
@@ -299,7 +300,7 @@ async function loadFormWithRelations(formIds) {
         level_id,
         min_authority,
         department:departments(id,name,color,icon),
-        level:worker_levels(id,name,authority,rank)
+        level:worker_levels(id,name,authority,can_manage_calendar,can_approve_quotes)
       )
     `)
     .in("id", formIds)
@@ -387,6 +388,7 @@ function enrichFormForDashboard(form, worker) {
 
 router.get("/meta/catalogs", async (req, res) => {
   try {
+    console.log("✅ /api/forms/meta/catalogs -> archivo actual cargado SIN rank");
     const { data: departments, error: departmentsError } = await supabaseAdmin
       .from("departments")
       .select("id,name,color,icon")
@@ -398,8 +400,9 @@ router.get("/meta/catalogs", async (req, res) => {
 
     const { data: levels, error: levelsError } = await supabaseAdmin
       .from("worker_levels")
-      .select("id,name,authority,rank")
-      .order("authority", { ascending: true });
+      .select("id,name,authority,can_manage_calendar,can_approve_quotes")
+      .order("authority", { ascending: true })
+      .order("name", { ascending: true });
 
     if (levelsError) {
       return res.status(500).json({ error: levelsError.message });

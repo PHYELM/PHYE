@@ -119,26 +119,46 @@ router.delete("/departments/:id", async (req, res) => {
 // rank se mantiene por compatibilidad
 // =====================
 router.get("/levels", async (req, res) => {
+  console.log("✅ /api/admin/levels -> ARCHIVO NUEVO CARGADO :: SIN rank :: DEBUG-LEVELS-V2");
+
   const { data, error } = await supabaseAdmin
     .from("worker_levels")
     .select("*")
     .order("authority", { ascending: true })
-    .order("rank", { ascending: true });
+    .order("name", { ascending: true });
 
-  if (error) return res.status(500).json({ error: error.message });
-  res.json({ data });
+  if (error) {
+    console.error("❌ /api/admin/levels error:", error);
+    return res.status(500).json({
+      error: error.message,
+      route: "/api/admin/levels",
+      debug: "DEBUG-LEVELS-V2",
+      admin_file: __filename,
+      ts: Date.now(),
+    });
+  }
+
+  return res.json({
+    data: data || [],
+    debug: "DEBUG-LEVELS-V2",
+    admin_file: __filename,
+    ts: Date.now(),
+  });
 });
-
 router.post("/levels", async (req, res) => {
   const { name, authority, can_approve_quotes, can_manage_calendar } = req.body || {};
   if (!name) return res.status(400).json({ error: "name required" });
 
   const auth = Math.max(1, Math.min(5, Number(authority || 1)));
-  const rank = auth;
 
   const { data, error } = await supabaseAdmin
     .from("worker_levels")
-    .insert({ name, authority: auth, rank, can_approve_quotes: Boolean(can_approve_quotes), can_manage_calendar: Boolean(can_manage_calendar) })
+    .insert({
+      name,
+      authority: auth,
+      can_approve_quotes: Boolean(can_approve_quotes),
+      can_manage_calendar: Boolean(can_manage_calendar),
+    })
     .select("*")
     .single();
 
@@ -153,11 +173,15 @@ router.put("/levels/:id", async (req, res) => {
   if (!name) return res.status(400).json({ error: "name required" });
 
   const auth = Math.max(1, Math.min(5, Number(authority || 1)));
-  const rank = auth;
 
   const { data, error } = await supabaseAdmin
     .from("worker_levels")
-    .update({ name, authority: auth, rank, can_approve_quotes: Boolean(can_approve_quotes), can_manage_calendar: Boolean(can_manage_calendar) })
+    .update({
+      name,
+      authority: auth,
+      can_approve_quotes: Boolean(can_approve_quotes),
+      can_manage_calendar: Boolean(can_manage_calendar),
+    })
     .eq("id", id)
     .select("*")
     .single();
@@ -197,7 +221,7 @@ router.get("/workers", async (req, res) => {
       profile_photo_url,
       created_at,
       department:departments!workers_department_id_fkey(id, name, color, icon),
-      level:worker_levels!workers_level_id_fkey(id, name, authority, rank, can_approve_quotes, can_manage_calendar),
+      level:worker_levels!workers_level_id_fkey(id, name, authority, can_approve_quotes, can_manage_calendar),
       branch:branches!workers_branch_id_fkey(id, name, color)
     `)
     .order("created_at", { ascending: false });
@@ -399,7 +423,8 @@ router.get("/levels/with-permissions", async (req, res) => {
   const { data: levels, error: levelsError } = await supabaseAdmin
     .from("worker_levels")
     .select("*")
-    .order("authority", { ascending: true });
+    .order("authority", { ascending: true })
+    .order("name", { ascending: true });
 
   if (levelsError) return res.status(500).json({ error: levelsError.message });
 
@@ -434,5 +459,12 @@ router.get("/__routes", (req, res) => {
   });
   res.json({ routes });
 });
-
+router.get("/debug/version", async (req, res) => {
+  return res.json({
+    ok: true,
+    debug: "ADMIN-ROUTER-V2",
+    file: __filename,
+    ts: Date.now(),
+  });
+});
 module.exports = router;

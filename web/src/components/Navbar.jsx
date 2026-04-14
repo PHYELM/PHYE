@@ -606,8 +606,8 @@ if (data?.profile_photo_url) {
           >
             <img
               className="nav-logo-img"
-              src="/assets/ECOVISACONTEXTO.png"
-              alt="ECOVISA"
+              src="/assets/PHYEWHITE.png"
+              alt="PHYE"
             />
           </button>
         </div>

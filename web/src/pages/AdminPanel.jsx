@@ -512,19 +512,31 @@ const [lpCanManageCalendar, setLpCanManageCalendar] = useState(false);
   const lvlMenuBtnRefs = useRef({});
 
 async function loadAll() {
-    const [d, l, w, p, b] = await Promise.all([
-      apiFetch("/api/admin/departments"),
-      apiFetch("/api/admin/levels"),
-      apiFetch("/api/admin/workers"),
-      apiFetch("/api/admin/access-policies"),
-      apiFetch("/api/branches"),
-    ]);
+    try {
+      const d = await apiFetch("/api/admin/departments");
+      console.log("✅ departments:", d);
 
-    setDepartments(d.data || []);
-    setLevels(l.data || []);
-    setWorkers(w.data || []);
-    setPolicies(p.data || []);
-    setBranches(b.data || []);
+      const l = await apiFetch("/api/admin/levels");
+      console.log("✅ levels:", l);
+
+      const w = await apiFetch("/api/admin/workers");
+      console.log("✅ workers:", w);
+
+      const p = await apiFetch("/api/admin/access-policies");
+      console.log("✅ access-policies:", p);
+
+      const b = await apiFetch("/api/branches");
+      console.log("✅ branches:", b);
+
+      setDepartments(d.data || []);
+      setLevels(l.data || []);
+      setWorkers(w.data || []);
+      setPolicies(p.data || []);
+      setBranches(b.data || []);
+    } catch (e) {
+      console.error("❌ loadAll error:", e);
+      throw e;
+    }
   }
 
   useEffect(() => {
@@ -560,9 +572,9 @@ async function loadAll() {
     return m;
   }, [departments]);
 
-  const levelsMap = useMemo(() => {
+const levelsMap = useMemo(() => {
     const m = new Map();
-    levels.forEach((l) => m.set(l.id, { ...l, authority: l.authority ?? l.rank ?? 1 }));
+    levels.forEach((l) => m.set(l.id, { ...l, authority: l.authority ?? 1 }));
     return m;
   }, [levels]);
 
@@ -910,7 +922,7 @@ async function openLevelPolicyModalEdit(levelObj) {
 
     const d0 = departments[0].id;
     const lv = levelsMap.get(levelObj.id) || levelObj;
-    const authority = lv.authority ?? lv.rank ?? 1;
+    const authority = lv.authority ?? 1;
 
     const key = `${d0}|${levelObj.id}`;
     const saved = policiesMap.get(key);
@@ -1381,7 +1393,7 @@ await Swal.fire({
   </div>
 
 {pagedLevels.map((l) => {
-  const auth = l.authority ?? l.rank ?? 1;
+  const auth = l.authority ?? 1;
 
   return (
     <div className="apMiniRow" key={l.id}>
@@ -2089,7 +2101,7 @@ onChange={(e) => setDepName(titleCaseLive(e.target.value))}
           setLpLevelId(v);
           const obj = levelsMap.get(v);
           setLpLevelName(obj?.name || "");
-          setLpAuthority(Number(obj?.authority ?? obj?.rank ?? 1) || 1);
+          setLpAuthority(Number(obj?.authority ?? 1) || 1);
           setLpCanManageCalendar(Boolean(obj?.can_manage_calendar));
           setLpCanApproveQuotes(Boolean(obj?.can_approve_quotes));
           syncLpPolicy(lpDeptId, v);
@@ -2198,32 +2210,6 @@ onChange={(e) => setDepName(titleCaseLive(e.target.value))}
           </div>
 
           {/* ✅ Módulos habilitados para este puesto */}
-          <div className="apPermGridPro">
-            {MODULES.map((m) => {
-              const on = lpModules.has(m.key);
-              return (
-                <button
-                  key={m.key}
-                  type="button"
-                  className={`apPermItemPro ${on ? "on" : "off"}`}
-                  onClick={() => {
-                    setLpModules((prev) => {
-                      const next = new Set(prev);
-                      if (next.has(m.key)) next.delete(m.key);
-                      else next.add(m.key);
-                      return next;
-                    });
-                  }}
-                >
-                  <span className={`apPermDot ${on ? "on" : "off"}`} />
-                  <span className="apPermLabelPro">{m.label}</span>
-                  <span className="apPermKeyPro">{m.key}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* ✅ Permisos más legibles + menos blanco */}
           <div className="apPermGridPro">
             {MODULES.map((m) => {
               const on = lpModules.has(m.key);

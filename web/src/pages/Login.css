@@ -77,7 +77,7 @@
 }
 
 .brand-logo {
-  height: 54px;                /* ✅ más grande */
+  height: 70px;                /* ✅ más grande */
   width: auto;
   max-width: 90%;
   object-fit: contain;
