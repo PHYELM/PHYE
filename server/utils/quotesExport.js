@@ -5,17 +5,17 @@ const path        = require('path');
 const fs          = require('fs');
 
 const COMPANY = {
-  name:     'ECOVISA',
+  name:     'PHYELM',
   full:     'Ecología, Vida y Salud, S.A. de C.V.',
   address:  'Blvd. Jesús García Morales No. 834, Col. La manga, Hermosillo, Sonora',
   phone:    '01 800 624 34 24',
-  web:      'www.ecovisa.com',
+  web:      'www.phyelm.com',
   navy:     '#1a3c5e',
   teal:     '#0ea5a0',
-  BASE_URL: 'https://ecovisa-software.onrender.com',
+  BASE_URL: 'https://phye.onrender.com',
 };
 
-const LOGO_PATH = path.join(__dirname, '../../web/public/assets/ECOVISA_ICON.png');
+const LOGO_PATH = path.join(__dirname, '../../web/public/assets/PHYE_ICON.png');
 
 function fmtCur(n, cur = 'MXN') {
   return new Intl.NumberFormat('es-MX', { style: 'currency', currency: cur || 'MXN' }).format(Number(n) || 0);
@@ -308,7 +308,7 @@ async function generateQuotePDF(quote) {
       const sw      = CW / 2 - 24;
       const lineLen = 100;
 
-      // Firma izquierda — ECOVISA + firmante
+      // Firma izquierda — PHYE + firmante
       const sig1CenterX = PL + sw / 2 + PL / 2;
       doc.rect(sig1CenterX - lineLen / 2, y + 28, lineLen, 0.7).fill('#94a3b8');
       doc.font('Helvetica-Bold').fontSize(8).fillColor('#0f172a')
@@ -863,7 +863,7 @@ function generateQuoteXML(quote) {
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <Cotizacion
-  xmlns:cot="http://ecovisa.com/cotizacion/1.0"
+  xmlns:cot="http://phyelm.com/cotizacion/1.0"
   Version="1.0"
   Folio="${escXml(quote.folio || '')}"
   Fecha="${quote.created_at ? new Date(quote.created_at).toISOString() : now}"

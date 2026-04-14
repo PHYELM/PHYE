@@ -865,7 +865,7 @@ if (data?.profile_photo_url) {
   {/* ✅ Panel encima */}
   <div className="nav-drawer-inner" role="document">
     <div className="nav-drawer-head">
-      <img className="nav-drawer-logo" src="/assets/ECOVISACONTEXTO.png" alt="ECOVISA" />
+      <img className="nav-drawer-logo" src="/assets/PHYEWHITE.png" alt="PHYELM" />
       <button
         className="nav-drawer-close"
         onClick={() => setMobileOpen(false)}

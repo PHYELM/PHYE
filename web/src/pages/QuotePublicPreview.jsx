@@ -142,7 +142,7 @@ export default function QuotePublicPreview() {
                     letterSpacing: '-0.04em',
                   }}
                 >
-                  ECOVISA
+                  PHYELM
                 </div>
                 <div
                   style={{
@@ -539,7 +539,7 @@ export default function QuotePublicPreview() {
             color: '#94a3b8',
           }}
         >
-          ECOVISA — Ecología, Vida y Salud, S.A. de C.V. | www.ecovisa.com
+          PHYELM — Proyectos Hidráulicos y Estructurales, S.A. de C.V. | www.phyelm.com
         </div>
       </div>
     </div>

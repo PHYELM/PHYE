@@ -1,7 +1,7 @@
 {
-  "short_name": "ECOVISA",
-  "name": "ECOVISA",
-  "description": "ECOVISA - Plataforma interna",
+  "short_name": "PHYELM",
+  "name": "PHYELM",
+  "description": "PHYELM - Plataforma interna",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
