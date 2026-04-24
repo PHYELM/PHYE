@@ -1,5 +1,6 @@
 const router = require("express").Router();
 const { supabaseAdmin } = require("../supabaseAdmin");
+const { branchFilter } = require("../middleware/branchFilter");
 
 router.get("/", async (req, res) => {
   try {

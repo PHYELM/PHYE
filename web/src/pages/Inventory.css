@@ -5,7 +5,7 @@
    - layout estable (sin hover transform que "brinca")
 ========================= */
 
-/* ✅ tokens (una sola vez) */
+
 :root{
   --inv-bg: #f6f7fb;
   --inv-card: #ffffff;
@@ -24,7 +24,7 @@
   --inv-teal: #00c1a8;
   --inv-green: #13a96f;
   --inv-red: #e04646;
-  --inv-purple: #7c5cff;
+   --inv-ops: #7c5cff;
   --inv-amber: #f5a623;
 
   --inv-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
@@ -43,7 +43,7 @@
   color: var(--inv-text);
 }
 
-/* ✅ fondo Monday (no lila) */
+
 .invWrap.invMonday{
   background: transparent;
 }
@@ -368,7 +368,7 @@ body{
 .invKpiTile.toneB::before{ background: var(--inv-teal); }
 .invKpiTile.toneIn::before{ background: var(--inv-green); }
 .invKpiTile.toneOut::before{ background: var(--inv-red); }
-.invKpiTile.toneMoney::before{ background: var(--inv-purple); }
+.invKpiTile.toneOps::before{ background: var(--inv-ops); }
 
 /* =========================
    DASHBOARD GRID (estable)
@@ -392,17 +392,17 @@ body{
    - evita deformaciones/cortes en charts
 ========================= */
 .invDashGridPro .invCard{
-  min-height: 360px; /* ✅ todas parejas */
+  min-height: 360px; 
 }
 
 @media (max-width: 1180px){
   .invDashGridPro .invCard{ min-height: 360px; }
 }
 @media (max-width: 560px){
-  .invDashGridPro .invCard{ min-height: auto; } /* ✅ en celular que fluya */
+  .invDashGridPro .invCard{ min-height: auto; }
 }
 
-/* ✅ ECharts siempre toma altura real del contenedor */
+
 .invEChartWrap{
   width: 100%;
   min-height: 260px;
@@ -618,8 +618,8 @@ body{
   color: var(--inv-soft);
   display: flex;
   align-items: center;
-  justify-content: center;   /* ✅ default CENTER */
-  text-align: center;        /* ✅ default CENTER */
+  justify-content: center;   
+  text-align: center;        
   border-right: 1px solid var(--inv-line);
   white-space: nowrap;
   overflow: hidden;
@@ -636,7 +636,7 @@ body{
   border-right: 0;
 }
 
-/* ✅ si quieres permitir textos largos SOLO cuando lo pidas */
+
 .invMiniGridCell.l{
   justify-content: flex-start;
   text-align: left;
@@ -861,7 +861,17 @@ body{
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
 }
+.invProFormGrid--2{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
 
+@media (max-width: 720px){
+  .invProFormGrid--2{
+    grid-template-columns: 1fr;
+  }
+}
 .invFormAdmin{
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
@@ -1002,7 +1012,7 @@ body{
 .invNoAccessTitle{ font-weight: 900; font-size: 18px; }
 .invNoAccessSub{ margin-top: 8px; font-weight: 700; color: var(--inv-muted); }
 /* =========================
-   ANALYTICS LAYOUT (Rendimientos)
+   ANALYTICS LAYOUT (Análisis operativo)
    - separa secciones como "Inicio"
 ========================= */
 .invAnalyticsCol{
@@ -1011,29 +1021,25 @@ body{
   gap: var(--inv-g);
 }
 /* =========================================================
-   ✅ INVENTORY RESPONSIVE PATCH (Phone/Tablet/Desktop)
-   Pegar al FINAL de Inventory.css
+   INVENTORY RESPONSIVE PATCH (Phone/Tablet/Desktop)
 ========================================================= */
 
 /* 0) NO lateral scroll + viewport safe */
 .invWrap{
-  max-width: none;           /* ✅ deja que use todo el ancho */
+  max-width: none;         
 }
 
-/* ✅ modo fluido: NO dupliques padding con app-main */
 .invWrap.invFluid{
   width: 100%;
   margin: 0 auto;
-  padding: 0;               /* ✅ app-main ya da padding */
+  padding: 0;               
 }
 
-/* ✅ en caso de que Inventory se use fuera del shell,
-   damos un fallback de padding mínimo */
 @supports not (padding: max(1px, 2px)){
   .invWrap.invFluid{ padding: 12px; }
 }
 
-/* 1) TOP BAR - responsive real */
+/* 1) TOP BAR - responsive */
 .invTop{
   grid-template-columns: 1fr minmax(240px, 720px) 1fr;
 }
@@ -1052,12 +1058,12 @@ body{
     gap: 10px;
   }
   .invTopRight .invBtn{
-    flex: 1;               /* ✅ botones ocupan ancho en móvil */
+    flex: 1;               
     justify-content: center;
   }
 }
 
-/* 2) Tabs - wrap bonito y tocable */
+
 .invTabs{
   gap: 8px;
   flex-wrap: wrap;
@@ -1069,7 +1075,7 @@ body{
   }
 }
 
-/* 3) KPIs - que no se vean apretados en teléfono */
+
 .invKpiRow{
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 }
@@ -1083,7 +1089,7 @@ body{
     overflow-y: visible;
     gap: 10px;
     padding-bottom: 8px;
-    /* scroll suave sin scrollbar visible */
+    
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
@@ -1095,7 +1101,7 @@ body{
   }
 
   .invKpiTile{
-    flex: 0 0 160px;          /* ancho fijo compacto */
+    flex: 0 0 160px;          
     min-width: 160px;
     height: 110px;
     min-height: 110px;
@@ -1145,17 +1151,17 @@ body{
   }
 }
 
-/* 5) Cards - quita min-height rígida en móvil/tablet */
+/* 5) Cards  */
 .invDashGridPro .invCard{
-  min-height: 340px;       /* desktop: se ven parejas */
+  min-height: 340px;       
 }
 @media (max-width: 720px){
   .invDashGridPro .invCard{
-    min-height: unset;     /* ✅ móvil: que fluya */
+    min-height: unset;    
   }
 }
 
-/* 6) CardTopCompact - que el header no se rompa */
+/* 6) CardTopCompact  */
 .invCardTopCompact{
   flex-wrap: wrap;
   align-items: flex-start;
@@ -1167,7 +1173,7 @@ body{
   flex: 0 0 auto;
 }
 
-/* ✅ ProSelect en headers (filtros) que no rompa */
+
 .invCardTopCompact select,
 .invCardTopCompact .proSelect,
 .invCardTopCompact .ProSelect{
@@ -1181,18 +1187,17 @@ body{
 @media (max-width: 560px){
   .invEChartWrap{
     min-height: 220px;
-    height: 220px;         /* ✅ evita “grandes vacíos” */
+    height: 220px;         
   }
 }
 
-/* 8) Tablas - “modo móvil” (sin min-width 760) */
+/* 8) Tablas  */
 @media (max-width: 720px){
   .invTable{
-    min-width: 0;          /* ✅ deja de forzar scroll gigante */
+    min-width: 0;         
   }
 
-  /* ✅ en móvil, tabla tipo cards si quieres sin reescribir JSX:
-     hacemos scroll horizontal ligero con buena UX */
+
   .invTableWrap{
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
@@ -1285,25 +1290,25 @@ body{
   min-width: 0;
 }
 /* =========================================================
-   ✅ Card header tools (Range + Segmented + ⋮) responsive
+   Card header tools (Range + Segmented + ⋮) responsive
 ========================================================= */
 .invCardTools{
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 10px;
-  flex-wrap: wrap;     /* ✅ clave: permite bajar de línea */
+  flex-wrap: wrap;     
   min-width: 0;
 }
 
 .invRange{
-  min-width: 180px;    /* desktop ok */
+  min-width: 180px;   
 }
 
 .invSeg{
   display: flex;
   gap: 8px;
-  flex-wrap: nowrap;   /* desktop: en una línea */
+  flex-wrap: nowrap;  
   min-width: 0;
 }
 
@@ -1311,7 +1316,6 @@ body{
   flex: 0 0 auto;
 }
 
-/* ✅ Mobile: todo cabe dentro de la card */
 @media (max-width: 560px){
   .invCardTools{
     justify-content: stretch;
@@ -1320,24 +1324,24 @@ body{
 
   .invRange{
     flex: 1 1 100%;
-    min-width: 0;      /* ✅ mata el “minWidth 180” en móvil */
+    min-width: 0;      
   }
 
   .invSeg{
     flex: 1 1 100%;
     width: 100%;
-    flex-wrap: wrap;   /* ✅ si no cabe, se acomoda */
+    flex-wrap: wrap;   
   }
 
   .invSeg .invTab{
-    flex: 1 1 0;       /* ✅ 2 botones, mitad y mitad */
+    flex: 1 1 0;       
     display: inline-flex;
     justify-content: center;
     white-space: nowrap;
   }
 
   .invDots{
-    margin-left: auto; /* ✅ ⋮ se pega a la derecha y ya no empuja nada afuera */
+    margin-left: auto; 
   }
 }
 /* =========================
@@ -2614,9 +2618,23 @@ body{
 .invStockLedgerWrap{
   width: 100%;
   min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+
+.invStockLedgerWrap::-webkit-scrollbar{
+  height: 10px;
+}
+
+.invStockLedgerWrap::-webkit-scrollbar-thumb{
+  background: rgba(10,12,14,0.16);
+  border-radius: 999px;
 }
 
 .invStockLedger{
+  min-width: 1180px;
   border: 1px solid #dbe4ef;
   border-radius: 18px;
   background: #ffffff;
@@ -2626,7 +2644,7 @@ body{
 
 .invStockLedger__head{
   display: grid;
-  grid-template-columns: 220px 170px 190px minmax(220px, 1fr) 120px 130px 84px;
+  grid-template-columns: 220px 170px 190px minmax(220px, 1fr) 120px 130px 136px;
   gap: 0;
   background: linear-gradient(180deg, #f9fbff 0%, #eef4fb 100%);
   border-bottom: 1px solid #dde6f0;
@@ -2661,13 +2679,12 @@ body{
 
 .invStockLedgerRow{
   display: grid;
-  grid-template-columns: 220px 170px 190px minmax(220px, 1fr) 120px 130px 84px;
+  grid-template-columns: 220px 170px 190px minmax(220px, 1fr) 120px 130px 136px;
   gap: 0;
   width: 100%;
   border: 0;
   border-bottom: 1px solid #e8eef5;
   background: #fff;
-  cursor: pointer;
   text-align: left;
   transition: background 140ms ease, box-shadow 140ms ease;
 }
@@ -2797,6 +2814,19 @@ body{
   box-shadow:
     0 4px 10px rgba(15,23,42,0.04),
     inset 0 1px 0 rgba(255,255,255,0.9);
+}
+
+.invRowActionsLedger{
+  width: 100%;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: nowrap;
+}
+
+.invRowActionsLedger .invActBtn{
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
 }
 
 /* preview */
@@ -2992,7 +3022,7 @@ body{
 
   .invStockLedger__head,
   .invStockLedgerRow{
-    min-width: 1120px;
+    min-width: 1180px;
   }
 }
 
@@ -3331,6 +3361,10 @@ body{
   background: #fff;
 }
 
+.invProModal__grid--editMovement{
+  grid-template-columns: minmax(0, 1.45fr) minmax(280px, 340px);
+}
+
 .invProModal__left{
   min-width: 0;
   min-height: 0;
@@ -3373,6 +3407,10 @@ body{
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+}
+
+.invProFormGrid--1{
+  grid-template-columns: 1fr;
 }
 
 .invProFormGrid--3{
@@ -3471,14 +3509,7 @@ body{
   gap: 10px;
 }
 
-.invProItems__head{
-  display: grid;
-  grid-template-columns: minmax(0, 2.15fr) 92px 152px 120px 92px;
-  gap: 10px;
-  align-items: center;
-  padding: 0 6px 8px;
-  border-bottom: 1px solid #e6edf5;
-}
+
 
 .invProItems__head > div{
   font-size: 11px;
@@ -3492,36 +3523,77 @@ body{
   text-align: center;
 }
 
+.invProItems__head{
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 110px 150px 54px;
+  gap: 12px;
+  align-items: center;
+  padding: 0 8px 10px;
+  border-bottom: 1px solid #e6edf5;
+}
+
 .invProItems__row{
   display: grid;
-  grid-template-columns: minmax(0, 2.15fr) 92px 152px 120px 92px;
-  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) 110px 150px 54px;
+  gap: 12px;
   align-items: center;
-  padding: 10px;
+  padding: 12px;
   border: 1px solid #e6edf5;
   border-radius: 16px;
   background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
-  box-shadow:
-    0 4px 10px rgba(15,23,42,0.03),
-    inset 0 1px 0 rgba(255,255,255,0.9);
 }
 
 .invProItems__row > div{
   min-width: 0;
+  max-width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.invProItems__row > div:first-child{
+  justify-content: stretch;
 }
 
 .invProItems__row .proSelect,
 .invProItems__row select,
 .invProItems__row input,
 .invProItems__row .invMoneyWrap{
-  width: 100%;
-  min-width: 0;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box;
+}
+
+.invProItems__row .proSelect{
+  overflow: hidden;
+  flex: 1 1 auto;
 }
 
 .invProItems__row .proSelect,
 .invProItems__row select,
 .invProItems__row input{
-  min-height: 46px;
+  min-height: 50px;
+}
+
+.invProItems__row .proSelect,
+.invProItems__row select{
+  color: #1f2937 !important;
+  background: #ffffff !important;
+  font-weight: 800;
+}
+
+.invProItems__row .proSelect option,
+.invProItems__row select option{
+  color: #1f2937 !important;
+  background: #ffffff !important;
+}
+
+.invProItems__row .proSelect:focus,
+.invProItems__row select:focus{
+  color: #1f2937 !important;
+  background: #ffffff !important;
 }
 
 .invProItems__row input.c{
@@ -3532,9 +3604,9 @@ body{
 
 .invProItems__row .invMoneyWrap{
   display: grid;
-  grid-template-columns: 44px minmax(0, 1fr);
+  grid-template-columns: 46px minmax(0, 1fr);
   align-items: stretch;
-  min-height: 46px;
+  min-height: 50px;
   border-radius: 14px;
   overflow: hidden;
   border: 1px solid #dbe4ef;
@@ -3552,15 +3624,17 @@ body{
 
 .invProItems__row .invMoneyInput{
   border: 0 !important;
-  min-height: 46px;
+  min-height: 50px;
   border-radius: 0 !important;
   text-align: center;
   font-weight: 900;
   background: transparent;
+  padding: 0 10px;
 }
 
 .invProLineTotal{
-  min-height: 46px;
+  width: 100%;
+  min-height: 50px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3572,14 +3646,32 @@ body{
   font-weight: 900;
   color: #233047;
   padding: 0 10px;
+  white-space: nowrap;
 }
 
-.invProItems__row .invBtn{
-  min-height: 46px;
-  width: 100%;
+.invIconTrashBtn{
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border: 1px solid rgba(239,68,68,0.18);
+  background: rgba(239,68,68,0.08);
+  color: #dc2626;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
-  border-radius: 14px;
-  font-weight: 900;
+  cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease, transform 140ms ease;
+}
+
+.invIconTrashBtn:hover{
+  background: rgba(239,68,68,0.14);
+  border-color: rgba(239,68,68,0.28);
+  transform: translateY(-1px);
+}
+
+.invIconTrashBtn svg{
+  font-size: 18px;
 }
 
 .invAddRowBtn{
@@ -3612,6 +3704,47 @@ body{
   border-radius: 12px;
 }
 
+.invModal .proSelect,
+.invModal select{
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  color: #1f2937 !important;
+  background: #ffffff !important;
+}
+
+.invModal .proSelect option,
+.invModal select option{
+  color: #1f2937 !important;
+  background: #ffffff !important;
+}
+.invModal--movementEdit{
+  width: min(980px, calc(100vw - 32px));
+  max-width: calc(100vw - 32px);
+}
+
+.invProModal--editMovement .invProModal__left,
+.invProModal--editMovement .invProModal__right{
+  padding: 18px;
+}
+
+.invProModal--editMovement .invProSummary__media{
+  min-height: 136px;
+}
+
+.invProModal--editMovement .invField input{
+  min-height: 54px;
+}
+
+.invProModal--editMovement .invProSummary__item b{
+  max-width: 68%;
+}
+
+@media (max-width: 920px){
+  .invProModal__grid--editMovement{
+    grid-template-columns: 1fr;
+  }
+}
 @media (max-width: 1180px){
   .invModal--fit{
     width: min(1080px, calc(100vw - 24px));
@@ -3623,7 +3756,7 @@ body{
 
   .invProItems__head,
   .invProItems__row{
-    grid-template-columns: minmax(0, 1.7fr) 82px 136px 110px 86px;
+    grid-template-columns: minmax(0, 1fr) 96px 128px 52px;
   }
 }
 
@@ -4295,7 +4428,7 @@ body{
   }
 }
 /* =========================================================
-   TOP VALORIZADOS + ACTIVIDAD RECIENTE
+   STOCK BAJO + ACTIVIDAD RECIENTE
    MISMA ALTURA VISUAL
 ========================================================= */
 
@@ -4313,12 +4446,12 @@ body{
   min-height: 0;
 }
 
-.invCard--topValued .invEChartWrap{
+.invCard--lowStock .invEChartWrap{
   min-height: 100% !important;
   height: 100% !important;
 }
 
-.invCard--topValued .invCardBody{
+.invCard--lowStock .invCardBody{
   display: flex;
   flex-direction: column;
 }
@@ -4333,7 +4466,7 @@ body{
     height: auto !important;
   }
 
-  /* ── Rendimientos: cards del dashboard que se desbordan en móvil ── */
+  /* ── Análisis operativo: cards del dashboard que se desbordan en móvil ── */
   .invDashGridPro .invCard{
     min-height: unset !important;
     height: auto !important;
@@ -4359,7 +4492,6 @@ body{
     min-height: unset !important;
   }
 }
-
 /* =========================================================
    EMPTY STATE PRO - INVENTORY
 ========================================================= */
@@ -4649,5 +4781,65 @@ body{
     min-height: 40px !important;
     height: 40px !important;
     padding: 0 14px !important;
+  }
+}
+
+.invActionIcon{
+  width:60px;
+  height:60px;
+  border-radius:50%;
+  border:0;
+  background:transparent;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  transition:160ms ease;
+  color:#0f172a;
+}
+
+.invActionIcon svg{
+  width:34px;
+  height:34px;
+  stroke-width:2.35;
+}
+
+.invActionIcon:hover{
+  transform:scale(1.08);
+}
+
+.invActionIcon:active{
+  transform:scale(0.96);
+}
+
+.invActionIcon--in{
+  color:#13a96f;
+}
+
+.invActionIcon--in:hover{
+  background:rgba(19,169,111,0.12);
+  color:#0f9a64;
+}
+
+.invActionIcon--out{
+  color:#e04646;
+}
+
+.invActionIcon--out:hover{
+  background:rgba(224,70,70,0.12);
+  color:#cf3e3e;
+}
+
+.invActionIcon--create{
+  color:#2f6fed;
+}
+
+.invActionIcon--create:hover{
+  background:rgba(47,111,237,0.12);
+  color:#1b4fc9;
+}
+
+@media (max-width:1180px){
+  .invTopRight .invActionIcon{
+    flex:0 0 60px;
   }
 }

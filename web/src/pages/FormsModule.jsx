@@ -1903,45 +1903,45 @@ function showFormInfo(form) {
 
           <div className="gf-builderPro__aside">
             <div className="gf-builderPro__actionCard">
-<div className="gf-builderPro__actionButtons">
-                <button
-                  className="forms-btn forms-btn--ghost gf-actionBtn"
-                  type="button"
-                  title="Dashboard"
-                  onClick={() => {
-                    setViewMode("dashboard");
-                    setSelectedForm(null);
-                    setCurrentAnswerId(null);
-                    resetBuilder();
-                  }}
-                >
-                  <TbLayoutGrid />
-                  <span className="gf-actionBtn__label">Dashboard</span>
-                </button>
+<div className="gf-builderPro__actionButtons gf-builderPro__actionButtons--icons">
+  <button
+    className="gfBuilderActionIcon gfBuilderActionIcon--dashboard"
+    type="button"
+    title="Dashboard"
+    aria-label="Dashboard"
+    onClick={() => {
+      setViewMode("dashboard");
+      setSelectedForm(null);
+      setCurrentAnswerId(null);
+      resetBuilder();
+    }}
+  >
+    <TbLayoutGrid />
+  </button>
 
-                <button
-                  className="forms-btn forms-btn--ghost gf-actionBtn"
-                  type="button"
-                  title="Cancelar"
-                  onClick={() => {
-                    setViewMode("dashboard");
-                    resetBuilder();
-                  }}
-                >
-                  <TbX />
-                  <span className="gf-actionBtn__label">Cancelar</span>
-                </button>
+  <button
+    className="gfBuilderActionIcon gfBuilderActionIcon--cancel"
+    type="button"
+    title="Cancelar"
+    aria-label="Cancelar"
+    onClick={() => {
+      setViewMode("dashboard");
+      resetBuilder();
+    }}
+  >
+    <TbX />
+  </button>
 
-                <button
-                  className="forms-btn forms-btn--primary gf-actionBtn"
-                  type="button"
-                  title="Guardar formulario"
-                  onClick={saveBuilder}
-                >
-                  <TbDeviceFloppy />
-                  <span className="gf-actionBtn__label">Guardar formulario</span>
-                </button>
-              </div>
+  <button
+    className="gfBuilderActionIcon gfBuilderActionIcon--save"
+    type="button"
+    title="Guardar formulario"
+    aria-label="Guardar formulario"
+    onClick={saveBuilder}
+  >
+    <TbDeviceFloppy />
+  </button>
+</div>
             </div>
 
             {renderBuilderSideConfig()}
@@ -2308,27 +2308,29 @@ function showFormInfo(form) {
                 </p>
               </div>
 
-              <div className="forms-top-actions">
-                <button
-                  className="forms-btn forms-btn--ghost"
-                  type="button"
-                  onClick={goToFormsDashboard}
-                >
-                  <TbLayoutGrid />
-                  Dashboard
-                </button>
+<div className="forms-top-actions">
+  <button
+    className="formsActionIcon formsActionIcon--dashboard"
+    type="button"
+    onClick={goToFormsDashboard}
+    title="Dashboard"
+    aria-label="Dashboard"
+  >
+    <TbLayoutGrid />
+  </button>
 
-                {isDirection ? (
-                  <button
-                    className="forms-btn forms-btn--primary"
-                    type="button"
-                    onClick={startCreateForm}
-                  >
-                    <TbPlus />
-                    Nuevo formulario
-                  </button>
-                ) : null}
-              </div>
+  {isDirection ? (
+    <button
+      className="formsActionIcon formsActionIcon--create"
+      type="button"
+      onClick={startCreateForm}
+      title="Nuevo formulario"
+      aria-label="Nuevo formulario"
+    >
+      <TbPlus />
+    </button>
+  ) : null}
+</div>
             </div>
 
             <div className="forms-filters">

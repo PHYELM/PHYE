@@ -9,17 +9,20 @@
   const formsRoutes = require("./routes/forms");
   const inventoryRoutes = require("./routes/inventory");
   const quotesRoutes = require("./routes/quotes");
+  const clientsRoutes = require("./routes/clients");
   const servicesRoutes = require("./routes/services");
   const invoicesRoutes = require("./routes/invoices");
   const serviceSheetsRoutes = require("./routes/serviceSheets");
-const weeklyReportsRoutes  = require("./routes/weeklyReports");
-const operationsRoutes     = require("./routes/operations");
-const branchesRoutes       = require("./routes/branches");
-const notificationsRoutes  = require("./routes/notifications");
-const salesRoutes          = require("./routes/sales");
+  const weeklyReportsRoutes  = require("./routes/weeklyReports");
+  const generalReportsRoutes = require("./routes/generalReports");
+  const operationsRoutes     = require("./routes/operations");
+  const branchesRoutes       = require("./routes/branches");
+  const notificationsRoutes  = require("./routes/notifications");
+  const salesRoutes          = require("./routes/sales");
   const gpsRoutes = require("./routes/gps");
   const calendarRoutes = require("./routes/calendar");
   const workersRoutes = require("./routes/workers");
+  const pushRoutes = require("./routes/pushSubscriptions");
 
   const { supabaseAdmin } = require("./supabaseAdmin");
 
@@ -32,7 +35,7 @@ const salesRoutes          = require("./routes/sales");
   console.log("🔌 inventoryRoutes loaded from:", require.resolve("./routes/inventory"));
 
   /* =========================
-    Headers debug (SIEMPRE arriba)
+    Headers debug
   ========================= */
   app.use((req, res, next) => {
     res.setHeader("X-Server-File", __filename);
@@ -45,7 +48,7 @@ const salesRoutes          = require("./routes/sales");
   ========================= */
   const isProd = process.env.NODE_ENV === "production";
 
-  // ✅ En producción: si front y back viven en el MISMO dominio, NO necesitas CORS
+  
   if (!isProd) {
     const ALLOWED_ORIGINS = [
       "http://localhost:3000",
@@ -74,7 +77,7 @@ const salesRoutes          = require("./routes/sales");
     });
   }
 
-  // ✅ si CORS bloquea, responde en JSON (debug real)
+  // si CORS bloquea, responde en JSON (debug real)
   app.use((err, req, res, next) => {
     if (err && String(err.message || "").startsWith("CORS blocked:")) {
       return res.status(403).json({ error: err.message, origin: req.headers.origin || "" });
@@ -95,16 +98,7 @@ const salesRoutes          = require("./routes/sales");
   /* =========================
     Health
   ========================= */
-  app.get("/api/health", (req, res) =>
-    res.json({
-      ok: true,
-      debug: "SERVER-INDEX-V2",
-      server_file: __filename,
-      admin_router_file: require.resolve("./routes/admin"),
-      cwd: process.cwd(),
-      ts: Date.now(),
-    })
-  );
+  app.get("/api/health", (req, res) => res.json({ ok: true }));
 
   /* =========================
     API Routes
@@ -113,9 +107,7 @@ const salesRoutes          = require("./routes/sales");
   app.use("/api/forms", formsRoutes);
 
   /* =========================
-    ✅ DEBUG DIRECTO (BYPASS ROUTER)
-    - si esto responde, tu server y montaje están bien
-    - si tu frontend daba 404, el problema está en routes/inventory.js
+    DEBUG DIRECTO (BYPASS ROUTER)
   ========================= */
   app.get("/api/inventory/metrics-ping", (req, res) => {
     return res.json({ ok: true, from: "SERVER_DIRECT" });
@@ -125,14 +117,14 @@ const salesRoutes          = require("./routes/sales");
   app.use(
     "/api/inventory",
     (req, res, next) => {
-      console.log("✅ HIT /api/inventory ->", req.method, req.url);
-      console.log("✅ inventory router file mounted from:", require.resolve("./routes/inventory"));
+      console.log("HIT /api/inventory ->", req.method, req.url);
+      console.log("inventory router file mounted from:", require.resolve("./routes/inventory"));
       next();
     },
     inventoryRoutes
   );
 
-  // ✅ DEBUG DIRECTO PARA COMPARAR CONTRA EL ROUTER
+  // DEBUG DIRECTO PARA COMPARAR CONTRA EL ROUTER
   app.get("/api/inventory/performance-summary-direct", async (req, res) => {
     return res.json({
       ok: true,
@@ -143,19 +135,31 @@ const salesRoutes          = require("./routes/sales");
     });
   });
 
-  app.use("/api/quotes", quotesRoutes);
-  app.use("/api/services", servicesRoutes);
+app.use("/api/quotes", quotesRoutes);
+
+app.use(
+  "/api/clients",
+  (req, res, next) => {
+    console.log("HIT /api/clients ->", req.method, req.url);
+    console.log("clients router file mounted from:", require.resolve("./routes/clients"));
+    next();
+  },
+  clientsRoutes
+);
+
+app.use("/api/services", servicesRoutes);
   app.use("/api/invoices", invoicesRoutes);
   app.use("/api/service-sheets", serviceSheetsRoutes);
-app.use("/api/weekly-reports", weeklyReportsRoutes);
-app.use("/api/operations", operationsRoutes);
-app.use("/api/branches", branchesRoutes);
-app.use("/api/notifications", notificationsRoutes);
-app.use("/api/sales", salesRoutes);
+  app.use("/api/weekly-reports", weeklyReportsRoutes);
+  app.use("/api/general-reports", generalReportsRoutes);
+  app.use("/api/operations", operationsRoutes);
+  app.use("/api/branches", branchesRoutes);
+  app.use("/api/notifications", notificationsRoutes);
+  app.use("/api/sales", salesRoutes);
   app.use("/api/gps", gpsRoutes);
   app.use("/api/calendar", calendarRoutes);
   app.use("/api/workers", workersRoutes);
-
+  app.use("/api/push", pushRoutes);
   /* =========================
     Debug: lista rutas cargadas
   ========================= */
@@ -274,7 +278,6 @@ return res.json({
 
   /* =========================
     404 DEBUG SOLO PARA /api
-    (IMPORTANTE: antes de servir React)
   ========================= */
   app.use("/api", (req, res) => {
     return res.status(404).json({
@@ -327,11 +330,68 @@ return res.json({
   /* =========================
     Start
   ========================= */
+  // ─── Limpieza automática de notificaciones cada 7 días ───────
+  const { supabaseAdmin: _supaForCleanup } = require("./supabaseAdmin");
+
+  async function cleanOldNotifications() {
+    try {
+      const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const { error } = await _supaForCleanup
+        .from("notifications")
+        .delete()
+        .lt("created_at", cutoff);
+      if (error) {
+        console.error("⚠️ cleanOldNotifications error:", error.message);
+      } else {
+        console.log("🧹 Notificaciones antiguas eliminadas (> 7 días):", new Date().toISOString());
+      }
+    } catch (e) {
+      console.error("⚠️ cleanOldNotifications exception:", e.message);
+    }
+  }
+
+  // Ejecutar al arrancar + cada 7 días
+  cleanOldNotifications();
+  setInterval(cleanOldNotifications, 7 * 24 * 60 * 60 * 1000);
+
   const port = Number(process.env.PORT || 3001);
 
-  app.listen(port, "0.0.0.0", () => {
-    console.log("Server running on port", port);
-    console.log("NODE_ENV =", process.env.NODE_ENV);
-    console.log("Server file =", __filename);
-    console.log("Serving static from =", webBuild);
-  });
+const server = app.listen(port, "0.0.0.0", () => {
+  console.log("Server running on port", port);
+  console.log("NODE_ENV =", process.env.NODE_ENV);
+  console.log("Server file =", __filename);
+  console.log("Serving static from =", webBuild);
+  console.log("server.listening =", server.listening);
+});
+
+server.keepAliveTimeout = 120000;
+server.headersTimeout = 120000;
+
+// Mantener vivo el event loop en dev y además detectar quién cierra el proceso
+const __DEV_KEEPALIVE__ = setInterval(() => {
+  // noop
+}, 30000);
+
+process.on("beforeExit", (code) => {
+  console.error("⚠️ process.beforeExit code =", code);
+});
+
+process.on("exit", (code) => {
+  console.error("⚠️ process.exit code =", code);
+});
+
+process.on("SIGINT", () => {
+  console.error("⚠️ SIGINT recibido");
+});
+
+process.on("SIGTERM", () => {
+  console.error("⚠️ SIGTERM recibido");
+});
+
+process.on("uncaughtException", (err) => {
+  console.error("🔥 uncaughtException:", err);
+});
+
+process.on("unhandledRejection", (reason) => {
+  console.error("🔥 unhandledRejection:", reason);
+});

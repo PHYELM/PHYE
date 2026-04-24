@@ -135,3 +135,74 @@ select.opsInput { cursor:pointer; }
   .opsDrawer { width:100vw; }
   .opsStatusTabs { overflow-x:auto; flex-wrap:nowrap; padding-bottom:4px; }
 }
+.opsRefreshIcon{
+  width:60px;
+  height:60px;
+  border-radius:50%;
+  border:0;
+  background:transparent;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  color:#475569;
+  transition:160ms ease;
+}
+
+.opsRefreshIcon svg{
+  width:34px;
+  height:34px;
+  stroke-width:2.1;
+}
+
+.opsRefreshIcon:hover{
+  background:rgba(15,23,42,0.06);
+  transform:rotate(90deg) scale(1.05);
+  color:#0f172a;
+}
+
+.opsRefreshIcon:disabled{
+  cursor:wait;
+  opacity:.9;
+}
+
+.opsRefreshIcon.is-spinning svg{
+  animation:opsRefreshSpin 760ms linear infinite;
+}
+
+@keyframes opsRefreshSpin{
+  from{
+    transform:rotate(0deg);
+  }
+  to{
+    transform:rotate(360deg);
+  }
+}
+
+.opsCreateIcon{
+  width:60px;
+  height:60px;
+  border-radius:50%;
+  border:0;
+  background:transparent;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  color:#0f172a;
+  transition:160ms ease;
+}
+
+.opsCreateIcon svg{
+  width:34px;
+  height:34px;
+  stroke-width:2.4;
+}
+
+.opsCreateIcon:hover{
+  background:rgba(37,99,235,0.10);
+  color:#2563eb;
+  transform:scale(1.08);
+}
+
+.opsCreateIcon:active{
+  transform:scale(0.96);
+}

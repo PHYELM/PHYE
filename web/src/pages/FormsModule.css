@@ -3586,3 +3586,45 @@ body.forms-filePreview-open .frt-respondModal{
     font-size: 14px !important;
   }
 }
+
+.formsActionIcon{
+  width:60px;
+  height:60px;
+  border-radius:50%;
+  border:0;
+  background:transparent;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  transition:160ms ease;
+}
+
+.formsActionIcon svg{
+  width:34px;
+  height:34px;
+  stroke-width:2.35;
+}
+
+.formsActionIcon--dashboard{
+  color:#0f172a;
+}
+
+.formsActionIcon--dashboard:hover{
+  background:rgba(15,23,42,0.06);
+  color:#020617;
+  transform:scale(1.08);
+}
+
+.formsActionIcon--create{
+  color:#16a34a;
+}
+
+.formsActionIcon--create:hover{
+  background:rgba(22,163,74,0.12);
+  color:#15803d;
+  transform:scale(1.08);
+}
+
+.formsActionIcon:active{
+  transform:scale(0.96);
+}

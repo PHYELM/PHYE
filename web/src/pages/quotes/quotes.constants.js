@@ -1,7 +1,10 @@
 export const QUOTE_STATUSES = {
+  draft:     { label: 'Borrador',   color: '#475569' },
+  sent:      { label: 'Enviada',    color: '#7c3aed' },
   pending:   { label: 'En espera',  color: '#d97706' },
   approved:  { label: 'Aprobada',   color: '#2563eb' },
   rejected:  { label: 'Rechazada',  color: '#dc2626' },
+  invoiced:  { label: 'Facturada',  color: '#0f766e' },
   paid:      { label: 'Pagada',     color: '#16a34a' },
   cancelled: { label: 'Cancelada',  color: '#6b7280' },
 };

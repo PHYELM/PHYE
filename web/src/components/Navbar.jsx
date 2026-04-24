@@ -13,9 +13,11 @@ import {
   TbUserCircle,
   TbReceipt2,
   TbClipboardList,
-  TbReportAnalytics
+  TbReportAnalytics,
+  TbBuilding
 } from "react-icons/tb";
 import { apiFetch, API_BASE } from "../api.js";
+import toast from "react-hot-toast";
 import "./Navbar.css";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -24,6 +26,7 @@ const ICONS = {
   admin: <TbUsers />,
   forms: <TbClipboardText />,
   inventory: <TbBox />,
+  clients: <TbBuilding />,
   operations: <TbTruck />,
   calendar: <TbCalendarMonth />,
   quotes: <TbFileInvoice />,
@@ -31,7 +34,6 @@ const ICONS = {
   serviceSheets: <TbClipboardList />,
   weeklyReports: <TbReportAnalytics />
 };
-
 export default function Navbar({ worker, active, onChange, onLogout }) {
 const [mobileOpen, setMobileOpen] = useState(false);
 const navigate = useNavigate();
@@ -42,15 +44,16 @@ const ROUTES = useMemo(() => ({
   admin: "/admin",
   forms: "/forms",
   inventory: "/inventory",
+  clients: "/clients",
   quotes: "/quotes",
   operations: "/operations",
   invoices: "/invoices",
   serviceSheets: "/service-sheets",
-  weeklyReports: "/weekly-reports",
+  weeklyReports: "/general-reports",
   calendar: "/calendar"
 }), []);
 
-// ✅ Deducir el tab activo desde la URL (fix F5 / refresh)
+
 const getKeyFromPath = useCallback((pathname) => {
   // orden: rutas más largas primero por seguridad
   const entries = Object.entries(ROUTES).sort((a, b) => b[1].length - a[1].length);
@@ -65,7 +68,7 @@ const getKeyFromPath = useCallback((pathname) => {
   return "home";
 }, [ROUTES]);
 
-// ✅ Activo 100% estable: SOLO desde la URL (no depende de mediciones ni props)
+
 const activeKey = useMemo(() => {
   return getKeyFromPath(location.pathname);
 }, [location.pathname, getKeyFromPath]);
@@ -114,7 +117,6 @@ const closeNotif = () => {
 const pillRef = useRef(null);
 const btnRefs = useRef({}); // key -> button element
 const [activePill, setActivePill] = useState({ x: 0, y: 0, w: 44, h: 44, ready: false });
-// ✅ refs estables (evita refs "fantasma" en re-mount / refresh)
 const setBtnRef = useCallback(
   (key) => (el) => {
     if (el) btnRefs.current[key] = el;
@@ -129,25 +131,25 @@ const [rawFileType, setRawFileType] = useState("image/jpeg");
 const [crop, setCrop] = useState({ x: 0, y: 0 });
 const [zoom, setZoom] = useState(1);
 const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
-const items = useMemo(
+  const items = useMemo(
     () => [
       { key: "home", label: "Inicio" },
       { key: "admin", label: "Admin" },
       { key: "forms", label: "Formularios" },
       { key: "inventory", label: "Inventario" },
+      { key: "clients", label: "Clientes" },
       { key: "quotes", label: "Cotizaciones" },
       { key: "operations", label: "Operaciones" },
       { key: "invoices", label: "Facturación" },
-      { key: "serviceSheets", label: "Hoja de Servicios" },
-      { key: "weeklyReports", label: "Bitácora Semanal" },
+      { key: "weeklyReports", label: "Reportes Generales" },
       { key: "calendar", label: "Calendario" }
     ],
     []
   );
 const handleGo = (key) => {
   const path = ROUTES[key] || "/";
-  if (location.pathname !== path) navigate(path); // ✅ Navbar navega SIEMPRE
-  onChange?.(key); // opcional (por si quieres guardar en localStorage en el padre)
+  if (location.pathname !== path) navigate(path); 
+  onChange?.(key); 
   setMobileOpen(false);
 };
 useLayoutEffect(() => {
@@ -189,10 +191,10 @@ useLayoutEffect(() => {
     c.scrollTo({ left: Math.max(0, target), behavior });
   };
 
-  // ✅ 1) primer cálculo
+  // 1) primer cálculo
   update();
 
-  // ✅ 2) estabiliza tras 2 frames (cuando icon fonts / layout terminan)
+  // 2) estabiliza tras 2 frames (cuando icon fonts / layout terminan)
   raf1 = requestAnimationFrame(() => {
     update();
     center("auto"); // sin anim al cargar/refresh
@@ -201,7 +203,7 @@ useLayoutEffect(() => {
     });
   });
 
-  // ✅ ResizeObserver: si cambia el tamaño del nav o del botón, recalcula
+  // ResizeObserver: si cambia el tamaño del nav o del botón, recalcula
 let ro;
 if (typeof ResizeObserver !== "undefined") {
   ro = new ResizeObserver(() => update());
@@ -209,14 +211,14 @@ if (typeof ResizeObserver !== "undefined") {
   ro.observe(btn);
 }
 
-  // ✅ cuando termina el load (imágenes/fonts/etc), recalcula
+  // cuando termina el load (imágenes/fonts/etc), recalcula
   const onLoad = () => {
     update();
     center("auto");
   };
   window.addEventListener("load", onLoad);
 
-  // ✅ cuando las fonts están listas (iconos), recalcula
+  // cuando las fonts están listas (iconos), recalcula
   let cancelled = false;
   if (document.fonts?.ready) {
     document.fonts.ready.then(() => {
@@ -251,7 +253,7 @@ useEffect(() => {
   document.addEventListener("mousedown", onDown);
   return () => document.removeEventListener("mousedown", onDown);
 }, [profileOpen, notifOpen]);
-// ✅ Cerrar drawer con ESC (mobile/desktop)
+// Cerrar drawer con ESC (mobile/desktop)
 useEffect(() => {
   const onKey = (e) => {
     if (e.key === "Escape") setMobileOpen(false);
@@ -259,7 +261,7 @@ useEffect(() => {
   document.addEventListener("keydown", onKey);
   return () => document.removeEventListener("keydown", onKey);
 }, []);
-  // ✅ Asegura depto/puesto aunque el worker venga incompleto desde login/localStorage
+
   useEffect(() => {
     const run = async () => {
       if (!worker?.id) return;
@@ -272,11 +274,10 @@ if (w) {
     level_name: w.level_name || ""
   });
 
-  // opcional: sincroniza para que el resto de la UI lo vea
   worker.department_name = w.department_name || worker.department_name || "";
   worker.level_name = w.level_name || worker.level_name || "";
 
-  // ✅ SI el backend trae la foto, la metemos a estado local (y al worker por compatibilidad)
+
   const photo = w.profile_photo_url || "";
   if (photo) {
     setAvatarUrl(photo);
@@ -310,7 +311,7 @@ useEffect(() => {
 useEffect(() => {
   const c = navCenterRef.current;
   if (!c) return;
-  // ✅ al montar / refresh, fuerza scrollLeft estable
+
   c.scrollLeft = 0;
 }, []);
   // --- Helpers (Title Case)
@@ -349,10 +350,46 @@ useEffect(() => {
   const [notifications, setNotifications] = useState([]);
 
 
+// ── Web Push: registrar SW y suscribir ────────────────
+  const registerPush = useCallback(async () => {
+    if (!worker?.id) return;
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
+
+    try {
+      const reg = await navigator.serviceWorker.register("/sw.js");
+
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") return;
+
+      const { key } = await apiFetch("/api/push/vapid-public-key");
+      if (!key) return;
+
+      // convertir clave VAPID a Uint8Array
+      const b64 = key.replace(/-/g, "+").replace(/_/g, "/");
+      const raw = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: raw,
+      });
+
+      await apiFetch("/api/push/subscribe", {
+        method: "POST",
+        body: JSON.stringify({ worker_id: worker.id, subscription: sub.toJSON() }),
+      });
+    } catch (e) {
+      console.warn("registerPush error:", e?.message);
+    }
+  }, [worker?.id]);
+
+  useEffect(() => {
+    registerPush();
+  }, [registerPush]);
+
   const fetchNotifications = useCallback(async () => {
     if (!worker?.id) return;
     try {
-      const resp = await apiFetch(`/api/notifications?recipient_id=${worker.id}&limit=40`);
+      const resp = await apiFetch(`/api/notifications?recipient_id=${worker.id}&worker_id=${worker.id}&limit=40`);
       setNotifications(
         (resp?.data || []).map((n) => ({
           ...n,
@@ -369,7 +406,7 @@ useEffect(() => {
     }
   }, [worker?.id]);
 
-// ✅ Cargar al montar + SSE tiempo real (con fallback a polling si SSE falla)
+
   useEffect(() => {
     if (!worker?.id) return;
 
@@ -392,16 +429,65 @@ useEffect(() => {
     try {
       es = new EventSource(sseUrl);
 
-      es.onmessage = (ev) => {
+es.onmessage = (ev) => {
         try {
           const msg = JSON.parse(ev.data || "{}");
-          // solo recarga cuando hay una notif nueva real
           if (msg.type === "new_notification") {
             fetchNotifications();
+
+            // ── Toast visual ──────────────────────────────
+            toast.custom((t) => (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                  background: "#fff",
+                  borderRadius: "14px",
+                  padding: "12px 16px",
+                  boxShadow: "0 8px 32px rgba(0,0,0,0.18)",
+                  opacity: t.visible ? 1 : 0,
+                  transition: "opacity 0.2s",
+                  minWidth: "280px",
+                  maxWidth: "420px",
+                }}
+              >
+                <div style={{
+                  width: 40, height: 40, borderRadius: "50%",
+                  background: "#0ea5a0", display: "flex",
+                  alignItems: "center", justifyContent: "center",
+                  flexShrink: 0, fontSize: 20, color: "#fff",
+                }}>
+                  🔔
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 800, fontSize: 14, color: "#0f172a", marginBottom: 2 }}>
+                    {msg.title || "Nueva notificación"}
+                  </div>
+                  <div style={{ fontSize: 13, color: "#475569", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {msg.message || msg.actor_name || ""}
+                  </div>
+                </div>
+              </div>
+            ), { duration: 5000 });
+
+            // ── Sonido ────────────────────────────────────
+            try {
+              const ctx = new (window.AudioContext || window.webkitAudioContext)();
+              const osc = ctx.createOscillator();
+              const gain = ctx.createGain();
+              osc.connect(gain);
+              gain.connect(ctx.destination);
+              osc.frequency.setValueAtTime(880, ctx.currentTime);
+              osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.15);
+              gain.gain.setValueAtTime(0.3, ctx.currentTime);
+              gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+              osc.start(ctx.currentTime);
+              osc.stop(ctx.currentTime + 0.4);
+            } catch {}
           }
         } catch {}
       };
-
       es.onerror = () => {
         try { es?.close?.(); } catch {}
         // si SSE falla, cae a polling cada 30 seg
@@ -561,8 +647,8 @@ async function handleSaveCroppedPhoto() {
     });
 
 if (data?.profile_photo_url) {
-  setAvatarUrl(data.profile_photo_url);              // ✅ re-render seguro
-  worker.profile_photo_url = data.profile_photo_url; // opcional
+  setAvatarUrl(data.profile_photo_url);             
+  worker.profile_photo_url = data.profile_photo_url; 
 }
 
     if (rawImageUrl) URL.revokeObjectURL(rawImageUrl);
@@ -607,14 +693,14 @@ if (data?.profile_photo_url) {
             <img
               className="nav-logo-img"
               src="/assets/PHYEWHITE.png"
-              alt="PHYE"
+              alt="ECOVISA"
             />
           </button>
         </div>
 
         {/* CENTER */}
 <nav className="nav-center" aria-label="Módulos" ref={navCenterRef}>
-  {/* ✅ pill animado (circulo) */}
+ 
   <span
     ref={pillRef}
     className={`nav-activePill ${activePill.ready ? "ready" : ""}`}
@@ -710,7 +796,7 @@ if (data?.profile_photo_url) {
       </button>
     </div>
 
-    {/* ✅ Tabs */}
+   
     <div className="nav-notifTabs" role="tablist" aria-label="Filtrar notificaciones">
       <button
         type="button"
@@ -745,7 +831,7 @@ if (data?.profile_photo_url) {
           <button
             key={n.id}
             className={`nav-notifItem ${!n.read ? "unread" : "read"}`}
-            onClick={() => handleMarkOneSeen(n.id)} // ✅ NO cierra, solo marca leída
+            onClick={() => handleMarkOneSeen(n.id)} 
             type="button"
           >
             <span className="nav-notifAvatar">
@@ -771,7 +857,7 @@ if (data?.profile_photo_url) {
       )}
     </div>
 
-    {/* ✅ Marcar todas sin cerrar */}
+    
     <button
       className="nav-notifFooter solid"
       type="button"
@@ -853,7 +939,7 @@ if (data?.profile_photo_url) {
 
 {/* MOBILE DRAWER */}
 <div className={`nav-drawer ${mobileOpen ? "open" : ""}`} role="dialog" aria-modal="true">
-  {/* ✅ Backdrop primero para que NO tape el panel */}
+  
   <button
     className="nav-drawer-backdrop"
     onClick={() => setMobileOpen(false)}
@@ -862,10 +948,10 @@ if (data?.profile_photo_url) {
     type="button"
   />
 
-  {/* ✅ Panel encima */}
+ 
   <div className="nav-drawer-inner" role="document">
     <div className="nav-drawer-head">
-      <img className="nav-drawer-logo" src="/assets/PHYEWHITE.png" alt="PHYELM" />
+      <img className="nav-drawer-logo" src="/assets/PHYEWHITE.png" alt="PHYE" />
       <button
         className="nav-drawer-close"
         onClick={() => setMobileOpen(false)}
@@ -897,7 +983,7 @@ if (data?.profile_photo_url) {
     </button>
   </div>
 </div>
-      {/* MODAL CROP (tipo FB) */}
+      {/* MODAL CROP */}
 {cropOpen && (
   <div className="avatarCrop-backdrop" role="dialog" aria-modal="true">
     <div className="avatarCrop-modal">

@@ -15,8 +15,17 @@ export default function CalendarEventModal({
 }) {
   const [form, setForm] = useState(() => {
     const existingFiles = Array.isArray(initialEvent?.files) ? initialEvent.files : [];
-    const deptIds = Array.isArray(initialEvent?.department_ids) ? initialEvent.department_ids : [];
-    const workerIds = Array.isArray(initialEvent?.worker_ids) ? initialEvent.worker_ids : [];
+const deptIds = Array.isArray(initialEvent?.department_ids)
+  ? initialEvent.department_ids
+  : Array.isArray(initialEvent?.departments)
+  ? initialEvent.departments.map((d) => d.id).filter(Boolean)
+  : [];
+
+const workerIds = Array.isArray(initialEvent?.worker_ids)
+  ? initialEvent.worker_ids
+  : Array.isArray(initialEvent?.workers)
+  ? initialEvent.workers.map((w) => w.id).filter(Boolean)
+  : [];
     return {
       id: initialEvent?.id || "",
       title: initialEvent?.title || "",
@@ -198,7 +207,7 @@ return (
               <span>{new Date().toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
             </div>
           </div>
-          <button className="calModalClose" type="button" onClick={onClose}>✕</button>
+<button className="calModalClose" type="button" onClick={handleClose}>✕</button>
         </div>
 
         {/* ── Form ── */}

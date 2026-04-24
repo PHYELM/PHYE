@@ -1,8 +1,8 @@
 const router = require("express").Router();
 const { supabaseAdmin } = require("../supabaseAdmin");
 
-// ✅ DEBUG: confirma que ESTE archivo se está cargando
-console.log("✅ ADMIN ROUTES LOADED:", __filename);
+// DEBUG: confirma que ESTE archivo se está cargando
+console.log("ADMIN ROUTES LOADED:", __filename);
 
 async function replaceLevelPermissions(levelId, permissions) {
   const safePermissions = Array.isArray(permissions) ? permissions : [];
@@ -37,10 +37,10 @@ async function replaceLevelPermissions(levelId, permissions) {
   if (insertError) throw new Error(insertError.message);
 }
 
-// ✅ DEBUG: confirma que el PUT/DELETE realmente entra al router admin
+// DEBUG: confirma que el PUT/DELETE realmente entra al router admin
 router.use((req, res, next) => {
   if (req.url.startsWith("/departments/")) {
-    console.log("✅ ADMIN HIT:", req.method, req.originalUrl);
+    console.log("ADMIN HIT:", req.method, req.originalUrl);
   }
   next();
 });
@@ -115,35 +115,17 @@ router.delete("/departments/:id", async (req, res) => {
 });
 // =====================
 // Levels (Puestos)
-// authority: 1..5 (simple)
-// rank se mantiene por compatibilidad
+// authority: 1..5
 // =====================
 router.get("/levels", async (req, res) => {
-  console.log("✅ /api/admin/levels -> ARCHIVO NUEVO CARGADO :: SIN rank :: DEBUG-LEVELS-V2");
-
   const { data, error } = await supabaseAdmin
     .from("worker_levels")
-    .select("*")
+    .select("id, name, authority, can_manage_calendar, can_approve_quotes, created_at")
     .order("authority", { ascending: true })
-    .order("name", { ascending: true });
+    .order("created_at", { ascending: true });
 
-  if (error) {
-    console.error("❌ /api/admin/levels error:", error);
-    return res.status(500).json({
-      error: error.message,
-      route: "/api/admin/levels",
-      debug: "DEBUG-LEVELS-V2",
-      admin_file: __filename,
-      ts: Date.now(),
-    });
-  }
-
-  return res.json({
-    data: data || [],
-    debug: "DEBUG-LEVELS-V2",
-    admin_file: __filename,
-    ts: Date.now(),
-  });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ data });
 });
 router.post("/levels", async (req, res) => {
   const { name, authority, can_approve_quotes, can_manage_calendar } = req.body || {};
@@ -159,7 +141,7 @@ router.post("/levels", async (req, res) => {
       can_approve_quotes: Boolean(can_approve_quotes),
       can_manage_calendar: Boolean(can_manage_calendar),
     })
-    .select("*")
+    .select("id, name, authority, can_manage_calendar, can_approve_quotes, created_at")
     .single();
 
   if (error) return res.status(500).json({ error: error.message });
@@ -183,7 +165,7 @@ router.put("/levels/:id", async (req, res) => {
       can_manage_calendar: Boolean(can_manage_calendar),
     })
     .eq("id", id)
-    .select("*")
+    .select("id, name, authority, can_manage_calendar, can_approve_quotes, created_at")
     .single();
 
   if (error) return res.status(500).json({ error: error.message });
@@ -423,8 +405,7 @@ router.get("/levels/with-permissions", async (req, res) => {
   const { data: levels, error: levelsError } = await supabaseAdmin
     .from("worker_levels")
     .select("*")
-    .order("authority", { ascending: true })
-    .order("name", { ascending: true });
+    .order("authority", { ascending: true });
 
   if (levelsError) return res.status(500).json({ error: levelsError.message });
 
@@ -448,7 +429,7 @@ router.get("/levels/with-permissions", async (req, res) => {
   return res.json({ data: enriched });
 });
 
-// ✅ DEBUG: lista rutas registradas en este router (para confirmar que existe access-policies)
+// DEBUG: lista rutas registradas en este router (para confirmar que existe access-policies)
 router.get("/__routes", (req, res) => {
   const routes = [];
   router.stack.forEach((layer) => {
@@ -459,12 +440,5 @@ router.get("/__routes", (req, res) => {
   });
   res.json({ routes });
 });
-router.get("/debug/version", async (req, res) => {
-  return res.json({
-    ok: true,
-    debug: "ADMIN-ROUTER-V2",
-    file: __filename,
-    ts: Date.now(),
-  });
-});
+
 module.exports = router;

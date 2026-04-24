@@ -524,8 +524,25 @@ export default function OperationsModule({ currentWorker }) {
           <p className="opsSub">Gestión operativa de unidades, operadores, rutas e incidencias en campo</p>
         </div>
         <div className="opsTopActions">
-          <button type="button" className="opsBtn opsBtnGhost" onClick={loadRows}><TbRefresh /> Recargar</button>
-          <button type="button" className="opsBtn opsBtnPrimary" onClick={openCreate}><TbPlus /> Nueva operación</button>
+          <button
+  type="button"
+  className={`opsRefreshIcon ${loading ? "is-spinning" : ""}`}
+  onClick={loadRows}
+  title="Recargar"
+  aria-label="Recargar"
+  disabled={loading}
+>
+  <TbRefresh />
+</button>
+          <button
+  type="button"
+  className="opsCreateIcon"
+  onClick={openCreate}
+  title="Nueva operación"
+  aria-label="Nueva operación"
+>
+  <TbPlus />
+</button>
         </div>
       </div>
 

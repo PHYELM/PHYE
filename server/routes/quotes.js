@@ -1,10 +1,9 @@
-const express  = require('express');
-const router   = express.Router();
+const router = require('express').Router();
 const { supabaseAdmin: supabase } = require('../supabaseAdmin');
 const { generateQuotePDF, generateQuoteExcel, generateQuoteXML } = require('../utils/quotesExport');
 const { branchFilter } = require('../middleware/branchFilter');
 const { createNotifications } = require('./notifications');
-
+const { syncReservations, releaseReservations, deductInventoryFromQuote } = require('../utils/quoteInventory');
 /* ── SSE broadcast ─────────────────────────────────────── */
 const sseClients = new Set();
 function broadcast(data = { event: 'change' }) {
@@ -50,47 +49,7 @@ async function canApproveQuotes(workerId) {
   return isDireccion || Boolean(data.level?.can_approve_quotes) || Number(data.level?.authority) >= 5;
 }
 
-/* ════════════════════════════════════════════════════════
-   CLIENTS
-════════════════════════════════════════════════════════ */
-router.get('/clients', async (req, res) => {
-  try {
-    const { q } = req.query;
-    let query = supabase.from('clients').select('*').order('name');
-    if (q) query = query.ilike('name', `%${q}%`);
-    const { data, error } = await query;
-    if (error) throw error;
-    res.json({ data });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
 
-router.post('/clients', async (req, res) => {
-  try {
-    const { worker_id, ...payload } = req.body;
-    const { data, error } = await supabase.from('clients')
-      .insert({ ...payload, created_by: worker_id }).select().single();
-    if (error) throw error;
-    res.json({ data });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-router.put('/clients/:id', async (req, res) => {
-  try {
-    const { worker_id, ...payload } = req.body;
-    const { data, error } = await supabase.from('clients')
-      .update(payload).eq('id', req.params.id).select().single();
-    if (error) throw error;
-    res.json({ data });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-router.delete('/clients/:id', async (req, res) => {
-  try {
-    const { error } = await supabase.from('clients').delete().eq('id', req.params.id);
-    if (error) throw error;
-    res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
 
 /* ════════════════════════════════════════════════════════
    PUBLIC (sin auth)
@@ -139,7 +98,7 @@ router.get('/public/:token/export/pdf', async (req, res) => {
    QUOTES LIST & CRUD
 ════════════════════════════════════════════════════════ */
 
-// ✅ GET con filtro de base
+// GET con filtro de base
 router.get('/', branchFilter, async (req, res) => {
   try {
     const { status, q } = req.query;
@@ -153,7 +112,7 @@ router.get('/', branchFilter, async (req, res) => {
       `)
       .order('created_at', { ascending: false });
 
-    // ✅ Dirección ve todo; otros solo su base
+    // Dirección ve todo; otros solo su base
     if (req.branchId) query = query.eq('branch_id', req.branchId);
 
     if (status && status !== 'all') query = query.eq('status', status);
@@ -198,7 +157,7 @@ router.get('/:id', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ✅ POST con branch_id
+// POST con branch_id
 router.post('/', branchFilter, async (req, res) => {
   try {
     const { worker_id, items = [], ...payload } = req.body;
@@ -209,23 +168,24 @@ router.post('/', branchFilter, async (req, res) => {
       if (c) clientSnapshot = c;
     }
     const { data: quote, error } = await supabase.from('quotes')
-      .insert({
-        ...payload, ...totals,
-        client_snapshot: clientSnapshot,
-        created_by: worker_id,
-        status: 'pending',
-        // ✅ hereda base del worker
-        branch_id: req.branchId || null,
-      })
+.insert({
+  ...payload, ...totals,
+  client_snapshot: clientSnapshot,
+  created_by: worker_id,
+  status: 'draft',
+  // hereda base del worker
+  branch_id: req.branchId || null,
+})
       .select().single();
     if (error) throw error;
-    const rows = items.filter(it => String(it.description || '').trim()).map((it, idx) => ({
+const rows = items.filter(it => String(it.description || '').trim()).map((it, idx) => ({
       quote_id: quote.id, description: it.description, unit: it.unit || 'pieza',
       quantity: Number(it.quantity) || 1, unit_price: Number(it.unit_price) || 0,
       discount_pct: Number(it.discount_pct) || 0, amount: Number(it.amount) || 0, sort_order: idx,
       product_id: it.product_id || null,
     }));
     if (rows.length) await supabase.from('quote_items').insert(rows);
+    await syncReservations(quote.id).catch((e) => console.warn("syncReservations POST/ error:", e?.message));
     broadcast();
     res.json({ data: quote });
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -238,7 +198,7 @@ router.put('/:id', async (req, res) => {
     const { data: quote, error } = await supabase.from('quotes')
       .update({ ...payload, ...totals }).eq('id', req.params.id).select().single();
     if (error) throw error;
-    if (items !== undefined) {
+if (items !== undefined) {
       await supabase.from('quote_items').delete().eq('quote_id', req.params.id);
       const rows = (items || []).filter(it => String(it.description || '').trim()).map((it, idx) => ({
         quote_id: req.params.id, description: it.description, unit: it.unit || 'pieza',
@@ -248,6 +208,7 @@ router.put('/:id', async (req, res) => {
       }));
       if (rows.length) await supabase.from('quote_items').insert(rows);
     }
+    await syncReservations(req.params.id).catch((e) => console.warn("syncReservations PUT/:id error:", e?.message));
     broadcast();
     res.json({ data: quote });
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -263,8 +224,28 @@ router.delete('/:id', async (req, res) => {
 });
 
 /* ── Status transitions ──────────────────────────────── */
+// draft → sent
+router.post('/:id/send', async (req, res) => {
+  try {
+    const { data, error } = await supabase.from('quotes')
+      .update({ status: 'sent' })
+      .eq('id', req.params.id)
+      .select()
+      .single();
 
-// ✅ pending → approved con notificación al creador
+    if (error) throw error;
+
+    await syncReservations(req.params.id).catch((e) =>
+      console.warn("syncReservations send error:", e?.message)
+    );
+
+    broadcast();
+    res.json({ data });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+// pending → approved con notificación al creador
 router.post('/:id/approve', async (req, res) => {
   try {
     const { worker_id } = req.body;
@@ -281,7 +262,7 @@ router.post('/:id/approve', async (req, res) => {
     if (error) throw error;
     broadcast();
 
-    // ✅ Notificar al creador de la cotización
+// Notificar al creador de la cotización
     if (prev?.created_by && prev.created_by !== worker_id) {
       const { data: actor } = await supabase
         .from('workers').select('id, full_name, profile_photo_url').eq('id', worker_id).maybeSingle();
@@ -299,11 +280,16 @@ router.post('/:id/approve', async (req, res) => {
       }]);
     }
 
+    // Descontar inventario y registrar salida
+    await deductInventoryFromQuote(req.params.id, worker_id, prev?.folio).catch((e) =>
+      console.warn("deductInventory approve error:", e?.message)
+    );
+
     res.json({ data });
   } catch (e) { res.status(500).json({ error: e.message }); }
-});
+}); 
 
-// ✅ pending/approved → rejected con notificación al creador
+// pending/approved → rejected con notificación al creador
 router.post('/:id/reject', async (req, res) => {
   try {
     const { worker_id, reason } = req.body;
@@ -322,7 +308,7 @@ router.post('/:id/reject', async (req, res) => {
     if (error) throw error;
     broadcast();
 
-    // ✅ Notificar al creador
+// Notificar al creador
     if (prev?.created_by && prev.created_by !== worker_id) {
       const { data: actor } = await supabase
         .from('workers').select('id, full_name, profile_photo_url').eq('id', worker_id).maybeSingle();
@@ -340,20 +326,40 @@ router.post('/:id/reject', async (req, res) => {
       }]);
     }
 
+    // Liberar reservas de inventario
+    await releaseReservations(req.params.id).catch((e) =>
+      console.warn("releaseReservations reject error:", e?.message)
+    );
+
     res.json({ data });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// rejected → pending
+// rejected/cancelled → draft
 router.post('/:id/reopen', async (req, res) => {
   try {
     const { data, error } = await supabase.from('quotes')
-      .update({ status: 'pending', rejected_at: null, rejected_by: null, rejection_reason: null })
-      .eq('id', req.params.id).select().single();
+      .update({
+        status: 'draft',
+        rejected_at: null,
+        rejected_by: null,
+        rejection_reason: null,
+      })
+      .eq('id', req.params.id)
+      .select()
+      .single();
+
     if (error) throw error;
+
+    await releaseReservations(req.params.id).catch((e) =>
+      console.warn("releaseReservations reopen error:", e?.message)
+    );
+
     broadcast();
     res.json({ data });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // approved → paid + descuenta inventario
@@ -368,26 +374,10 @@ router.post('/:id/pay', async (req, res) => {
       .eq('id', req.params.id).select().single();
     if (qe) throw qe;
 
-    const { data: items } = await supabase.from('quote_items')
-      .select('product_id, quantity')
-      .eq('quote_id', req.params.id)
-      .not('product_id', 'is', null);
-
-    if (items && items.length > 0) {
-      const { data: movement, error: me } = await supabase.from('inventory_movements')
-        .insert({ type: 'OUT', reason: `Cotización pagada: ${quote.folio}`, created_by: worker_id })
-        .select().single();
-
-      if (!me && movement) {
-        const rows = items.map(it => ({
-          movement_id: movement.id,
-          product_id:  it.product_id,
-          qty:         Number(it.quantity) || 1,
-          unit_cost:   0,
-        }));
-        await supabase.from('inventory_movement_items').insert(rows);
-      }
-    }
+    // Usa el helper centralizado: crea movimiento OUT + libera reservas
+    await deductInventoryFromQuote(req.params.id, worker_id, quote?.folio).catch((e) =>
+      console.warn("deductInventory pay error:", e?.message)
+    );
 
     broadcast();
     res.json({ data: quote });
@@ -404,11 +394,36 @@ router.post('/:id/cancel', async (req, res) => {
       .update({ status: 'cancelled' })
       .eq('id', req.params.id).select().single();
     if (error) throw error;
+
+    // Liberar reservas al cancelar
+    await releaseReservations(req.params.id).catch((e) =>
+      console.warn("releaseReservations cancel error:", e?.message)
+    );
+
     broadcast();
     res.json({ data });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
+router.post('/:id/invoice', async (req, res) => {
+  try {
+    const { worker_id } = req.body;
+    if (!await canApproveQuotes(worker_id))
+      return res.status(403).json({ error: 'No tienes permiso para marcar como facturada' });
 
+    const { data, error } = await supabase.from('quotes')
+      .update({ status: 'invoiced' })
+      .eq('id', req.params.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    broadcast();
+    res.json({ data });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
 /* ── Exports ─────────────────────────────────────────── */
 async function loadFullQuote(id) {
   const { data: quote, error } = await supabase

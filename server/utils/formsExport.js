@@ -3,7 +3,9 @@ const path = require("path");
 const ExcelJS = require("exceljs");
 const { PDFDocument, StandardFonts, rgb } = require("pdf-lib");
 
-const LOGO_PATH = path.join(__dirname, "..", "templates", "LOGOTIPO.png");
+const LOGO_DARK_PATH = path.join(__dirname, "../../web/public/assets/PH.png");
+const LOGO_LIGHT_PATH = path.join(__dirname, "../../web/public/assets/PHYEWHITE.png");
+const LOGO_PATH = LOGO_DARK_PATH;
 
 const BRAND = {
   navy: "061A2D",

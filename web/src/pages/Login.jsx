@@ -20,7 +20,7 @@ function toTitleCase(value) {
 }
 function validatePassword(raw, opts = {}) {
   const value = (raw || "").trim();
-  const allowLegacy = !!opts.allowLegacy; // ✅ excepción para director
+  const allowLegacy = !!opts.allowLegacy; 
 
   if (allowLegacy) {
     // Para el usuario director (tests): solo pedimos que no esté vacío
@@ -49,13 +49,13 @@ export default function Login({ onLogin }) {
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // ✅ recordar sesión
+
   const [rememberSession, setRememberSession] = useState(() => {
     const v = localStorage.getItem("remember_session");
     return v === null ? true : v === "true";
   });
 
-  // ✅ título
+
   useEffect(() => {
     setTitle("Login");
   }, []);
@@ -79,7 +79,7 @@ const canSubmit = useMemo(() => {
     setLoading(true);
     try {
 const payload = {
-  username: username.trim().toLowerCase(), // ✅ coincide con BD: director
+  username: username.trim().toLowerCase(), 
 password: password.replace(/\s+/g, "").trim().toUpperCase()
 };
 
@@ -88,7 +88,7 @@ password: password.replace(/\s+/g, "").trim().toUpperCase()
         body: JSON.stringify(payload)
       });
 
-      // ✅ guarda según switch
+      
       localStorage.setItem("remember_session", String(rememberSession));
 
       if (rememberSession) {
@@ -111,12 +111,12 @@ password: password.replace(/\s+/g, "").trim().toUpperCase()
     <div className="login-page">
       <div className="login-card">
         <div className="login-left">
-          {/* 1) Logo PHYELM centrado (imagen) */}
+          {/* 1) Logo ECOVISA centrado (imagen) */}
           <div className="brand-center">
             <img
               className="brand-logo"
               src={`${process.env.PUBLIC_URL}/assets/PHYETEXT.png`}
-              alt="ECOVISA"
+              alt="PHYE"
               draggable="false"
               
             />
@@ -135,7 +135,7 @@ password: password.replace(/\s+/g, "").trim().toUpperCase()
 <p className="login-note">
   <span>Acceso interno. Dirección administra usuarios y módulos.</span>
   <span>Todos los Derechos Reservados</span>
-  <span>PHYELM ©</span>
+  <span>ECOVISA ©</span>
 </p>
         </div>
 
@@ -166,7 +166,7 @@ password: password.replace(/\s+/g, "").trim().toUpperCase()
                   type={showPass ? "text" : "password"}
                   value={password}
                   onChange={(e) => {
-                    // ✅ todo en mayúsculas (tu regla)
+                    
                     setPassword(e.target.value.toUpperCase());
                     // si había error de login, lo quitamos cuando escribe
                     if (err) setErr("");
@@ -185,7 +185,7 @@ password: password.replace(/\s+/g, "").trim().toUpperCase()
                 </button>
               </div>
 
-              {/* ✅ feedback de validación */}
+              
 {!isDirector && !passCheck.ok && password.length > 0 && (
   <div className="hint-error">{passCheck.msg}</div>
 )}
@@ -195,7 +195,7 @@ password: password.replace(/\s+/g, "").trim().toUpperCase()
               {loading ? "ENTRANDO..." : "ENTRAR"}
             </button>
 
-            {/* ✅ recordar sesión */}
+            
             <div className="remember-row">
               <span className="remember-label">Recordar sesión</span>
 

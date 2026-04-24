@@ -56,8 +56,8 @@ function titleCaseWords(str = "") {
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(" ");
 }
-// ✅ Title Case En Tiempo Real (No Recorta Ni Colapsa Espacios)
-// - Mantiene Espacios Tal Cual Para No Mover El Cursor
+
+
 // - Primera Letra De Cada Palabra => Mayúscula
 // - Resto => Minúscula
 function titleCaseLive(str = "") {
@@ -195,7 +195,7 @@ const MODULES = [
   { key: "calendar", label: "Calendario" },
 ];
 
-// ✅ Permisos granulares: qué acciones aplican a cada módulo
+// Permisos granulares: qué acciones aplican a cada módulo
 const MODULES_FULL = [
   { key: "home",          label: "Inicio",            actions: ["can_view"] },
   { key: "admin",         label: "Admin",             actions: ["can_view", "can_create", "can_edit", "can_delete"] },
@@ -266,17 +266,15 @@ function DeptIcon({ iconKey, size = 18 }) {
 
 /* =========================
   Color grid (tipo imagen 3)
-  - sin contenedores
-  - cuadrados pegados
 ========================= */
 function buildColorGrid() {
-  // filas de saturación/luz; columnas de matiz (rainbow) + grises al final
+  
   const colsHue = 12;
   const rows = 7;
 
   const out = [];
 
-  // rainbow
+  
   for (let r = 0; r < rows; r++) {
     const t = r / (rows - 1); // 0..1
     const sat = clamp(90 - t * 35, 40, 90);
@@ -287,8 +285,8 @@ function buildColorGrid() {
       out.push(`hsl(${h} ${sat}% ${light}%)`);
     }
 
-    // blanco + grises (como la columna derecha de la imagen)
-    out.push(`hsl(0 0% ${clamp(98 - t * 10, 86, 98)}%)`); // casi blanco
+    
+    out.push(`hsl(0 0% ${clamp(98 - t * 10, 86, 98)}%)`); 
     out.push(`hsl(0 0% ${clamp(90 - t * 18, 60, 90)}%)`);
     out.push(`hsl(0 0% ${clamp(78 - t * 22, 45, 78)}%)`);
     out.push(`hsl(0 0% ${clamp(64 - t * 22, 30, 64)}%)`);
@@ -300,7 +298,7 @@ function buildColorGrid() {
 const COLOR_GRID = buildColorGrid();
 
 /* =========================
-  Modal (pro con anim IN/OUT)
+  Modal
 ========================= */
 function Modal({ open, title, onClose, children }) {
   const ref = useRef(null);
@@ -350,7 +348,7 @@ function Modal({ open, title, onClose, children }) {
 }
 
 /* =========================
-  MiniMenu (3 puntitos)
+  MiniMenu 
 ========================= */
 function MiniMenu({ open, onClose, anchorRef, children }) {
   const menuRef = useRef(null);
@@ -422,7 +420,8 @@ const [departments, setDepartments] = useState([]);
   const [workers, setWorkers] = useState([]);
   const [policies, setPolicies] = useState([]);
   const [branches, setBranches] = useState([]);
-  // ✅ Modal "Ver detalles" (móvil + pro)
+  const [refreshing, setRefreshing] = useState(false);
+  // Modal "Ver detalles" (móvil + pro)
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [detailsWorker, setDetailsWorker] = useState(null);
 
@@ -439,7 +438,7 @@ const [departments, setDepartments] = useState([]);
   const [fLevel, setFLevel] = useState("all");
   const [q, setQ] = useState("");
 
-  // ✅ buscador general (Departamentos + Puestos)
+  // buscador general (Departamentos + Puestos)
   const [adminQ, setAdminQ] = useState("");
 
 // paginación (usuarios)
@@ -461,7 +460,7 @@ const [levelPage, setLevelPage] = useState(1);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [fullName, setFullName] = useState("");
-  const [username, setUsername] = useState(""); // ✅ ahora será "Nombre Apellido"
+  const [username, setUsername] = useState(""); 
   const [passwordPlain, setPasswordPlain] = useState("");
   const [selDept, setSelDept] = useState("");
   const [selLevel, setSelLevel] = useState("");
@@ -489,10 +488,10 @@ const [lpDeptId, setLpDeptId] = useState("");
 const [lpCanManageCalendar, setLpCanManageCalendar] = useState(false);
   const [lpCanApproveQuotes,  setLpCanApproveQuotes]  = useState(false);
 
-  // ✅ Permisos granulares del PUESTO
+  // Permisos granulares del PUESTO
   const [lpPermissions, setLpPermissions] = useState(defaultPermissions);
 
-  // ✅ Modal de Bases
+  // Modal de Bases
   const [branchModalOpen, setBranchModalOpen] = useState(false);
   const [branchEditOpen, setBranchEditOpen] = useState(false);
   const [branchEditingId, setBranchEditingId] = useState(null);
@@ -512,33 +511,26 @@ const [lpCanManageCalendar, setLpCanManageCalendar] = useState(false);
   const lvlMenuBtnRefs = useRef({});
 
 async function loadAll() {
+    setRefreshing(true);
+
     try {
-      const d = await apiFetch("/api/admin/departments");
-      console.log("✅ departments:", d);
-
-      const l = await apiFetch("/api/admin/levels");
-      console.log("✅ levels:", l);
-
-      const w = await apiFetch("/api/admin/workers");
-      console.log("✅ workers:", w);
-
-      const p = await apiFetch("/api/admin/access-policies");
-      console.log("✅ access-policies:", p);
-
-      const b = await apiFetch("/api/branches");
-      console.log("✅ branches:", b);
+      const [d, l, w, p, b] = await Promise.all([
+        apiFetch("/api/admin/departments"),
+        apiFetch("/api/admin/levels"),
+        apiFetch("/api/admin/workers"),
+        apiFetch("/api/admin/access-policies"),
+        apiFetch("/api/branches"),
+      ]);
 
       setDepartments(d.data || []);
       setLevels(l.data || []);
       setWorkers(w.data || []);
       setPolicies(p.data || []);
       setBranches(b.data || []);
-    } catch (e) {
-      console.error("❌ loadAll error:", e);
-      throw e;
+    } finally {
+      setRefreshing(false);
     }
   }
-
   useEffect(() => {
     loadAll();
   }, []);
@@ -550,7 +542,7 @@ async function loadAll() {
     if (currentWorker.level_id) setSelLevel(currentWorker.level_id);
   }, [currentWorker]);
 
-  // ✅ autocompletar: fullName + username + password (si no editMode)
+  // autocompletar: fullName + username + password (si no editMode)
   useEffect(() => {
     const f = titleCaseWords(firstName);
     const l = titleCaseWords(lastName);
@@ -558,7 +550,7 @@ async function loadAll() {
 
     setFullName(full);
 
-    // ✅ username OBLIGATORIO = "Nombre Apellido" (Title Case)
+    // username OBLIGATORIO = "Nombre Apellido" (Title Case)
     if (!editMode) {
       setUsername(full);
       if (f && l) setPasswordPlain(genPassword(f, l));
@@ -572,9 +564,9 @@ async function loadAll() {
     return m;
   }, [departments]);
 
-const levelsMap = useMemo(() => {
+  const levelsMap = useMemo(() => {
     const m = new Map();
-    levels.forEach((l) => m.set(l.id, { ...l, authority: l.authority ?? 1 }));
+    levels.forEach((l) => m.set(l.id, { ...l, authority: l.authority ?? l.rank ?? 1 }));
     return m;
   }, [levels]);
 
@@ -922,7 +914,7 @@ async function openLevelPolicyModalEdit(levelObj) {
 
     const d0 = departments[0].id;
     const lv = levelsMap.get(levelObj.id) || levelObj;
-    const authority = lv.authority ?? 1;
+    const authority = lv.authority ?? lv.rank ?? 1;
 
     const key = `${d0}|${levelObj.id}`;
     const saved = policiesMap.get(key);
@@ -939,7 +931,7 @@ async function openLevelPolicyModalEdit(levelObj) {
     if (Array.isArray(saved) && saved.length > 0) setLpModules(new Set(saved));
     else setLpModules(new Set(MODULES.map((m) => m.key)));
 
-    // ✅ Cargar permisos granulares del puesto
+    // Cargar permisos granulares del puesto
     try {
       const permsResp = await apiFetch(`/api/admin/levels/${levelObj.id}/permissions`);
       const existingPerms = permsResp?.data || {};
@@ -1021,7 +1013,7 @@ if (lpIsNew) {
         }),
       });
 
-      // ✅ 3) guardar permisos granulares del puesto
+      // 3) guardar permisos granulares del puesto
       const permissionsArray = MODULES_FULL.map((m) => ({
         module_key:  m.key,
         can_view:    Boolean(lpPermissions[m.key]?.can_view),
@@ -1092,7 +1084,7 @@ if (lpIsNew) {
       return;
     }
 
-    const enforcedUsername = `${f} ${l}`.trim(); // ✅ usuario obligatorio así
+    const enforcedUsername = `${f} ${l}`.trim(); 
     const enforcedPassword = passwordPlain?.trim() || genPassword(f, l);
 
     // si están editando uno viejo (ej: director) no lo forzamos a cambiar
@@ -1223,7 +1215,7 @@ await Swal.fire({
           <div className="apSub">Departamentos · Puestos · Usuarios</div>
         </div>
 
-        {/* ✅ Buscador general centrado (Departamentos + Puestos) */}
+        {/* Buscador general centrado (Departamentos + Puestos) */}
         <div className="apHeaderMid">
           <div className="apSearch apHeaderSearch">
             <TbSearch />
@@ -1237,13 +1229,26 @@ await Swal.fire({
         </div>
 
         <div className="apHeaderRight">
-          <button className="apBtn apBtnPrimary apBtnIconHeavy" onClick={openCreateUser} type="button" title="Crear usuario">
-            <TbUserPlus /> Usuario
-          </button>
+<button
+  className="apCreateUserIcon"
+  onClick={openCreateUser}
+  type="button"
+  title="Nuevo usuario"
+  aria-label="Nuevo usuario"
+>
+  <TbUserPlus />
+</button>
 
-          <button className="apBtn apBtnGhost apBtnIconOnly" onClick={loadAll} type="button" title="Recargar">
-            <TbRefresh />
-          </button>
+<button
+  className={`apRefreshIcon ${refreshing ? "is-spinning" : ""}`}
+  onClick={loadAll}
+  type="button"
+  title="Recargar"
+  aria-label="Recargar"
+  disabled={refreshing}
+>
+  <TbRefresh />
+</button>
         </div>
       </div>
 
@@ -1378,7 +1383,7 @@ await Swal.fire({
             </div>
           </div>
 
-          {/* ✅ unificado: crear/editar puesto + permisos en 1 solo modal */}
+          {/* unificado: crear/editar puesto + permisos en 1 solo modal */}
 <div className="apInnerBar apInnerBarOnlyMeta">
   <div className="apInnerMeta">
     Mostrando <b>{pagedLevels.length}</b> de <b>{filteredLevels.length}</b>
@@ -1393,7 +1398,7 @@ await Swal.fire({
   </div>
 
 {pagedLevels.map((l) => {
-  const auth = l.authority ?? 1;
+  const auth = l.authority ?? l.rank ?? 1;
 
   return (
     <div className="apMiniRow" key={l.id}>
@@ -1488,7 +1493,7 @@ await Swal.fire({
         </section>
 </div>
 
-      {/* ✅ BASES / SUCURSALES */}
+      {/* BASES / SUCURSALES */}
       <section className="apCard apCardFull" style={{ marginTop: 16 }}>
         <div className="apCardTop">
           <div className="apCardTitle">
@@ -1545,7 +1550,7 @@ await Swal.fire({
     <TbKey /> Usuarios internos
   </div>
 
-  {/* ✅ buscador centrado */}
+  {/* buscador centrado */}
   <div className="apUsersSearchMid">
     <div className="apSearch apUsersSearch">
       <TbSearch />
@@ -1558,7 +1563,7 @@ await Swal.fire({
     </div>
   </div>
 
-  {/* ✅ filtros a la derecha */}
+  {/* filtros a la derecha */}
   <div className="apUsersFiltersRight">
     <ProSelect value={fDept} onChange={(e) => setFDept(e.target.value)} ariaLabel="Filtro depto">
       <option value="all">Todos los deptos</option>
@@ -1732,7 +1737,7 @@ return (
   </button>
 </div>
       </section>
-      {/* ✅ MODAL VER DETALLES (pro) */}
+      {/* MODAL VER DETALLES */}
       <Modal open={detailsOpen} title="Detalles del usuario" onClose={closeDetails}>
         {(() => {
           const w = detailsWorker;
@@ -1745,7 +1750,7 @@ return (
 
           return (
             <div className="apDetailsWrap">
-              {/* Hero: avatar grande + nombre centrado (móvil) */}
+              
               <div className="apDetailsHero">
                 <div className="apDetailsAvatar">
                   <TbUserCircle />
@@ -1803,7 +1808,7 @@ return (
                 </div>
               </div>
 
-              {/* Acciones bien posicionadas */}
+              
               <div className="apDetailsActions">
                 <button className="apBtn apBtnGhost" type="button" onClick={closeDetails}>
                   <TbX /> Cerrar
@@ -1900,7 +1905,7 @@ onChange={(e) => setLastName(titleCaseLive(e.target.value))}
             </div>
           </div>
 
-{/* ✅ AVISO: permisos heredados del puesto */}
+{/* AVISO: permisos heredados del puesto */}
           <div className="apField apSpan2">
             <label style={{ fontWeight: 700, fontSize: 13, marginBottom: 8, display: "block" }}>
               <TbShieldLock style={{ marginRight: 4 }} />
@@ -2101,7 +2106,7 @@ onChange={(e) => setDepName(titleCaseLive(e.target.value))}
           setLpLevelId(v);
           const obj = levelsMap.get(v);
           setLpLevelName(obj?.name || "");
-          setLpAuthority(Number(obj?.authority ?? 1) || 1);
+          setLpAuthority(Number(obj?.authority ?? obj?.rank ?? 1) || 1);
           setLpCanManageCalendar(Boolean(obj?.can_manage_calendar));
           setLpCanApproveQuotes(Boolean(obj?.can_approve_quotes));
           syncLpPolicy(lpDeptId, v);
@@ -2209,7 +2214,7 @@ onChange={(e) => setDepName(titleCaseLive(e.target.value))}
             </div>
           </div>
 
-          {/* ✅ Módulos habilitados para este puesto */}
+          {/* Módulos habilitados para este puesto */}
           <div className="apPermGridPro">
             {MODULES.map((m) => {
               const on = lpModules.has(m.key);
@@ -2235,7 +2240,33 @@ onChange={(e) => setDepName(titleCaseLive(e.target.value))}
             })}
           </div>
 
-{/* ✅ Matriz de permisos granulares del PUESTO */}
+          {/* Permisos más legibles + menos blanco */}
+          <div className="apPermGridPro">
+            {MODULES.map((m) => {
+              const on = lpModules.has(m.key);
+              return (
+                <button
+                  key={m.key}
+                  type="button"
+                  className={`apPermItemPro ${on ? "on" : "off"}`}
+                  onClick={() => {
+                    setLpModules((prev) => {
+                      const next = new Set(prev);
+                      if (next.has(m.key)) next.delete(m.key);
+                      else next.add(m.key);
+                      return next;
+                    });
+                  }}
+                >
+                  <span className={`apPermDot ${on ? "on" : "off"}`} />
+                  <span className="apPermLabelPro">{m.label}</span>
+                  <span className="apPermKeyPro">{m.key}</span>
+                </button>
+              );
+            })}
+          </div>
+
+{/* Matriz de permisos granulares del PUESTO */}
           <div style={{ marginTop: 16, marginBottom: 12 }}>
             <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 8 }}>
               <TbShieldLock style={{ marginRight: 4 }} />

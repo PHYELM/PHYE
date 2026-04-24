@@ -2625,3 +2625,69 @@ body.gf-config-open .gf-field-config__panel--overlay * {
     grid-template-columns: 1fr !important;
   }
 }
+
+.gf-builderPro__actionButtons--icons{
+  display:flex !important;
+  flex-direction:row !important;
+  align-items:center;
+  justify-content:center;
+  gap:14px;
+  flex-wrap:nowrap;
+}
+
+.gfBuilderActionIcon{
+  width:60px;
+  height:60px;
+  border-radius:50%;
+  border:0;
+  background:transparent;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  transition:160ms ease;
+}
+
+.gfBuilderActionIcon svg{
+  width:34px;
+  height:34px;
+  stroke-width:2.35;
+}
+
+.gfBuilderActionIcon:hover{
+  transform:scale(1.08);
+}
+
+.gfBuilderActionIcon:active{
+  transform:scale(0.96);
+}
+
+.gfBuilderActionIcon--dashboard{
+  color:#0f172a;
+}
+
+.gfBuilderActionIcon--dashboard:hover{
+  background:rgba(15,23,42,0.06);
+  color:#020617;
+}
+
+.gfBuilderActionIcon--cancel{
+  color:#475569;
+}
+
+.gfBuilderActionIcon--cancel:hover{
+  background:rgba(220,38,38,0.10);
+  color:#dc2626;
+}
+
+.gfBuilderActionIcon--save{
+  color:#16a34a;
+}
+
+.gfBuilderActionIcon--save:hover{
+  background:rgba(22,163,74,0.12);
+  color:#15803d;
+}
+
+.gf-builderPro__actionButtons--icons .gf-actionBtn__label{
+  display:none !important;
+}

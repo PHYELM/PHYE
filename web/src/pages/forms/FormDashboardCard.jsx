@@ -91,13 +91,20 @@ export default function FormDashboardCard({
   /* color del héroe = primer depto respondedor o color del form */
   const heroColor = respDepts[0]?.color || form.color || "#2563eb";
 
-  return (
-    <button
-      type="button"
-      className="form-card form-card--dashboardButton"
-      onClick={() => openFormWorkspace(form.id)}
-      style={{ height: "auto", minHeight: 0 }}
-    >
+return (
+  <div
+    role="button"
+    tabIndex={0}
+    className="form-card form-card--dashboardButton"
+    onClick={() => openFormWorkspace(form.id)}
+    onKeyDown={(e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        openFormWorkspace(form.id);
+      }
+    }}
+    style={{ height: "auto", minHeight: 0 }}
+  >
       {/* Hero reducido con color del primer depto respondedor */}
       <div
         className="form-card__heroMini"
@@ -215,6 +222,6 @@ export default function FormDashboardCard({
           );
         })()}
       </div>
-    </button>
+    </div>
   );
 }

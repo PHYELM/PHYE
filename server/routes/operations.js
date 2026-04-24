@@ -13,7 +13,7 @@ router.get("/", branchFilter, async (req, res) => {
       .select("*")
       .order("created_at", { ascending: false });
 
-    // ✅ Filtro de base: Dirección ve todo; otros solo su base
+    // Filtro de base: Dirección ve todo; otros solo su base
     if (req.branchId) query = query.eq("branch_id", req.branchId);
 
     if (status) query = query.eq("status", status);
@@ -53,28 +53,29 @@ router.post("/", branchFilter, async (req, res) => {
     const b = req.body || {};
     if (!toText(b.title)) return res.status(400).json({ error: "title required" });
 
-    const payload = {
-      title: toText(b.title),
-      status: b.status || "pending",
-      unit_name: toText(b.unit_name),
-      operator_name: toText(b.operator_name),
-      client_name: toText(b.client_name),
-      origin: toText(b.origin),
-      destination: toText(b.destination),
-      scheduled_at: b.scheduled_at || null,
-      real_departure_at: b.real_departure_at || null,
-      real_arrival_at: b.real_arrival_at || null,
-      observations: toText(b.observations),
-      created_by: b.created_by || null,
-      // ✅ hereda la base del worker que crea
-      branch_id: req.branchId || b.branch_id || null,
-    };
+const payload = {
+  title: toText(b.title),
+  status: b.status || "pending",
+  priority: b.priority || "medium",
+  unit_name: toText(b.unit_name),
+  operator_name: toText(b.operator_name),
+  client_name: toText(b.client_name),
+  origin: toText(b.origin),
+  destination: toText(b.destination),
+  scheduled_at: b.scheduled_at || null,
+  real_departure_at: b.real_departure_at || null,
+  real_arrival_at: b.real_arrival_at || null,
+  observations: toText(b.observations),
+  created_by: b.created_by || null,
+  // hereda la base del worker que crea
+  branch_id: req.branchId || b.branch_id || null,
+};
 
     const { data, error } = await supabaseAdmin
       .from("operations").insert(payload).select("*").single();
     if (error) return res.status(500).json({ error: error.message });
 
-    // ✅ Notificar a todos los trabajadores de la misma base (excepto el actor)
+    // Notificar a todos los trabajadores de la misma base (excepto el actor)
     if (data && req.actorWorker) {
       const branchToFilter = data.branch_id;
       if (branchToFilter) {
@@ -85,11 +86,11 @@ router.post("/", branchFilter, async (req, res) => {
           .neq("id", req.actorWorker.id);
 
         if (peers && peers.length > 0) {
-          await createNotifications(peers.map((p) => ({
+            await createNotifications(peers.map((p) => ({
             recipient_id: p.id,
             actor_id: req.actorWorker.id,
-            actor_name: req.actorWorker.name,
-            actor_photo: req.actorWorker.photo,
+            actor_name: req.actorWorker.full_name || req.actorWorker.username || "Sistema",
+            actor_photo: req.actorWorker.profile_photo_url || null,
             type: "operation_created",
             title: "Nueva operación registrada",
             message: `${req.actorWorker.name} creó la operación "${data.title}"`,
@@ -111,20 +112,21 @@ router.put("/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const b = req.body || {};
-    const payload = {
-      title: toText(b.title),
-      status: b.status || "pending",
-      unit_name: toText(b.unit_name),
-      operator_name: toText(b.operator_name),
-      client_name: toText(b.client_name),
-      origin: toText(b.origin),
-      destination: toText(b.destination),
-      scheduled_at: b.scheduled_at || null,
-      real_departure_at: b.real_departure_at || null,
-      real_arrival_at: b.real_arrival_at || null,
-      observations: toText(b.observations),
-      updated_at: new Date().toISOString(),
-    };
+const payload = {
+  title: toText(b.title),
+  status: b.status || "pending",
+  priority: b.priority || "medium",
+  unit_name: toText(b.unit_name),
+  operator_name: toText(b.operator_name),
+  client_name: toText(b.client_name),
+  origin: toText(b.origin),
+  destination: toText(b.destination),
+  scheduled_at: b.scheduled_at || null,
+  real_departure_at: b.real_departure_at || null,
+  real_arrival_at: b.real_arrival_at || null,
+  observations: toText(b.observations),
+  updated_at: new Date().toISOString(),
+};
     const { data, error } = await supabaseAdmin.from("operations").update(payload).eq("id", id).select("*").single();
     if (error) return res.status(500).json({ error: error.message });
     return res.json({ data });
