@@ -1543,6 +1543,272 @@ await Swal.fire({
         </div>
       </section>
 
+      {/* MODAL CREAR BASE */}
+      <Modal open={branchModalOpen} title="Nueva base / sucursal" onClose={() => setBranchModalOpen(false)}>
+        <div className="apModalGrid">
+          <div className="apField apSpan2">
+            <label>Nombre de la base</label>
+            <input
+              className="apInput"
+              value={branchName}
+              onChange={(e) => setBranchName(titleCaseLive(e.target.value))}
+              placeholder="Ej. Los Mochis"
+            />
+          </div>
+
+          <div className="apField apSpan2">
+            <label>Color</label>
+            <input
+              className="apInput"
+              type="color"
+              value={branchColor}
+              onChange={(e) => setBranchColor(e.target.value)}
+            />
+          </div>
+
+          <div className="apModalActions apSpan2">
+            <button
+              className="apBtn apBtnGhost"
+              type="button"
+              onClick={() => setBranchModalOpen(false)}
+            >
+              <TbX /> Cancelar
+            </button>
+
+            <button
+              className="apBtn apBtnPrimary"
+              type="button"
+              onClick={addBranch}
+            >
+              <TbPlus /> Crear base
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* MODAL EDITAR BASE */}
+      <Modal open={branchEditOpen} title="Editar base / sucursal" onClose={() => setBranchEditOpen(false)}>
+        <div className="apModalGrid">
+          <div className="apField apSpan2">
+            <label>Nombre de la base</label>
+            <input
+              className="apInput"
+              value={branchName}
+              onChange={(e) => setBranchName(titleCaseLive(e.target.value))}
+              placeholder="Ej. Los Mochis"
+            />
+          </div>
+
+          <div className="apField apSpan2">
+            <label>Color</label>
+            <input
+              className="apInput"
+              type="color"
+              value={branchColor}
+              onChange={(e) => setBranchColor(e.target.value)}
+            />
+          </div>
+
+          <div className="apModalActions apSpan2">
+            <button
+              className="apBtn apBtnGhost"
+              type="button"
+              onClick={() => setBranchEditOpen(false)}
+            >
+              <TbX /> Cancelar
+            </button>
+
+            <button
+              className="apBtn apBtnPrimary"
+              type="button"
+              onClick={saveEditBranch}
+            >
+              <TbEdit /> Guardar cambios
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* MODAL CREAR BASE */}
+      <Modal open={branchModalOpen} title="Nueva base / sucursal" onClose={() => setBranchModalOpen(false)}>
+        <div className="apBranchModal">
+          <div
+            className="apBranchPreview"
+            style={{
+              "--branchColor": branchColor || "#1a3b6b",
+              "--branchText": isLightColor(branchColor || "#1a3b6b")
+                ? "rgba(10,12,14,0.92)"
+                : "rgba(255,255,255,0.96)",
+            }}
+          >
+            <div className="apBranchPreviewIcon">
+              <TbMapPin />
+            </div>
+
+            <div className="apBranchPreviewText">
+              <div className="apBranchPreviewLabel">Vista previa</div>
+              <div className="apBranchPreviewName">
+                {branchName.trim() || "Nombre de la base"}
+              </div>
+            </div>
+          </div>
+
+          <div className="apBranchFormCard">
+            <div className="apField">
+              <label>Nombre de la base</label>
+              <input
+                className="apInput apBranchInput"
+                value={branchName}
+                onChange={(e) => setBranchName(titleCaseLive(e.target.value))}
+                placeholder="Ej. Los Mochis"
+              />
+            </div>
+
+            <div className="apField">
+              <label>Color de identificación</label>
+
+              <div className="apBranchColorRow">
+                <button
+                  type="button"
+                  className="apBranchColorPreview"
+                  style={{ background: branchColor || "#1a3b6b" }}
+                  title="Color seleccionado"
+                  aria-label="Color seleccionado"
+                />
+
+                <input
+                  className="apBranchColorInput"
+                  type="color"
+                  value={branchColor}
+                  onChange={(e) => setBranchColor(e.target.value)}
+                />
+
+                <input
+                  className="apInput apBranchHexInput"
+                  value={branchColor}
+                  onChange={(e) => setBranchColor(e.target.value)}
+                  placeholder="#1a3b6b"
+                />
+              </div>
+
+              <div className="apSmallHint">
+                Este color identificará visualmente la base en tarjetas, usuarios y filtros.
+              </div>
+            </div>
+          </div>
+
+          <div className="apBranchActions">
+            <button
+              className="apBranchCancel"
+              type="button"
+              onClick={() => setBranchModalOpen(false)}
+            >
+              <TbX />
+              Cancelar
+            </button>
+
+            <button
+              className="apBranchSave"
+              type="button"
+              onClick={addBranch}
+            >
+              <TbPlus />
+              Crear base
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* MODAL EDITAR BASE */}
+      <Modal open={branchEditOpen} title="Editar base / sucursal" onClose={() => setBranchEditOpen(false)}>
+        <div className="apBranchModal">
+          <div
+            className="apBranchPreview"
+            style={{
+              "--branchColor": branchColor || "#1a3b6b",
+              "--branchText": isLightColor(branchColor || "#1a3b6b")
+                ? "rgba(10,12,14,0.92)"
+                : "rgba(255,255,255,0.96)",
+            }}
+          >
+            <div className="apBranchPreviewIcon">
+              <TbMapPin />
+            </div>
+
+            <div className="apBranchPreviewText">
+              <div className="apBranchPreviewLabel">Vista previa</div>
+              <div className="apBranchPreviewName">
+                {branchName.trim() || "Nombre de la base"}
+              </div>
+            </div>
+          </div>
+
+          <div className="apBranchFormCard">
+            <div className="apField">
+              <label>Nombre de la base</label>
+              <input
+                className="apInput apBranchInput"
+                value={branchName}
+                onChange={(e) => setBranchName(titleCaseLive(e.target.value))}
+                placeholder="Ej. Los Mochis"
+              />
+            </div>
+
+            <div className="apField">
+              <label>Color de identificación</label>
+
+              <div className="apBranchColorRow">
+                <button
+                  type="button"
+                  className="apBranchColorPreview"
+                  style={{ background: branchColor || "#1a3b6b" }}
+                  title="Color seleccionado"
+                  aria-label="Color seleccionado"
+                />
+
+                <input
+                  className="apBranchColorInput"
+                  type="color"
+                  value={branchColor}
+                  onChange={(e) => setBranchColor(e.target.value)}
+                />
+
+                <input
+                  className="apInput apBranchHexInput"
+                  value={branchColor}
+                  onChange={(e) => setBranchColor(e.target.value)}
+                  placeholder="#1a3b6b"
+                />
+              </div>
+
+              <div className="apSmallHint">
+                Este color identificará visualmente la base en tarjetas, usuarios y filtros.
+              </div>
+            </div>
+          </div>
+
+          <div className="apBranchActions">
+            <button
+              className="apBranchCancel"
+              type="button"
+              onClick={() => setBranchEditOpen(false)}
+            >
+              <TbX />
+              Cancelar
+            </button>
+
+            <button
+              className="apBranchSave"
+              type="button"
+              onClick={saveEditBranch}
+            >
+              <TbEdit />
+              Guardar cambios
+            </button>
+          </div>
+        </div>
+      </Modal>
+
       {/* Usuarios */}
       <section className="apCard apCardFull">
 <div className="apCardTop apCardTopRow apUsersTopRow">
