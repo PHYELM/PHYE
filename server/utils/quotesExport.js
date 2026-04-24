@@ -897,7 +897,7 @@ function generateQuoteXML(quote) {
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <Cotizacion
-  xmlns:cot="http://ecovisa.com/cotizacion/1.0"
+  xmlns:cot="http://phyelm.com/cotizacion/1.0"
   Version="1.0"
   Folio="${escXml(quote.folio || '')}"
   Fecha="${quote.created_at ? new Date(quote.created_at).toISOString() : now}"

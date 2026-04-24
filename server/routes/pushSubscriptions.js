@@ -3,7 +3,7 @@ const { supabaseAdmin } = require("../supabaseAdmin");
 const webpush = require("web-push");
 
 webpush.setVapidDetails(
-  process.env.VAPID_SUBJECT || "mailto:admin@ecovisa.com",
+  process.env.VAPID_SUBJECT || "mailto:admin@phyelm.com",
   process.env.VAPID_PUBLIC_KEY,
   process.env.VAPID_PRIVATE_KEY
 );

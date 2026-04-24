@@ -111,7 +111,7 @@ password: password.replace(/\s+/g, "").trim().toUpperCase()
     <div className="login-page">
       <div className="login-card">
         <div className="login-left">
-          {/* 1) Logo ECOVISA centrado (imagen) */}
+          {/* 1) Logo PHYELM centrado (imagen) */}
           <div className="brand-center">
             <img
               className="brand-logo"
@@ -135,7 +135,7 @@ password: password.replace(/\s+/g, "").trim().toUpperCase()
 <p className="login-note">
   <span>Acceso interno. Dirección administra usuarios y módulos.</span>
   <span>Todos los Derechos Reservados</span>
-  <span>ECOVISA ©</span>
+  <span>PHYELM ©</span>
 </p>
         </div>
 

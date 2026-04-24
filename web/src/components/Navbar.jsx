@@ -693,7 +693,7 @@ if (data?.profile_photo_url) {
             <img
               className="nav-logo-img"
               src="/assets/PHYEWHITE.png"
-              alt="ECOVISA"
+              alt="PHYELM"
             />
           </button>
         </div>

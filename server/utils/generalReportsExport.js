@@ -2193,7 +2193,7 @@ function generateGeneralReportXML(report) {
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <ReporteGeneral
-  xmlns:rep="http://ecovisa.com/reportes-generales/1.0"
+  xmlns:rep="http://phyelm.com/reportes-generales/1.0"
   Version="1.0"
   Periodo="${escXml(meta.periodLabel)}"
   FechaInicial="${escXml(meta.dateFrom || "")}"

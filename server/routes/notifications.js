@@ -98,7 +98,7 @@ try {
 
       // Web Push (fuera de la app — móvil y escritorio)
       sendPushToWorker(notif.recipient_id, {
-        title: notif.title || "ECOVISA",
+        title: notif.title || "PHYELM",
         body: notif.message || "",
         icon: "/assets/ECOVISA_ICON.png",
         badge: "/assets/ECOVISA_ICON.png",
